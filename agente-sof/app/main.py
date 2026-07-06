@@ -17,7 +17,7 @@ import json
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from slowapi import Limiter
@@ -397,7 +397,7 @@ async def health_check() -> dict:
 @limiter.limit("60/minute")
 async def process_agent_command(
     request: Request,
-    payload: AgentRequest,
+    payload: AgentRequest = Body(...),
     _api_key: str = Depends(verify_api_key),
 ) -> AgentResponse:
     """
