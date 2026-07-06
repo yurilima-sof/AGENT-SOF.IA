@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Banco de Dados (PostgreSQL + pgvector)
+  # ---------------------------------------------------------------------------
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: agente_sof_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-agente_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agente_senha_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-agente_sof_db}
+    # SEGURANÇA: O banco expõe porta apenas para localhost (127.0.0.1)
+    # para permitir desenvolvimento local, mantendo-se seguro na VPS.
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agente_user} -d ${POSTGRES_DB:-agente_sof_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # API FastAPI
+  # ---------------------------------------------------------------------------
+  api:
+    build: .
+    container_name: agente_sof_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-agente_user}:${POSTGRES_PASSWORD:-agente_senha_dev}@db:5432/${POSTGRES_DB:-agente_sof_db}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Proxy Reverso (Caddy - SSL Automático)
+  # ---------------------------------------------------------------------------
+  caddy:
+    image: caddy:2-alpine
+    container_name: agente_sof_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local

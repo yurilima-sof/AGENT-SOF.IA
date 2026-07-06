@@ -1,0 +1,74 @@
+# =============================================================================
+# requirements.txt - Dependências do Projeto Agente SOF
+# =============================================================================
+# Instalar todas as dependências: pip install -r requirements.txt
+#
+# Dica: Em produção, use um ambiente virtual (venv):
+#   python -m venv venv
+#   source venv/bin/activate  (Linux/Mac)
+#   venv\Scripts\activate     (Windows)
+#   pip install -r requirements.txt
+# =============================================================================
+
+
+# --- Framework Web e Servidor ASGI ---
+# FastAPI: framework moderno, rápido e com validação automática via Pydantic.
+fastapi==0.111.0
+
+# Uvicorn: servidor ASGI de alta performance para rodar o FastAPI.
+# [standard] inclui extras como watchfiles (hot reload) e httptools.
+uvicorn[standard]==0.30.1
+
+
+# --- Validação de Dados ---
+# Pydantic v2: validação de dados com type hints. Já vem com o FastAPI,
+# mas fixamos a versão explicitamente para evitar surpresas.
+pydantic>=2.13.0,<3.0.0
+
+# Pydantic Settings: gerencia configurações via variáveis de ambiente.
+pydantic-settings==2.6.1
+
+
+# --- Banco de Dados ---
+# SQLAlchemy: ORM robusto para Python. Usaremos a versão assíncrona.
+sqlalchemy[asyncio]==2.0.31
+
+# asyncpg: driver PostgreSQL assíncrono de alta performance (para SQLAlchemy async).
+asyncpg==0.31.0
+
+# psycopg2-binary: driver síncrono, útil para scripts e ferramentas de migração.
+psycopg2-binary==2.9.12
+
+# Alembic: ferramenta de migração de banco de dados (versionamento do schema).
+# Usaremos quando precisarmos alterar as tabelas depois da criação inicial.
+alembic==1.13.1
+
+
+# --- Variáveis de Ambiente ---
+# python-dotenv: carrega variáveis do arquivo .env automaticamente.
+python-dotenv==1.0.1
+
+
+# --- HTTP Client (para comunicação futura com a API Tuya) ---
+# httpx: cliente HTTP assíncrono moderno, compatível com FastAPI/asyncio.
+httpx==0.28.1
+
+
+# --- Segurança e Rate Limiting ---
+# slowapi: rate limiting para FastAPI baseado em limites por IP.
+slowapi==0.1.9
+
+
+# --- IA e RAG (Fase 2 - Descomente quando for implementar) ---
+# langchain==0.2.6
+# langchain-community==0.2.6
+# langchain-openai==0.1.14
+# langchain-postgres==0.0.9       # Integração LangChain + pgvector
+# llama-index==0.10.50
+openai==1.60.1
+# google-generativeai duplicate removed
+google-generativeai==0.8.6
+
+# --- Utilitários ---
+# python-multipart: necessário para upload de arquivos (manuais PDF no futuro).
+python-multipart==0.0.9

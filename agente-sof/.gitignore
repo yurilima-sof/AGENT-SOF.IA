@@ -1,0 +1,63 @@
+# =============================================================================
+# .gitignore - Arquivos e pastas ignorados pelo Git
+# =============================================================================
+# NUNCA versione arquivos sensíveis (senhas, chaves de API)!
+# =============================================================================
+
+# --- Ambiente Virtual Python ---
+venv/
+.venv/
+env/
+.env/
+__pypackages__/
+
+# --- Variáveis de Ambiente (SEGURANÇA CRÍTICA!) ---
+# O .env.example pode ser versionado, o .env NUNCA deve!
+.env
+
+# --- Cache do Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# --- Distribuição / Empacotamento ---
+dist/
+build/
+*.egg-info/
+*.egg
+
+# --- IDEs e Editores ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Sistemas Operacionais ---
+.DS_Store          # macOS
+Thumbs.db          # Windows
+desktop.ini        # Windows
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Cobertura de Testes ---
+.coverage
+htmlcov/
+.pytest_cache/
+
+# --- Docker ---
+# Não ignoramos o docker-compose.yml pois é parte do projeto.
+# Mas ignoramos overrides locais que podem conter credenciais.
+docker-compose.override.yml
+
+# --- Dados do Banco (Volume Local) ---
+# Se optar por usar um volume local em vez de volume nomeado Docker.
+postgres_data/
+
+# --- Arquivos de Dados Sensíveis e Executáveis ---
+_chat.txt
+*.exe
+*.bin
+
