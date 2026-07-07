@@ -15,7 +15,7 @@
 # com uma mensagem clara explicando o problema. Zero código extra!
 # =============================================================================
 
-from __future__ import annotations
+
 
 from typing import Any, Dict, Optional
 

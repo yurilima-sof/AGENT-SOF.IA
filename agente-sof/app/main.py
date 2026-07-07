@@ -8,7 +8,6 @@
 #   Acesse http://localhost:8000/docs
 # =============================================================================
 
-from __future__ import annotations
 
 import logging
 import secrets
