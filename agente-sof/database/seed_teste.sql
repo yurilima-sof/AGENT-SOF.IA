@@ -17,9 +17,10 @@ VALUES (
   '{
     "tipo": "ifttt",
     "observacao": "Grupo exclusivo de testes - Jaylson SOF",
-    "freezer": "https://maker.ifttt.com/trigger/Teste_ligar/with/key/boVO_NH7Ia-1fj95TkxKZf",
-    "esquentar": null,
-    "off": "https://maker.ifttt.com/trigger/thiago_off/with/key/boVO_NH7Ia-1fj95TkxKZf",
+    "freezer": "https://maker.ifttt.com/trigger/T-LOW-TESTE/with/key/boVO_NH7Ia-1fj95TkxKZf",
+    "esquentar": "https://maker.ifttt.com/trigger/Teste_ligar/with/key/boVO_NH7Ia-1fj95TkxKZf",
+    "medio": "https://maker.ifttt.com/trigger/TESTE/with/key/boVO_NH7Ia-1fj95TkxKZf",
+    "off": "https://maker.ifttt.com/trigger/T-OFF-TEST/with/key/boVO_NH7Ia-1fj95TkxKZf",
     "ligar": "https://maker.ifttt.com/trigger/Teste_ligar/with/key/boVO_NH7Ia-1fj95TkxKZf"
   }',
   true

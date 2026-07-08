@@ -55,7 +55,7 @@ def chamar_api(mensagem: str) -> dict[str, Any]:
 def imprimir_resultado(mensagem: str, resposta: dict[str, Any]) -> None:
     """Formata e imprime o resultado de forma legível."""
     acao = resposta.get("ifttt_action")
-    emoji = {"freezer": "❄️ ", "esquentar": "🔆", "off": "❌", None: "💬"}
+    emoji = {"freezer": "❄️ ", "esquentar": "🔆", "medio": "🌤️", "off": "❌", None: "💬"}
     print(f"\n{'─' * 55}")
     print(f"  📩 Mensagem   : \"{mensagem}\"")
     print(f"  🎯 Intenção   : {resposta.get('intencao')}")
@@ -74,12 +74,20 @@ CASOS_DE_TESTE = [
     ("🔥",                             "freezer"),
     ("calor demais",                   "freezer"),
     ("esfriar por favor",              "freezer"),
+    ("t-low",                          "freezer"),
 
     # --- Deve acionar ESQUENTAR (aquecer) ---
     ("tá muito frio aqui",             "esquentar"),
     ("opção 2",                        "esquentar"),
     ("🥶",                             "esquentar"),
     ("muito frio",                     "esquentar"),
+    ("t-high",                         "esquentar"),
+
+    # --- Deve acionar MEDIO (temperatura média) ---
+    ("temperatura média",              "medio"),
+    ("t-medium",                       "medio"),
+    ("primeiro calor",                 "medio"),
+    ("medio",                          "medio"),
 
     # --- Deve acionar OFF (desligar) ---
     ("opção 3",                        "off"),

@@ -110,13 +110,17 @@ _KEYWORDS: dict[str, list[str]] = {
         "frio", "fria", "gelado", "congelar", "esfriar",
         "freezer", "freeze", "quente demais", "muito quente",
         "calor", "ta quente", "tá quente", "opção 1", "opcao 1",
-        "🔥", "opção1", "opcao1", "ação:freezer",
+        "🔥", "opção1", "opcao1", "ação:freezer", "t-low", "baixo", "low",
     ],
     "esquentar": [
         "esquentar", "aquecer", "warm", "high", "t-high",
         "thigh", "frio demais", "muito frio", "gelado demais",
         "ta frio", "tá frio", "opção 2", "opcao 2", "🥶",
         "opção2", "opcao2", "ação:esquentar",
+    ],
+    "medio": [
+        "medio", "médio", "medium", "t-medium", "t-médium",
+        "temperatura média", "primeiro calor"
     ],
     "off": [
         "desligar maquinas", "off", "parar", "cancelar",
@@ -136,6 +140,7 @@ _KEYWORDS: dict[str, list[str]] = {
 _ACAO_PARA_INTENCAO: dict[str, str] = {
     "freezer": "ligar_resfriamento",
     "esquentar": "ligar_aquecimento",
+    "medio": "ligar_temperatura_media",
     "off": "desligar_dispositivos",
     "ligar": "ligar_dispositivos",
 }
@@ -144,6 +149,7 @@ _ACAO_PARA_INTENCAO: dict[str, str] = {
 _MENSAGENS_RESPOSTA: dict[str, str] = {
     "freezer": "Entendido! ❄️ Ativando modo resfriamento. Aguarde alguns instantes.",
     "esquentar": "Entendido! 🔆 Ativando aquecimento. Aguarde alguns instantes.",
+    "medio": "Entendido! 🌤️ Ajustando para uma temperatura média. Aguarde alguns instantes.",
     "off": "Ok! ✅ Desativando os equipamentos. Qualquer dúvida, estou aqui.",
     "ligar": "Entendido! ⚡ Ligando os equipamentos. Aguarde alguns instantes.",
     "nenhuma": "Olá! 🤖 Sou o Bot SOF. Como posso te ajudar com a temperatura do ambiente hoje?",
@@ -169,7 +175,7 @@ def identificar_acao(mensagem: str) -> Optional[str]:
         mensagem: Texto enviado pelo usuário no WhatsApp.
 
     Returns:
-        'freezer', 'esquentar', 'off', ou None se nenhuma ação for identificada.
+        'freezer', 'esquentar', 'medio', 'off', ou None se nenhuma ação for identificada.
     """
     texto = mensagem.lower().strip()
 
@@ -195,7 +201,7 @@ async def buscar_link_ifttt(id_grupo: str, acao: str) -> Optional[str]:
 
     Args:
         id_grupo: ID do grupo de WhatsApp.
-        acao: Ação identificada ('freezer', 'esquentar', 'off').
+        acao: Ação identificada ('freezer', 'esquentar', 'medio', 'off').
 
     Returns:
         URL do webhook IFTTT ou None se não encontrado/grupo inativo.
@@ -381,7 +387,7 @@ async def health_check() -> dict:
     description=(
         "Recebe uma mensagem do WhatsApp (via n8n), identifica a intenção "
         "e retorna o JSON estruturado. **Na fase de testes**, o campo `ifttt_action` "
-        "indica ao n8n qual webhook IFTTT disparar (freezer / esquentar / off). "
+        "indica ao n8n qual webhook IFTTT disparar (freezer / esquentar / medio / off). "
         "**Requer autenticação** via header `Authorization: Bearer <API_KEY>`."
     ),
     responses={

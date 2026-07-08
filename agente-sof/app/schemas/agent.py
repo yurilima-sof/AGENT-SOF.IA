@@ -122,11 +122,11 @@ class AgentResponse(BaseModel):
         default=None,
         description=(
             "[FASE DE TESTES] Ação a ser disparada no IFTTT. "
-            "Valores possíveis: 'freezer' (esfriar) | 'esquentar' | 'off' | None (sem ação física). "
+            "Valores possíveis: 'freezer' (esfriar) | 'esquentar' | 'medio' | 'off' | None (sem ação física). "
             "O n8n usa este campo para buscar a URL correta no mapa de grupos "
             "enquanto não migramos para a API Tuya direta."
         ),
-        examples=["freezer", "esquentar", "off", None],
+        examples=["freezer", "esquentar", "medio", "off", None],
     )
 
     link_ifttt: Optional[str] = Field(

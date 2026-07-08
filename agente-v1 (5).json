@@ -1,0 +1,416 @@
+{
+  "name": "agente-v1",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "Estag.\n\n- YURI GAB\n\nID TESTE: 120363422455765261-group",
+        "height": 208,
+        "width": 272,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        912,
+        432
+      ],
+      "typeVersion": 1,
+      "id": "97c1fd82-e9ba-4b2c-b5b0-701734b417d8",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "switch-ifttt-condition",
+              "leftValue": "={{ $json.link_ifttt }}",
+              "rightValue": "http",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7d974bdf-e507-4126-83d3-a37c30273d77",
+      "name": "Deve Executar IFTTT?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        784
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.z-api.io/instances/3E917D692D0BC18DB61216134452D8A5/token/94C319F4638369F07048B4DA/send-text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "client-token",
+              "value": "F0a656e1d81fe422e8d3311bc303d8aa4S"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "phone",
+              "value": "={{ $('Webhook').item.json.body.phone }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $('HTTP Request1').first().json.mensagem_wpp }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2208,
+        864
+      ],
+      "id": "85ce0280-82d2-43ba-8e94-c7102c61112b",
+      "name": "Enviar Resposta Z-API3"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1oN_tNVyOC4PVJhH5Ms3nS4cWquHcpcTMVGJycowy8m4",
+          "mode": "list",
+          "cachedResultName": "Log Atuação N8N",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1oN_tNVyOC4PVJhH5Ms3nS4cWquHcpcTMVGJycowy8m4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1oN_tNVyOC4PVJhH5Ms3nS4cWquHcpcTMVGJycowy8m4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Data": "={{ $json.Data }}",
+            "Hora": "={{ $json.Hora }}",
+            "Solicitado através": "={{ $json['Solicitado através'] }}",
+            "Atuação": "={{ $json['Atuação'] }}",
+            "Solicitado por": "={{ $json['Solicitado por'] }}",
+            "mensagem": "={{ $json.mensagem }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Data",
+              "displayName": "Data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hora",
+              "displayName": "Hora",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Solicitado através",
+              "displayName": "Solicitado através",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Atuação",
+              "displayName": "Atuação",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Solicitado por",
+              "displayName": "Solicitado por",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2704,
+        864
+      ],
+      "id": "efabffc8-bcec-42e4-85e3-4f1fc5a1ef32",
+      "name": "Append row in sheet4",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n\n  const webhookBody = $('Webhook').first().json.body || {};\n\n  const agoraBrasilia = $now.setZone('America/Sao_Paulo');\n\n  const mensagem = webhookBody.text?.message || webhookBody.message || \"\";\n  const solicitadoPor = webhookBody.senderName || \"Desconhecido\";\n  const numero = webhookBody.connectedPhone || webhookBody.phone || \"N/A\";\n  const grupo = webhookBody.chatName || \"Chat Individual\";\n\n  return {\n    json: {\n      \"Data\": agoraBrasilia.toFormat('dd/MM/yyyy'),\n      \"Hora\": agoraBrasilia.toFormat('HH:mm:ss'),\n      \"Solicitado através\": grupo,\n      \"Atuação\": \"Atendimento via Bot\",\n      \"Solicitado por\": `${solicitadoPor} (${numero})`,\n      \"mensagem\": mensagem\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2448,
+        864
+      ],
+      "id": "6d48c0d6-0e26-4cbe-a4a8-623d857c64e5",
+      "name": "Limpeza de dados para LOG V3"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link_ifttt }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2176,
+        656
+      ],
+      "id": "4f2327e1-37b4-4768-b7a2-0a0d19b8329e",
+      "name": "Executar IFTTT2",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7693005a-2735-4752-97b7-5028637e1a38",
+              "leftValue": "={{ $json.body.isGroup }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "415ef1de-9ecd-40df-95f6-6a0f3794c2e9",
+              "leftValue": "={{ $json.body.phone }}",
+              "rightValue": "120363422455765261-group",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f912d42f-a55f-4481-9fcb-55d0ffdb670f",
+      "name": "Apenas Grupos?3",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1456,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://143.95.217.234:8000/agent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"mensagem\": \"{{ $('Webhook').item.json.body.text.message }}\",\n  \"id_grupo\": \"{{ $('Webhook').item.json.body.phone }}\",\n  \"nome_revenda\": \"{{ $('Webhook').item.json.body.chatName }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1728,
+        800
+      ],
+      "id": "b3ab2969-82b8-4d0f-93df-8d3d825978a5",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "KuqiemeMLFvqq5de",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sof-agente-ia",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        1232,
+        800
+      ],
+      "id": "dfffd664-86ef-4bb8-bdbb-f8f122e8d98b",
+      "name": "Webhook",
+      "webhookId": "8fe4ea5d-02eb-4707-94a5-23574a3cab7f"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Deve Executar IFTTT?2": {
+      "main": [
+        [
+          {
+            "node": "Executar IFTTT2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Resposta Z-API3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Resposta Z-API3": {
+      "main": [
+        [
+          {
+            "node": "Limpeza de dados para LOG V3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpeza de dados para LOG V3": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar IFTTT2": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta Z-API3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apenas Grupos?3": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Deve Executar IFTTT?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Apenas Grupos?3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a474c33a-eeec-4e43-b038-d70ebb42ac1a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9286c9cf7fd351af8682fed15faf901be8935568e7d5687d54a4f55ddfa05fe0"
+  },
+  "nodeGroups": [],
+  "id": "XmmkAIMCgtZtSSo8",
+  "tags": []
+}
