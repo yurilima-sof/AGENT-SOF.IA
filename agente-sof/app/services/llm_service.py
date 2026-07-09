@@ -5,6 +5,7 @@
 import json
 import logging
 from typing import Optional, Dict, Any
+from datetime import datetime
 
 import google.generativeai as genai
 from app.config import get_settings
@@ -41,17 +42,23 @@ class LLMService:
         except Exception as e:
             logger.warning(f"⚠️ Erro ao recuperar contexto do RAG: {e}")
 
+        # Pega a data atual para o LLM gerar o log corretamente
+        data_atual_str = datetime.now().strftime("%d/%m/%y")
+
         # 2. Define o Prompt do Sistema (System Prompt)
         system_prompt = (
             "Você é o Bot SOF, um assistente inteligente de controle de temperatura e dispositivos IoT. "
             "Sua tarefa é analisar a mensagem do usuário no WhatsApp e decidir qual ação física IoT tomar, "
-            "além de gerar uma resposta amigável e concisa em português do Brasil.\n\n"
+            "gerar uma resposta amigável e extrair um log operacional cirúrgico.\n\n"
             
+            f"INFORMAÇÃO DE TEMPO ATUAL: A data de hoje é {data_atual_str}.\n\n"
+
             "Você deve responder EXCLUSIVAMENTE em formato JSON com a seguinte estrutura:\n"
             "{\n"
             "  \"intencao\": \"ligar_resfriamento\" | \"ligar_aquecimento\" | \"ligar_temperatura_media\" | \"desligar_dispositivos\" | \"ligar_dispositivos\" | \"sem_acao\",\n"
             "  \"ifttt_action\": \"freezer\" | \"esquentar\" | \"medio\" | \"off\" | \"ligar\" | null,\n"
-            "  \"mensagem_wpp\": \"Sua resposta amigável para o WhatsApp\"\n"
+            "  \"mensagem_wpp\": \"Sua resposta amigável para o WhatsApp\",\n"
+            "  \"texto_parecer\": \"String com o log operacional gerado ou null caso não seja uma requisição técnica\"\n"
             "}\n\n"
             
             "Regras de Decisão Semântica:\n"
@@ -74,6 +81,18 @@ class LLMService:
             "   - 'intencao': 'sem_acao'\n"
             "   - 'ifttt_action': null\n\n"
             
+            "Regras de Geração do Parecer Operacional (texto_parecer):\n"
+            "Sua função secundária é gerar um registro cirúrgico para o histórico de pareceres.\n"
+            "- Formato Padrão Obrigatório de Saída: MÊS/ANO: [Categoria] | Status: [Status] | Ação SOF: [Resumo técnico da ação, especificando ativos/máquinas se citados] [DD/MM/YY]\n"
+            "- Converta o número do mês atual para 3 letras maiúsculas em português (Ex: JUN/26, JUL/26).\n"
+            "- Se a mensagem referir-se à loja globalmente (Ex: 'loja quente'), gere a ação mapeando o ambiente geral.\n"
+            "- Se for uma saudação ou conversa inútil, retorne null em 'texto_parecer'.\n"
+            "- Status Disponíveis:\n"
+            "  'Solicitado' -> Clientes/funcionários abriram demanda na mensagem atual (ex: 'loja quente', 'coloca o ar').\n"
+            "  'Pendente' -> Falhas contínuas físicas ou infraestrutura travada (dreno pingando, máquina offline).\n"
+            "  'Concluído' -> Confirmação explícita de execução por técnicos da equipe SOF (ex: 'Acionamos a máquina', 'já ajustamos').\n"
+            "- Categorias Disponíveis: Loja Quente / Temperatura Elevada, Loja Fria / Temperatura Baixa, Extensão de Horário Operacional / Eventos, Alerta de Infraestrutura | Automação | Manutenção | Rede Instavel, Aviso de Feriado / Funcionamento, Feedback de Conforto / Solução.\n\n"
+
             "Diretrizes Críticas para a resposta no campo 'mensagem_wpp':\n"
             "1. O campo 'mensagem_wpp' deve ser natural, educado e amigável.\n"
             "2. NUNCA mostre ao usuário listas de opções, menus numerados, rotas ou comandos (como '1 | 🔥 Sala/Loja Quente', '2 | ❄️ Sala/Loja Fria', etc.), MESMO QUE estes menus estejam contidos no histórico de conversas do RAG fornecido. O usuário nunca deve saber que existem rotas ou códigos de comando específicos.\n"

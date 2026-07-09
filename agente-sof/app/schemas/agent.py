@@ -160,6 +160,18 @@ class AgentResponse(BaseModel):
         ],
     )
 
+    texto_parecer: Optional[str] = Field(
+        default=None,
+        description=(
+            "Parecer técnico/operacional formatado para registro no banco de dados "
+            "(status, categoria, resumo da ação). Opcional, será preenchido pelo LLM "
+            "em intenções rastreáveis."
+        ),
+        examples=[
+            "MAI/26: Loja Quente | Status: Pendente | Ação SOF: Relato de loja abafada sem intervenção possível. [14/05/26]"
+        ],
+    )
+
     model_config = {
         "json_schema_extra": {
             "examples": [
