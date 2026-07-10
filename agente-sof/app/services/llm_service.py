@@ -31,8 +31,6 @@ class LLMService:
         Consulta o RAG por histórico contextual, envia a pergunta + contexto ao gemini-2.5-flash
         e retorna a classificação estruturada no formato compatível com AgentResponse.
         """
-        pass
-
         # 1. Recupera contexto relevante do RAG (histórico de chat)
         contexto_rag = ""
         try:
@@ -109,18 +107,19 @@ class LLMService:
                 f"Mensagem atual do Usuário: '{mensagem}'"
             )
 
-        logger.info(f"   Enviando requisição ao gemini-flash-latest...")
+        logger.info(f"   Enviando requisição ao gemini-2.5-flash...")
 
         # 4. Envia para a API do Gemini de forma assíncrona usando GenerativeModel
         model = genai.GenerativeModel(
-            model_name="gemini-flash-latest",
+            model_name="gemini-2.5-flash",
             system_instruction=system_prompt
         )
         response = await model.generate_content_async(
             user_content,
             generation_config=genai.GenerationConfig(
                 response_mime_type="application/json",
-                temperature=0.0
+                temperature=0.0,
+                max_output_tokens=300
             )
         )
 

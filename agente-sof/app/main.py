@@ -81,7 +81,7 @@ async def verify_api_key(
 # Padrão: 60 requisições por minuto por IP.
 # =============================================================================
 
-limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
+limiter = Limiter(key_func=get_remote_address, default_limits=["600/minute"])
 
 
 # =============================================================================
@@ -399,7 +399,7 @@ async def health_check() -> dict:
     },
     tags=["Agente IA"],
 )
-@limiter.limit("60/minute")
+@limiter.limit("600/minute")
 async def process_agent_command(
     request: Request,
     payload: AgentRequest = Body(...),

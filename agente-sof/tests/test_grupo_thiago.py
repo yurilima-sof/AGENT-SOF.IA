@@ -45,7 +45,10 @@ def chamar_api(mensagem: str) -> dict[str, Any]:
     req = urllib.request.Request(
         f"{API_URL}/agent",
         data=dados,
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            
+        },
         method="POST",
     )
     with urllib.request.urlopen(req) as resp:
