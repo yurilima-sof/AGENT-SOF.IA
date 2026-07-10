@@ -119,7 +119,7 @@ class LLMService:
             generation_config=genai.GenerationConfig(
                 response_mime_type="application/json",
                 temperature=0.0,
-                max_output_tokens=300
+                max_output_tokens=1000
             )
         )
 
