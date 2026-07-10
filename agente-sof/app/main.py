@@ -433,6 +433,7 @@ async def process_agent_command(
         acao = None
         intencao = None
         mensagem_wpp = None
+        texto_parecer = None
 
         if settings.gemini_api_key:
             try:
@@ -441,6 +442,7 @@ async def process_agent_command(
                 intencao = resultado.get("intencao")
                 acao = resultado.get("ifttt_action")
                 mensagem_wpp = resultado.get("mensagem_wpp")
+                texto_parecer = resultado.get("texto_parecer")
 
                 # Normalização de nulos vindos da resposta JSON do LLM
                 if acao == "null" or acao == "None" or not acao:
@@ -450,6 +452,7 @@ async def process_agent_command(
                 acao = None
                 intencao = None
                 mensagem_wpp = None
+                texto_parecer = None
 
         # Fallback de Palavras-Chave (Keyword Matching)
         if not intencao:
@@ -499,6 +502,7 @@ async def process_agent_command(
                 link_ifttt=link_ifttt,     # URL do webhook buscada do banco
                 parametros={},
                 mensagem_wpp=mensagem_wpp,
+                texto_parecer=texto_parecer,
             )
 
         else:
@@ -527,6 +531,7 @@ async def process_agent_command(
                 ifttt_action=None,         # ← n8n NÃO dispara o IFTTT
                 parametros={},
                 mensagem_wpp=mensagem_wpp,
+                texto_parecer=texto_parecer,
             )
 
     except Exception as exc:
