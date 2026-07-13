@@ -56,8 +56,13 @@ class LLMService:
             "  \"intencao\": \"ligar_resfriamento\" | \"ligar_aquecimento\" | \"ligar_temperatura_media\" | \"desligar_dispositivos\" | \"ligar_dispositivos\" | \"sem_acao\",\n"
             "  \"ifttt_action\": \"freezer\" | \"esquentar\" | \"medio\" | \"off\" | \"ligar\" | null,\n"
             "  \"mensagem_wpp\": \"Sua resposta amigável para o WhatsApp\",\n"
-            "  \"texto_parecer\": \"String com o log operacional gerado ou null caso não seja uma requisição técnica\"\n"
+            "  \"texto_parecer\": \"String com o log operacional gerado ou null caso não seja uma requisição técnica\",\n"
+            "  \"salvar_memoria\": true | false\n"
             "}\n\n"
+            
+            "Filtro de Memória Orgânica (salvar_memoria):\n"
+            "- Defina como true APENAS se a mensagem do usuário ditar uma regra, preferência duradoura, padrão de temperatura ou hábito que o bot deve lembrar para o futuro (ex: 'sempre ligamos no medio de manhã', 'nossa loja é muito gelada às 14h').\n"
+            "- Defina como false para comandos normais ('liga o ar'), reclamações pontuais ('tá quente hoje'), saudações e lixo.\n\n"
             
             "Hierarquia de Conhecimento e Comandos:\n"
             "- Se o histórico do RAG trouxer informações marcadas como [REGRA ESPECÍFICA DA REVENDA], elas ANULAM as orientações de [REGRA GLOBAL] em caso de conflito.\n"

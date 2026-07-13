@@ -446,6 +446,14 @@ async def process_agent_command(
                 mensagem_wpp = resultado.get("mensagem_wpp")
                 texto_parecer = resultado.get("texto_parecer")
 
+                # --- Filtro de Memória Orgânica ---
+                if resultado.get("salvar_memoria") is True:
+                    try:
+                        logger.info(f"   [RAG] 🧠 Memória orgânica útil detectada! Salvando regra: '{payload.mensagem}'")
+                        await rag_service.ingest_message(payload.id_grupo, payload.mensagem)
+                    except Exception as e_rag:
+                        logger.warning(f"⚠️ Falha ao auto-salvar memória orgânica: {e_rag}")
+
                 # Normalização de nulos vindos da resposta JSON do LLM
                 if acao == "null" or acao == "None" or not acao:
                     acao = None
