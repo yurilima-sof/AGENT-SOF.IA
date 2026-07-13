@@ -11,7 +11,7 @@ settings = get_settings()
 class RAGService:
     """
     Serviço para gerenciar a busca semântica vetorial utilizando a API de
-    embeddings do Google Gemini (text-embedding-004) e o pgvector do PostgreSQL.
+    embeddings do Google Gemini (gemini-embedding-001) e o pgvector do PostgreSQL.
     """
 
     def __init__(self):
@@ -27,9 +27,7 @@ class RAGService:
         similaridade de cosseno filtrada pelo ID do grupo no PostgreSQL e retorna
         o contexto formatado.
         """
-        # Se não for o grupo de teste, não busca no RAG (como solicitado pelo usuário)
-        if group_id != "120363422455765261-group":
-            return ""
+
 
         # 1. Gera o embedding da pergunta do usuário usando o Gemini (768 dimensões)
         try:
@@ -50,9 +48,9 @@ class RAGService:
             try:
                 result = await session.execute(
                     text("""
-                        SELECT conteudo
+                        SELECT conteudo, id_grupo_wpp
                         FROM rag_documentos
-                        WHERE id_grupo_wpp = :group_id
+                        WHERE id_grupo_wpp IN (:group_id, 'GLOBAL_MANUAL')
                         ORDER BY embedding <=> :query_embedding
                         LIMIT :limit
                     """),
@@ -65,7 +63,13 @@ class RAGService:
                 rows = result.fetchall()
                 
                 # Junta os blocos recuperados com uma divisória clara
-                context_chunks = [row[0] for row in rows]
+                context_chunks = []
+                for row in rows:
+                    conteudo = row[0]
+                    grupo_db = row[1]
+                    etiqueta = "[REGRA GLOBAL]" if grupo_db == 'GLOBAL_MANUAL' else "[REGRA ESPECÍFICA DA REVENDA]"
+                    context_chunks.append(f"{etiqueta}\n{conteudo}")
+                
                 if not context_chunks:
                     return ""
                 
@@ -74,6 +78,39 @@ class RAGService:
             except Exception as e:
                 logger.warning(f"Erro ao consultar o banco vetorial: {e}")
                 return ""
+    async def ingest_message(self, group_id: str, message: str) -> None:
+        """
+        Gera embedding para a nova mensagem e insere no banco vetorial.
+        """
+        try:
+            response = genai.embed_content(
+                model="models/gemini-embedding-001",
+                content=message,
+                task_type="retrieval_document",
+                output_dimensionality=768,
+            )
+            embedding = response["embedding"]
+        except Exception as e:
+            logger.warning(f"Erro ao gerar embedding para ingestão: {e}")
+            raise
+            
+        async with async_session_maker() as session:
+            try:
+                await session.execute(
+                    text("""
+                        INSERT INTO rag_documentos (id_grupo_wpp, conteudo, embedding)
+                        VALUES (:group_id, :conteudo, :embedding)
+                    """),
+                    {
+                        "group_id": group_id,
+                        "conteudo": message,
+                        "embedding": str(embedding)
+                    }
+                )
+                await session.commit()
+            except Exception as e:
+                logger.warning(f"Erro ao salvar documento vetorial no banco: {e}")
+                raise
 
 
 # Singleton para uso no app

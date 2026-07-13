@@ -59,7 +59,11 @@ class LLMService:
             "  \"texto_parecer\": \"String com o log operacional gerado ou null caso não seja uma requisição técnica\"\n"
             "}\n\n"
             
-            "Regras de Decisão Semântica:\n"
+            "Hierarquia de Conhecimento e Comandos:\n"
+            "- Se o histórico do RAG trouxer informações marcadas como [REGRA ESPECÍFICA DA REVENDA], elas ANULAM as orientações de [REGRA GLOBAL] em caso de conflito.\n"
+            "- Sempre verifique no histórico (RAG) a progressão de comandos da revenda. Por exemplo, se eles preferem iniciar com temperatura 'medio' e depois ir para 'freezer', ignore a Regra de Decisão padrão abaixo e siga a preferência da revenda.\n\n"
+
+            "Regras de Decisão Semântica (Padrão):\n"
             "1. Se o usuário estiver com CALOR, disser que a sala está quente, abafada ou pedir para esfriar/gelar:\n"
             "   - 'intencao': 'ligar_resfriamento'\n"
             "   - 'ifttt_action': 'freezer'\n"

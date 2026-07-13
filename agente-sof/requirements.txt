@@ -46,7 +46,7 @@ alembic==1.13.1
 
 # --- Variáveis de Ambiente ---
 # python-dotenv: carrega variáveis do arquivo .env automaticamente.
-python-dotenv==1.0.1
+python-dotenv>=1.2.2
 
 
 # --- HTTP Client (para comunicação futura com a API Tuya) ---
@@ -71,4 +71,4 @@ google-generativeai==0.8.6
 
 # --- Utilitários ---
 # python-multipart: necessário para upload de arquivos (manuais PDF no futuro).
-python-multipart==0.0.9
+python-multipart>=0.0.27

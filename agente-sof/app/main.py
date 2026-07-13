@@ -27,7 +27,9 @@ from sqlalchemy import text
 from app.config import get_settings
 from app.database import async_session_maker
 from app.schemas.agent import AgentRequest, AgentResponse, ErrorResponse
+from app.schemas.rag import RagIngestRequest, RagIngestResponse
 from app.services.llm_service import llm_service
+from app.services.rag_service import rag_service
 
 # =============================================================================
 # CONFIGURAÇÃO DO LOGGER
@@ -556,3 +558,35 @@ async def process_agent_command(
                 "message": "Erro interno ao processar o comando. Tente novamente.",
             },
         ) from exc
+
+
+@app.post(
+    "/rag/aprender",
+    response_model=RagIngestResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Ingerir novo conhecimento no RAG",
+    tags=["RAG"],
+)
+async def aprender_conhecimento(
+    payload: RagIngestRequest = Body(...),
+    _api_key: str = Depends(verify_api_key),
+) -> RagIngestResponse:
+    """
+    Recebe uma nova mensagem/regra e a salva no banco vetorial para a revenda específica (ou para GLOBAL_MANUAL).
+    """
+    try:
+        await rag_service.ingest_message(payload.id_grupo, payload.mensagem)
+        return RagIngestResponse(
+            status="sucesso",
+            mensagem=f"Conhecimento ingerido com sucesso para o grupo {payload.id_grupo}."
+        )
+    except Exception as exc:
+        logger.exception(f"Erro ao ingerir conhecimento: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "internal_server_error",
+                "message": "Erro ao ingerir conhecimento no banco vetorial.",
+            },
+        ) from exc
+

@@ -22,17 +22,21 @@ from app.database import get_sync_engine
 
 settings = get_settings()
 
-# ID do grupo de teste fixo para esta ingestão
-TEST_GROUP_ID = "120363422455765261-group"
+import argparse
 
-# Caminho do arquivo de chat — configurável por argumento CLI ou variável de ambiente.
-# Prioridade: 1) argumento CLI  2) env CHAT_FILE_PATH  3) fallback padrão (_chat.txt na raiz)
-_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_DEFAULT_CHAT_PATH = os.path.join(_PROJECT_ROOT, "_chat.txt")
-CHAT_FILE_PATH = (
-    sys.argv[1] if len(sys.argv) > 1
-    else os.getenv("CHAT_FILE_PATH", _DEFAULT_CHAT_PATH)
-)
+# Configuração de Argumentos do Terminal (CLI)
+parser = argparse.ArgumentParser(description="Ingestão de Histórico do WhatsApp para o RAG")
+parser.add_argument("group_id", type=str, help="ID do grupo (ex: 120363422455765261-group)")
+parser.add_argument("file_path", type=str, nargs='?', default="_chat.txt", help="Caminho para o arquivo .txt (Padrão: _chat.txt na raiz)")
+
+# Para compatibilidade com a execução antiga, verificamos se o usuário passou argumentos
+if len(sys.argv) > 1:
+    args = parser.parse_args()
+    TARGET_GROUP_ID = args.group_id
+    CHAT_FILE_PATH = args.file_path
+else:
+    print("❌ Erro: Faltando ID do Grupo. Uso correto: python app/scripts/ingest_chat.py <ID_DO_GRUPO> [caminho_do_arquivo.txt]")
+    sys.exit(1)
 
 # Regex para detectar mensagens no formato do WhatsApp
 # Exemplo: [30/07/2025, 14:09:22] ~ Eduardo Dos Anjos: Recepção muito quente...
@@ -160,7 +164,7 @@ def main():
     with engine.begin() as conn:
         conn.execute(
             text("DELETE FROM rag_documentos WHERE id_grupo_wpp = :group_id"),
-            {"group_id": TEST_GROUP_ID}
+            {"group_id": TARGET_GROUP_ID}
         )
 
     for i, chunk_text in enumerate(chunks):
@@ -191,7 +195,7 @@ def main():
                             VALUES (:group_id, :content, :embedding, :metadata)
                         """),
                         {
-                            "group_id": TEST_GROUP_ID,
+                            "group_id": TARGET_GROUP_ID,
                             "content": chunk_text,
                             "embedding": json.dumps(embedding),
                             "metadata": json.dumps({"source": "whatsapp_chat_export"})
