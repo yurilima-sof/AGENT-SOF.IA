@@ -108,6 +108,16 @@ class AgentResponse(BaseModel):
         examples=["ligar_dispositivo", "desligar_dispositivo", "consultar_status"],
     )
 
+    ambiente: Optional[str] = Field(
+        default=None,
+        description=(
+            "Nome do ambiente específico que o usuário deseja controlar (ex: 'recepcao', 'showroom'). "
+            "Deve ser formatado como um slug (letras minúsculas, sem espaços, sem acentos). "
+            "Será null se o comando for genérico para a loja toda."
+        ),
+        examples=["recepcao", "sala_1", None],
+    )
+
     dispositivo_id: Optional[str] = Field(
         default=None,
         description=(

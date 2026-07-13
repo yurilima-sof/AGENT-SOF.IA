@@ -26,7 +26,7 @@ class LLMService:
         if settings.gemini_api_key:
             genai.configure(api_key=settings.gemini_api_key)
 
-    async def processar_mensagem(self, mensagem: str, id_grupo: str) -> Dict[str, Any]:
+    async def processar_mensagem(self, mensagem: str, id_grupo: str, ambientes_disponiveis: list[str] = None) -> Dict[str, Any]:
         """
         Consulta o RAG por histórico contextual, envia a pergunta + contexto ao gemini-2.5-flash
         e retorna a classificação estruturada no formato compatível com AgentResponse.
@@ -55,6 +55,7 @@ class LLMService:
             "{\n"
             "  \"intencao\": \"ligar_resfriamento\" | \"ligar_aquecimento\" | \"ligar_temperatura_media\" | \"desligar_dispositivos\" | \"ligar_dispositivos\" | \"sem_acao\",\n"
             "  \"ifttt_action\": \"freezer\" | \"esquentar\" | \"medio\" | \"off\" | \"ligar\" | null,\n"
+            "  \"ambiente\": \"nome do ambiente (slug) ou null\",\n"
             "  \"mensagem_wpp\": \"Sua resposta amigável para o WhatsApp\",\n"
             "  \"texto_parecer\": \"String com o log operacional gerado ou null caso não seja uma requisição técnica\",\n"
             "  \"salvar_memoria\": true | false\n"
@@ -63,6 +64,10 @@ class LLMService:
             "Filtro de Memória Orgânica (salvar_memoria):\n"
             "- Defina como true APENAS se a mensagem do usuário ditar uma regra, preferência duradoura, padrão de temperatura ou hábito que o bot deve lembrar para o futuro (ex: 'sempre ligamos no medio de manhã', 'nossa loja é muito gelada às 14h').\n"
             "- Defina como false para comandos normais ('liga o ar'), reclamações pontuais ('tá quente hoje'), saudações e lixo.\n\n"
+            
+            "Regra de Execução Imediata vs Futura:\n"
+            "- Se o usuário estiver APENAS declarando uma regra para o futuro (ex: 'Queremos que todos os dias as 14:15 esteja frio' ou 'A partir de amanhã, faça X'), você NÃO deve executar a ação agora. Retorne `ifttt_action: null` e `intencao: sem_acao`, mas mantenha `salvar_memoria: true`.\n"
+            "- Retorne uma ação no `ifttt_action` APENAS se o comando for para ser executado NESTE EXATO MOMENTO.\n\n"
             
             "Hierarquia de Conhecimento e Comandos:\n"
             "- Se o histórico do RAG trouxer informações marcadas como [REGRA ESPECÍFICA DA REVENDA], elas ANULAM as orientações de [REGRA GLOBAL] em caso de conflito.\n"
@@ -88,6 +93,14 @@ class LLMService:
             "   - 'intencao': 'sem_acao'\n"
             "   - 'ifttt_action': null\n\n"
             
+            "Regras de Múltiplos Ambientes:\n"
+            "1. Se a loja possui múltiplos ambientes, os ambientes disponíveis estarão listados em 'AMBIENTES CADASTRADOS PARA ESTA REVENDA' no prompt abaixo.\n"
+            "2. Se o usuário pedir uma ação e ESPECIFICAR o ambiente (ex: 'liga o showroom'), devolva no campo 'ambiente' o nome formatado (ex: 'showroom').\n"
+            "3. Se a loja possuir múltiplos ambientes, o usuário pedir uma ação (ex: 'tá quente') E NÃO ESPECIFICAR o ambiente:\n"
+            "   - NÃO execute nenhuma ação física ('ifttt_action': null, 'intencao': 'sem_acao').\n"
+            "   - Pergunte na 'mensagem_wpp' qual dos ambientes ele deseja controlar, listando de forma orgânica os ambientes disponíveis.\n"
+            "4. Se a lista de ambientes estiver vazia, assuma que a loja possui apenas ambiente único e devolva 'ambiente': null, acionando normalmente.\n\n"
+            
             "Regras de Geração do Parecer Operacional (texto_parecer):\n"
             "Sua função secundária é gerar um registro cirúrgico para o histórico de pareceres.\n"
             "- Formato Padrão Obrigatório de Saída: MÊS/ANO: [Categoria] | Status: [Status] | Ação SOF: [Resumo técnico da ação, especificando ativos/máquinas se citados] [DD/MM/YY]\n"
@@ -107,10 +120,13 @@ class LLMService:
             "4. Mantenha a resposta concisa (limite de 2 a 3 linhas) e use emojis de forma sutil."
         )
 
-        # 3. Constrói o Prompt do Usuário com o contexto RAG
-        user_content = f"Mensagem do Usuário: '{mensagem}'"
+        # 3. Constrói o Prompt do Usuário com o contexto RAG e Ambientes
+        ambientes_str = ", ".join(ambientes_disponiveis) if ambientes_disponiveis else "Nenhum (Ambiente Único)"
+        
+        user_content = f"AMBIENTES CADASTRADOS PARA ESTA REVENDA: [{ambientes_str}]\n\nMensagem do Usuário: '{mensagem}'"
         if contexto_rag:
             user_content = (
+                f"AMBIENTES CADASTRADOS PARA ESTA REVENDA: [{ambientes_str}]\n\n"
                 f"Histórico relevante de conversas anteriores da revenda:\n"
                 f"\"\"\"\n{contexto_rag}\n\"\"\"\n\n"
                 f"Mensagem atual do Usuário: '{mensagem}'"

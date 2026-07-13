@@ -194,40 +194,51 @@ def identificar_acao(mensagem: str) -> Optional[str]:
 # FUNÇÕES DE ACESSO AO BANCO DE DADOS
 # =============================================================================
 
-async def buscar_link_ifttt(id_grupo: str, acao: str) -> Optional[str]:
+async def buscar_credenciais_revenda(id_grupo: str) -> Optional[dict]:
     """
-    Consulta a tabela mapa_revendas para obter a URL IFTTT do grupo/ação.
-
-    Em vez de manter links hardcoded no código, buscamos diretamente do
-    campo JSONB `credenciais_tuya` no banco de dados.
-
-    Args:
-        id_grupo: ID do grupo de WhatsApp.
-        acao: Ação identificada ('freezer', 'esquentar', 'medio', 'off').
-
-    Returns:
-        URL do webhook IFTTT ou None se não encontrado/grupo inativo.
+    Consulta a tabela mapa_revendas para obter todas as credenciais_tuya do grupo.
     """
     async with async_session_maker() as session:
         try:
             result = await session.execute(
                 text("""
-                    SELECT credenciais_tuya->>:acao AS link_ifttt
+                    SELECT credenciais_tuya
                     FROM mapa_revendas
                     WHERE id_grupo_wpp = :id_grupo
                       AND ativo = true
                 """),
-                {"acao": acao, "id_grupo": id_grupo}
+                {"id_grupo": id_grupo}
             )
             row = result.fetchone()
-            if row and row.link_ifttt:
-                logger.info(f"   Link IFTTT encontrado no banco para '{acao}'")
-                return row.link_ifttt
-            logger.info(f"   Nenhum link IFTTT no banco para grupo '{id_grupo}' / ação '{acao}'")
+            if row and row.credenciais_tuya:
+                return row.credenciais_tuya
             return None
         except Exception as e:
             logger.warning(f"⚠️ Erro ao consultar mapa_revendas: {e}")
             return None
+
+async def buscar_link_ifttt(credenciais: dict, acao: str, ambiente: Optional[str] = None) -> Optional[str]:
+    """
+    Busca a URL IFTTT dentro das credenciais_tuya da revenda.
+    Se 'ambiente' for fornecido, tenta buscar a chave 'acao_ambiente'.
+    Se não encontrar, ou se não houver ambiente, busca a chave 'acao'.
+    """
+    if not credenciais:
+        return None
+        
+    if ambiente:
+        chave_ambiente = f"{acao}_{ambiente}"
+        if chave_ambiente in credenciais:
+            logger.info(f"   Link IFTTT específico encontrado para ambiente: '{chave_ambiente}'")
+            return credenciais[chave_ambiente]
+        logger.info(f"   Link IFTTT para '{chave_ambiente}' não encontrado. Tentando fallback para geral.")
+        
+    if acao in credenciais:
+        logger.info(f"   Link IFTTT geral encontrado para '{acao}'")
+        return credenciais[acao]
+        
+    logger.info(f"   Nenhum link IFTTT encontrado para '{acao}'")
+    return None
 
 
 async def registrar_log(
@@ -439,17 +450,28 @@ async def process_agent_command(
 
         if settings.gemini_api_key:
             try:
+                logger.info("   [Banco] Buscando credenciais e ambientes cadastrados...")
+                credenciais = await buscar_credenciais_revenda(payload.id_grupo)
+                
+                # Extrai lista de ambientes baseados nas chaves do banco (ex: freezer_recepcao -> recepcao)
+                ambientes_disponiveis = []
+                if credenciais:
+                    for chave in credenciais.keys():
+                        if "_" in chave and chave.split("_", 1)[1] not in ambientes_disponiveis:
+                            ambientes_disponiveis.append(chave.split("_", 1)[1])
+
                 logger.info("   [LLM] Processando mensagem com Google Gemini-2.5-Flash...")
-                resultado = await llm_service.processar_mensagem(payload.mensagem, payload.id_grupo)
+                resultado = await llm_service.processar_mensagem(payload.mensagem, payload.id_grupo, ambientes_disponiveis)
                 intencao = resultado.get("intencao")
                 acao = resultado.get("ifttt_action")
+                ambiente = resultado.get("ambiente")
                 mensagem_wpp = resultado.get("mensagem_wpp")
                 texto_parecer = resultado.get("texto_parecer")
 
                 # --- Filtro de Memória Orgânica ---
                 if resultado.get("salvar_memoria") is True:
                     try:
-                        logger.info(f"   [RAG] 🧠 Memória orgânica útil detectada! Salvando regra: '{payload.mensagem}'")
+                        logger.info("   [RAG] Memória orgânica útil detectada! Salvando regra no banco vetorial.")
                         await rag_service.ingest_message(payload.id_grupo, payload.mensagem)
                     except Exception as e_rag:
                         logger.warning(f"⚠️ Falha ao auto-salvar memória orgânica: {e_rag}")
@@ -461,8 +483,10 @@ async def process_agent_command(
                 logger.warning(f"⚠️ Falha no processamento com LLM/Gemini (aplicando Fallback): {e}")
                 acao = None
                 intencao = None
+                ambiente = None
                 mensagem_wpp = None
                 texto_parecer = None
+                credenciais = await buscar_credenciais_revenda(payload.id_grupo)
 
         # Fallback de Palavras-Chave (Keyword Matching)
         if not intencao:
@@ -482,11 +506,12 @@ async def process_agent_command(
             # Ação encontrada → vamos comandar o dispositivo via IFTTT
             intencao = _ACAO_PARA_INTENCAO.get(acao, intencao)
             
-            # Busca o link IFTTT do banco de dados (mapa_revendas.credenciais_tuya)
-            link_ifttt = await buscar_link_ifttt(payload.id_grupo, acao)
+            # Busca o link IFTTT do banco de dados 
+            link_ifttt = await buscar_link_ifttt(credenciais, acao, ambiente)
 
             logger.info(
                 f"✅ Ação identificada: '{acao}' | "
+                f"Ambiente: '{ambiente}' | "
                 f"Intenção: '{intencao}' | "
                 f"Link IFTTT: '{link_ifttt}' | "
                 f"Revenda: '{payload.nome_revenda}'"
@@ -502,11 +527,12 @@ async def process_agent_command(
                 intencao=intencao,
                 status_op="sucesso",
                 tempo_resposta_ms=elapsed_ms,
-                detalhes={"acao_ifttt": acao, "link_ifttt": link_ifttt},
+                detalhes={"acao_ifttt": acao, "ambiente": ambiente, "link_ifttt": link_ifttt},
             )
 
             return AgentResponse(
                 intencao=intencao,
+                ambiente=ambiente,
                 dispositivo_id=None,       # Será preenchido na Fase 2 (Tuya)
                 ifttt_action=acao,         # ← n8n usa este campo para chamar IFTTT
                 link_ifttt=link_ifttt,     # URL do webhook buscada do banco
@@ -537,6 +563,7 @@ async def process_agent_command(
 
             return AgentResponse(
                 intencao=intencao or "sem_acao",
+                ambiente=ambiente if 'ambiente' in locals() else None,
                 dispositivo_id=None,
                 ifttt_action=None,         # ← n8n NÃO dispara o IFTTT
                 parametros={},
