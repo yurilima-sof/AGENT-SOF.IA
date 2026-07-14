@@ -131,28 +131,6 @@ CREATE INDEX IF NOT EXISTS idx_logs_status ON logs_operacoes(status);
 
 
 -- =============================================================================
--- DADOS INICIAIS (Seed Data)
--- =============================================================================
--- Inserimos uma revenda de exemplo para facilitar os testes iniciais.
--- REMOVA ou modifique antes de ir para produção!
--- =============================================================================
-INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya)
-VALUES (
-    '12345-6789@g.us',
-    'Revenda Alpha (EXEMPLO)',
-    'SP',
-    '{
-        "access_key": "SUA_ACCESS_KEY_AQUI",
-        "secret_key": "SUA_SECRET_KEY_AQUI",
-        "region": "us",
-        "project_code": "proj_alpha_001"
-    }'
-)
--- ON CONFLICT evita erro caso o script seja rodado mais de uma vez.
-ON CONFLICT (id_grupo_wpp) DO NOTHING;
-
-
--- =============================================================================
 -- TABELA 3: rag_documentos
 -- =============================================================================
 -- Armazena os blocos de conhecimento (chat, manuais, regras) e seus embeddings.
