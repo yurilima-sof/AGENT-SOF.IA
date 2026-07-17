@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+import json
+
 async def registrar_log(
     db: AsyncSession,
     id_grupo: str,
@@ -21,16 +23,20 @@ async def registrar_log(
     Insere um log detalhado na tabela logs_operacoes.
     """
     try:
+        detalhes_json = json.dumps({
+            "acao_ifttt": acao_executada,
+            "ambiente": ambiente,
+            "texto_parecer": texto_parecer
+        })
+        
         await db.execute(
             text("""
                 INSERT INTO logs_operacoes (
-                    id_grupo_wpp, nome_revenda, mensagem_original,
-                    intencao, acao_executada, ambiente,
-                    status, tempo_resposta_ms, texto_parecer
+                    id_grupo, nome_revenda, mensagem_original,
+                    intencao, status, tempo_resposta_ms, detalhes
                 ) VALUES (
                     :id_grupo, :nome_revenda, :msg,
-                    :intencao, :acao, :ambiente,
-                    :status, :tempo, :parecer
+                    :intencao, :status, :tempo, :detalhes
                 )
             """),
             {
@@ -38,11 +44,9 @@ async def registrar_log(
                 "nome_revenda": nome_revenda,
                 "msg": mensagem_original,
                 "intencao": intencao,
-                "acao": acao_executada,
-                "ambiente": ambiente,
                 "status": status_op,
                 "tempo": tempo_resposta_ms,
-                "parecer": texto_parecer
+                "detalhes": detalhes_json
             }
         )
         await db.commit()
