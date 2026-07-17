@@ -86,136 +86,14 @@ async def verify_api_key(
 limiter = Limiter(key_func=get_remote_address, default_limits=["600/minute"])
 
 
-# =============================================================================
-# LÓGICA DE IDENTIFICAÇÃO DE INTENÇÃO (FASE DE TESTES - SEM LLM)
-# =============================================================================
-# Esta função replica a lógica JS do nó "Identificar Ação e Buscar IFTTT"
-# do n8n, mas agora rodando dentro da nossa API Python.
-#
-# VANTAGEM sobre o JS hardcoded no n8n:
-#   - Fácil de expandir e versionar
-#   - Testável com pytest
-#   - Futuramente substituída pelo pipeline RAG (LangChain) sem mexer no n8n
-#
-# CONCEITO para o estagiário:
-#   Por enquanto usamos "keyword matching" (busca por palavras-chave).
-#   É simples mas funciona bem para comandos diretos como
-#   "esfriar", "desligar", "opção 1", etc.
-#   Quando integrarmos o LLM (Fase 2), ele entenderá frases complexas
-#   como "tá muito abafado aqui" automaticamente.
-# =============================================================================
+# Importações para o banco de dados (injeção de dependência)
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.database import get_db
 
-# Mapeamento de palavras-chave → ação IFTTT
-# Estes são os mesmos padrões do JS do n8n, centralizados aqui.
-_KEYWORDS: dict[str, list[str]] = {
-    "freezer": [
-        "frio", "fria", "gelado", "congelar", "esfriar",
-        "freezer", "freeze", "quente demais", "muito quente",
-        "calor", "ta quente", "tá quente", "opção 1", "opcao 1",
-        "🔥", "opção1", "opcao1", "ação:freezer", "t-low", "baixo", "low",
-    ],
-    "esquentar": [
-        "esquentar", "aquecer", "warm", "high", "t-high",
-        "thigh", "frio demais", "muito frio", "gelado demais",
-        "ta frio", "tá frio", "opção 2", "opcao 2", "🥶",
-        "opção2", "opcao2", "ação:esquentar",
-    ],
-    "medio": [
-        "medio", "médio", "medium", "t-medium", "t-médium",
-        "temperatura média", "primeiro calor"
-    ],
-    "off": [
-        "desligar maquinas", "off", "parar", "cancelar",
-        "podem desligar todas", "opção 3", "opcao 3", "❌",
-        "opção3", "opcao3", "ação:off",
-        "revenda fechada hoje", "estamos fechado",
-        "por favor desligar maquinas",
-    ],
-    "ligar": [
-        "ligar arcondicionado", "ligar ar-condicionado", "ligar ar condicionado",
-        "ligar maquina", "ligar maquinas", "ligar todos", "ligar tudo",
-        "ligar ar", "ligar", "ação:ligar",
-    ],
-}
-
-# Mapeamento de ação → intenção semântica (para o campo `intencao` da resposta)
-_ACAO_PARA_INTENCAO: dict[str, str] = {
-    "freezer": "ligar_resfriamento",
-    "esquentar": "ligar_aquecimento",
-    "medio": "ligar_temperatura_media",
-    "off": "desligar_dispositivos",
-    "ligar": "ligar_dispositivos",
-}
-
-# Mensagens de resposta padrão para o WhatsApp
-_MENSAGENS_RESPOSTA: dict[str, str] = {
-    "freezer": "Entendido! ❄️ Ativando modo resfriamento. Aguarde alguns instantes.",
-    "esquentar": "Entendido! 🔆 Ativando aquecimento. Aguarde alguns instantes.",
-    "medio": "Entendido! 🌤️ Ajustando para uma temperatura média. Aguarde alguns instantes.",
-    "off": "Ok! ✅ Desativando os equipamentos. Qualquer dúvida, estou aqui.",
-    "ligar": "Entendido! ⚡ Ligando os equipamentos. Aguarde alguns instantes.",
-    "nenhuma": "Olá! 🤖 Sou o Bot SOF. Como posso te ajudar com a temperatura do ambiente hoje?",
-}
-
-# Lista de tuplas (keyword, acao) ordenada pelo tamanho da keyword em ordem decrescente.
-# Isso evita conflitos de substring (ex: "muito frio" disparar "freezer" por causa de "frio").
-_KEYWORDS_ORDENADAS: list[tuple[str, str]] = sorted(
-    [(kw, acao) for acao, kws in _KEYWORDS.items() for kw in kws],
-    key=lambda item: len(item[0]),
-    reverse=True,
-)
-
-
-def identificar_acao(mensagem: str) -> Optional[str]:
-    """
-    Analisa a mensagem do usuário e identifica a ação IoT correspondente.
-
-    Replica a lógica do nó JavaScript 'Identificar Ação e Buscar IFTTT' do n8n,
-    mas agora centralizada e testável em Python.
-
-    Args:
-        mensagem: Texto enviado pelo usuário no WhatsApp.
-
-    Returns:
-        'freezer', 'esquentar', 'medio', 'off', ou None se nenhuma ação for identificada.
-    """
-    texto = mensagem.lower().strip()
-
-    # Percorre as palavras-chave ordenadas por tamanho para evitar conflitos de substring
-    for keyword, acao in _KEYWORDS_ORDENADAS:
-        if keyword in texto:
-            logger.info(f"   Keyword detectada: '{keyword}' → ação: '{acao}'")
-            return acao
-
-    return None  # Nenhuma ação identificada → só conversa, sem comando IoT
-
-
-# =============================================================================
-# FUNÇÕES DE ACESSO AO BANCO DE DADOS
-# =============================================================================
-
-async def buscar_credenciais_revenda(id_grupo: str) -> Optional[dict]:
-    """
-    Consulta a tabela mapa_revendas para obter todas as credenciais_tuya do grupo.
-    """
-    async with async_session_maker() as session:
-        try:
-            result = await session.execute(
-                text("""
-                    SELECT credenciais_tuya
-                    FROM mapa_revendas
-                    WHERE id_grupo_wpp = :id_grupo
-                      AND ativo = true
-                """),
-                {"id_grupo": id_grupo}
-            )
-            row = result.fetchone()
-            if row and row.credenciais_tuya:
-                return row.credenciais_tuya
-            return None
-        except Exception as e:
-            logger.warning(f"⚠️ Erro ao consultar mapa_revendas: {e}")
-            return None
+# Importações dos novos serviços e CRUDs
+from app.crud.revendas import buscar_credenciais_revenda
+from app.crud.logs import registrar_log
+from app.services.fallback_service import identificar_acao, get_intencao_and_message
 
 async def buscar_link_ifttt(credenciais: dict, acao: str, ambiente: Optional[str] = None) -> Optional[str]:
     """
@@ -240,52 +118,6 @@ async def buscar_link_ifttt(credenciais: dict, acao: str, ambiente: Optional[str
     logger.info(f"   Nenhum link IFTTT encontrado para '{acao}'")
     return None
 
-
-async def registrar_log(
-    id_grupo: str,
-    nome_revenda: str,
-    mensagem_original: str,
-    intencao: Optional[str],
-    status_op: str,
-    tempo_resposta_ms: int,
-    detalhes: Optional[dict] = None,
-) -> None:
-    """
-    Registra a operação na tabela logs_operacoes para auditoria.
-
-    Args:
-        id_grupo: ID do grupo de WhatsApp.
-        nome_revenda: Nome da revenda.
-        mensagem_original: Texto enviado pelo usuário.
-        intencao: Intenção identificada pelo agente.
-        status_op: Resultado da operação ('sucesso', 'sem_acao', 'erro').
-        tempo_resposta_ms: Latência total em milissegundos.
-        detalhes: JSON com dados extras (ação IFTTT, link, etc.).
-    """
-    async with async_session_maker() as session:
-        try:
-            await session.execute(
-                text("""
-                    INSERT INTO logs_operacoes
-                        (id_grupo, nome_revenda, mensagem_original, intencao,
-                         status, tempo_resposta_ms, detalhes)
-                    VALUES
-                        (:id_grupo, :nome_revenda, :mensagem_original, :intencao,
-                         :status, :tempo_ms, :detalhes)
-                """),
-                {
-                    "id_grupo": id_grupo,
-                    "nome_revenda": nome_revenda,
-                    "mensagem_original": mensagem_original,
-                    "intencao": intencao,
-                    "status": status_op,
-                    "tempo_ms": tempo_resposta_ms,
-                    "detalhes": json.dumps(detalhes or {}),
-                }
-            )
-            await session.commit()
-        except Exception as e:
-            logger.warning(f"⚠️ Erro ao registrar log: {e}")
 
 
 
@@ -314,63 +146,61 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 # INSTÂNCIA DA APLICAÇÃO FASTAPI
 # =============================================================================
 
-app = FastAPI(
-    title=settings.app_name,
-    version=settings.app_version,
-    description=(
-        "API de inteligência para controle de dispositivos IoT via WhatsApp. "
-        "**Fase atual:** IFTTT Bridge — identifica intenções e retorna a ação para o n8n acionar o IFTTT. "
-        "**Próxima fase:** RAG + Tuya API direta."
-    ),
-    docs_url="/docs" if not settings.is_production else None,
-    redoc_url="/redoc" if not settings.is_production else None,
-    lifespan=lifespan,
-)
-
-# Integra o rate limiter ao app
-app.state.limiter = limiter
-
-
-@app.exception_handler(RateLimitExceeded)
-async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
-    """Retorna HTTP 429 quando o limite de requisições por IP é excedido."""
-    logger.warning(f"⚠️ Rate limit excedido para IP: {request.client.host}")
-    return HTTPException(
-        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-        detail={
-            "error": "rate_limit_exceeded",
-            "message": "Muitas requisições. Aguarde um momento e tente novamente.",
-        },
+def create_app() -> FastAPI:
+    """
+    Factory function para criação do app FastAPI.
+    """
+    app_instance = FastAPI(
+        title=settings.app_name,
+        version=settings.app_version,
+        description=(
+            "API de inteligência para controle de dispositivos IoT via WhatsApp. "
+            "**Fase atual:** IFTTT Bridge — identifica intenções e retorna a ação para o n8n acionar o IFTTT. "
+            "**Próxima fase:** RAG + Tuya API direta."
+        ),
+        docs_url="/docs" if not settings.is_production else None,
+        redoc_url="/redoc" if not settings.is_production else None,
+        lifespan=lifespan,
     )
 
+    # Integra o rate limiter ao app
+    app_instance.state.limiter = limiter
 
-# =============================================================================
-# MIDDLEWARES
-# =============================================================================
+    @app_instance.exception_handler(RateLimitExceeded)
+    async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+        logger.warning(f"⚠️ Rate limit excedido para IP: {request.client.host}")
+        return HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "error": "rate_limit_exceeded",
+                "message": "Muitas requisições. Aguarde um momento e tente novamente.",
+            },
+        )
 
-# CORS: Em produção, desabilitamos origens externas pois a API é server-to-server.
-# Em desenvolvimento, permitimos todas para facilitar testes locais.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"] if settings.is_development else [],
-    allow_credentials=True,
-    allow_methods=["*"] if settings.is_development else ["POST", "GET"],
-    allow_headers=["*"] if settings.is_development else ["Authorization", "Content-Type"],
-)
-
-
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    """Loga método, URL e tempo de resposta de cada requisição."""
-    start_time = time.monotonic()
-    response = await call_next(request)
-    elapsed_ms = int((time.monotonic() - start_time) * 1000)
-    logger.info(
-        f"{request.method} {request.url.path} | "
-        f"Status: {response.status_code} | "
-        f"Tempo: {elapsed_ms}ms"
+    # CORS
+    app_instance.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
-    return response
+
+    @app_instance.middleware("http")
+    async def log_requests(request: Request, call_next):
+        start_time = time.monotonic()
+        response = await call_next(request)
+        elapsed_ms = int((time.monotonic() - start_time) * 1000)
+        logger.info(
+            f"{request.method} {request.url.path} | "
+            f"Status: {response.status_code} | "
+            f"Tempo: {elapsed_ms}ms"
+        )
+        return response
+
+    return app_instance
+
+app = create_app()
 
 
 # =============================================================================
@@ -417,13 +247,14 @@ async def process_agent_command(
     request: Request,
     payload: AgentRequest = Body(...),
     _api_key: str = Depends(verify_api_key),
+    db: AsyncSession = Depends(get_db),
 ) -> AgentResponse:
     """
     Endpoint principal. Recebe o comando e retorna a ação a executar.
 
     ## Fluxo atual:
     1. Recebe e valida o payload JSON com Pydantic.
-    2. Identifica a intenção usando RAG + OpenAI (GPT-4o-mini).
+    2. Identifica a intenção usando RAG + Google Gemini.
     3. Se o LLM falhar ou não houver chave no .env, aplica o fallback por palavras-chave.
     4. Retorna a ação IFTTT e a mensagem de resposta correspondente.
     """
@@ -445,13 +276,14 @@ async def process_agent_command(
         # -----------------------------------------------------------------
         acao = None
         intencao = None
+        ambiente = None
         mensagem_wpp = None
         texto_parecer = None
 
         if settings.gemini_api_key:
             try:
                 logger.info("   [Banco] Buscando credenciais e ambientes cadastrados...")
-                credenciais = await buscar_credenciais_revenda(payload.id_grupo)
+                credenciais = await buscar_credenciais_revenda(db, payload.id_grupo)
                 
                 # Extrai lista de ambientes baseados nas chaves do banco (ex: freezer_recepcao -> recepcao)
                 ambientes_disponiveis = []
@@ -486,26 +318,20 @@ async def process_agent_command(
                 ambiente = None
                 mensagem_wpp = None
                 texto_parecer = None
-                credenciais = await buscar_credenciais_revenda(payload.id_grupo)
+                credenciais = await buscar_credenciais_revenda(db, payload.id_grupo)
 
         # Fallback de Palavras-Chave (Keyword Matching)
         if not intencao:
             logger.info("   [Fallback] Identificando ação via Keyword Matching...")
             acao = identificar_acao(payload.mensagem)
-            if acao:
-                intencao = _ACAO_PARA_INTENCAO[acao]
-                mensagem_wpp = _MENSAGENS_RESPOSTA[acao]
-            else:
-                intencao = "sem_acao"
-                mensagem_wpp = _MENSAGENS_RESPOSTA["nenhuma"]
+            intencao, mensagem_wpp = get_intencao_and_message(acao)
 
         # -----------------------------------------------------------------
         # PASSO 2: Montar a resposta com base na ação identificada
         # -----------------------------------------------------------------
+        elapsed_ms = int((time.monotonic() - start_time) * 1000)
+
         if acao:
-            # Ação encontrada → vamos comandar o dispositivo via IFTTT
-            intencao = _ACAO_PARA_INTENCAO.get(acao, intencao)
-            
             # Busca o link IFTTT do banco de dados 
             link_ifttt = await buscar_link_ifttt(credenciais, acao, ambiente)
 
@@ -517,25 +343,25 @@ async def process_agent_command(
                 f"Revenda: '{payload.nome_revenda}'"
             )
 
-            elapsed_ms = int((time.monotonic() - start_time) * 1000)
-
-            # Registra a operação no log de auditoria
             await registrar_log(
+                db=db,
                 id_grupo=payload.id_grupo,
                 nome_revenda=payload.nome_revenda,
                 mensagem_original=payload.mensagem,
                 intencao=intencao,
                 status_op="sucesso",
                 tempo_resposta_ms=elapsed_ms,
-                detalhes={"acao_ifttt": acao, "ambiente": ambiente, "link_ifttt": link_ifttt},
+                acao_executada=acao,
+                ambiente=ambiente,
+                texto_parecer=texto_parecer
             )
 
             return AgentResponse(
                 intencao=intencao,
                 ambiente=ambiente,
-                dispositivo_id=None,       # Será preenchido na Fase 2 (Tuya)
-                ifttt_action=acao,         # ← n8n usa este campo para chamar IFTTT
-                link_ifttt=link_ifttt,     # URL do webhook buscada do banco
+                dispositivo_id=None,
+                ifttt_action=acao,
+                link_ifttt=link_ifttt,
                 parametros={},
                 mensagem_wpp=mensagem_wpp,
                 texto_parecer=texto_parecer,
@@ -549,16 +375,17 @@ async def process_agent_command(
                 f"Revenda: '{payload.nome_revenda}'"
             )
 
-            elapsed_ms = int((time.monotonic() - start_time) * 1000)
-
-            # Registra mesmo as mensagens sem ação (para métricas)
             await registrar_log(
+                db=db,
                 id_grupo=payload.id_grupo,
                 nome_revenda=payload.nome_revenda,
                 mensagem_original=payload.mensagem,
                 intencao=intencao or "sem_acao",
                 status_op="sem_acao",
                 tempo_resposta_ms=elapsed_ms,
+                acao_executada=None,
+                ambiente=None,
+                texto_parecer=texto_parecer
             )
 
             return AgentResponse(

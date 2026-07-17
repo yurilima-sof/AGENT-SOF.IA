@@ -55,10 +55,9 @@ class Settings(BaseSettings):
         ),
     )
 
-    # --- LLM / IA (Fase 2) ---
-    # Deixamos os campos opcionais para não quebrar a inicialização
-    # enquanto não tivermos as chaves configuradas.
-    openai_api_key: str | None = Field(default=None, description="Chave da API OpenAI (para Fase 2 - RAG).")
+    # --- LLM / IA ---
+    # Deixamos o campo opcional para não quebrar a inicialização
+    # enquanto não tivermos a chave configurada.
     gemini_api_key: str | None = Field(default=None, description="Chave da API Google Gemini.")
 
     # Configuração do Pydantic Settings:

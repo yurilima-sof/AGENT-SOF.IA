@@ -59,16 +59,10 @@ httpx==0.28.1
 slowapi==0.1.9
 
 
-# --- IA e RAG (Fase 2 - Descomente quando for implementar) ---
-# langchain==0.2.6
-# langchain-community==0.2.6
-# langchain-openai==0.1.14
-# langchain-postgres==0.0.9       # Integração LangChain + pgvector
-# llama-index==0.10.50
-openai==1.60.1
-# google-generativeai duplicate removed
+# --- IA e RAG ---
+# Usamos Native RAG (SQLAlchemy + pgvector direto) ao invés do LangChain
+# para garantir o máximo de performance e mínimo de uso de RAM no Docker.
 google-generativeai==0.8.6
-
 # --- Utilitários ---
 # python-multipart: necessário para upload de arquivos (manuais PDF no futuro).
 python-multipart>=0.0.27
