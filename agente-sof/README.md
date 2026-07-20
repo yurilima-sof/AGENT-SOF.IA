@@ -324,6 +324,6 @@ Para receber requisições em tempo real do n8n na nuvem sem precisar abrir port
    ```
 
 > [!TIP]
-> O container do **Caddy** gerencia e renova automaticamente os certificados HTTPS de forma transparente e gratuita. A API estará segura em `https://api.seudominio.com/agent`.
+> **Acesso via IP Público vs Caddy:** Se você estiver utilizando acesso direto via IP público (`http://IP_DA_VPS:8000`), a porta `"8000:8000"` no `docker-compose.yml` deve permanecer liberada. Quando você configurar um domínio com o **Caddy** (HTTPS), recomendamos alterar a porta para `"127.0.0.1:8000:8000"` para que todo o tráfego passe obrigatoriamente pelo proxy seguro nas portas 80/443.
 
 

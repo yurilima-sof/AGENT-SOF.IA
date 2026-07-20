@@ -32,6 +32,8 @@ services:
     build: .
     container_name: agente_sof_api
     restart: unless-stopped
+    # Acesso direto via IP Público na porta 8000 (Sem Caddy / Sem SSL)
+    # NOTA: Quando configurar o Caddy com domínio HTTPS, altere para "127.0.0.1:8000:8000" para blindar a porta.
     ports:
       - "8000:8000"
     env_file:
