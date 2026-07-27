@@ -16,8 +16,7 @@ async def registrar_log(
     status_op: str,
     tempo_resposta_ms: int,
     acao_executada: Optional[str] = None,
-    ambiente: Optional[str] = None,
-    texto_parecer: Optional[str] = None
+    ambiente: Optional[str] = None
 ) -> None:
     """
     Insere um log detalhado na tabela logs_operacoes.
@@ -25,8 +24,7 @@ async def registrar_log(
     try:
         detalhes_json = json.dumps({
             "acao_ifttt": acao_executada,
-            "ambiente": ambiente,
-            "texto_parecer": texto_parecer
+            "ambiente": ambiente
         })
         
         await db.execute(

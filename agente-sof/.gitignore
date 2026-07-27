@@ -61,3 +61,9 @@ _chat.txt
 *.exe
 *.bin
 
+# --- Scripts Locais de Utilidade e Dados Extraídos ---
+utils/
+extracao_tuya_completa.md
+testar_agente.py
+
+

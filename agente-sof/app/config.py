@@ -41,6 +41,20 @@ class Settings(BaseSettings):
         description="URL de conexão com o PostgreSQL para SQLAlchemy assíncrono.",
     )
 
+    # --- API Tuya (IoT) ---
+    tuya_base_url: str = Field(
+        default="https://openapi.tuyaus.com",
+        description="URL base da API da Tuya (default para US).",
+    )
+    tuya_client_id: str | None = Field(
+        default=None,
+        description="Client ID gerado no projeto Tuya IoT Platform.",
+    )
+    tuya_client_secret: str | None = Field(
+        default=None,
+        description="Client Secret gerado no projeto Tuya IoT Platform.",
+    )
+
     # --- Segurança ---
     secret_key: str = Field(
         default="chave-insegura-apenas-para-desenvolvimento",

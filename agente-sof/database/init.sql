@@ -150,3 +150,38 @@ ON rag_documentos USING hnsw (embedding vector_cosine_ops);
 
 -- Índice por grupo de WhatsApp para agilizar filtros multi-tenant
 CREATE INDEX IF NOT EXISTS idx_rag_documentos_grupo ON rag_documentos(id_grupo_wpp);
+
+-- =============================================================================
+-- TABELA 4: tuya_clientes_homes
+-- =============================================================================
+-- Mapeia a sigla do cliente para o Tuya UID e Home ID
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS tuya_clientes_homes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sigla_cliente VARCHAR(50) NOT NULL,
+    tuya_uid VARCHAR(100) NOT NULL,
+    home_id VARCHAR(100) NOT NULL,
+    nome_home VARCHAR(200) NOT NULL,
+    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_tuya_homes_sigla ON tuya_clientes_homes(sigla_cliente);
+CREATE INDEX IF NOT EXISTS idx_tuya_homes_nome ON tuya_clientes_homes(nome_home);
+
+-- =============================================================================
+-- TABELA 5: tuya_clientes_cenas
+-- =============================================================================
+-- Mapeia os ambientes e ações para os Scene IDs da Tuya
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS tuya_clientes_cenas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sigla_cliente VARCHAR(50) NOT NULL,
+    home_id VARCHAR(100) NOT NULL,
+    ambiente VARCHAR(100) NOT NULL,
+    scene_id VARCHAR(100) NOT NULL UNIQUE,
+    nome_cena VARCHAR(200) NOT NULL,
+    acao VARCHAR(50) NOT NULL, -- Ex: 'ligar', 'desligar', 'esfriar', 'esquentar'
+    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_tuya_cenas_home ON tuya_clientes_cenas(home_id);
+CREATE INDEX IF NOT EXISTS idx_tuya_cenas_ambiente ON tuya_clientes_cenas(ambiente);
+

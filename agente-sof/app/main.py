@@ -94,6 +94,8 @@ from app.database import get_db
 from app.crud.revendas import buscar_credenciais_revenda
 from app.crud.logs import registrar_log
 from app.services.fallback_service import identificar_acao, get_intencao_and_message
+from app.crud.tuya import get_home_by_nome, get_scene_by_ambiente
+from app.services.tuya_service import tuya_service
 
 async def buscar_link_ifttt(credenciais: dict, acao: str, ambiente: Optional[str] = None) -> Optional[str]:
     """
@@ -131,7 +133,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     logger.info("=" * 60)
     logger.info(f"🚀 Iniciando: {settings.app_name} v{settings.app_version}")
     logger.info(f"   Ambiente : {settings.app_env.upper()}")
-    logger.info(f"   Modo     : IFTTT Bridge (Fase de Testes)")
+    logger.info(f"   Modo     : Tuya API Direta + IFTTT Fallback")
     logger.info("=" * 60)
 
     # TODO (Fase 2): Inicializar pool de conexões com o banco
@@ -278,16 +280,20 @@ async def process_agent_command(
         intencao = None
         ambiente = None
         mensagem_wpp = None
-        texto_parecer = None
 
         if settings.gemini_api_key:
             try:
                 logger.info("   [Banco] Buscando credenciais e ambientes cadastrados...")
+                
+                # NOVO FLUXO: Busca ambientes cadastrados diretamente das Cenas Tuya
+                from app.crud.tuya import get_ambientes_by_cliente
+                ambientes_disponiveis = await get_ambientes_by_cliente(db, payload.nome_revenda)
+                
+                # Retém a busca de credenciais antigas caso precise para logs
                 credenciais = await buscar_credenciais_revenda(db, payload.id_grupo)
                 
-                # Extrai lista de ambientes baseados nas chaves do banco (ex: freezer_recepcao -> recepcao)
-                ambientes_disponiveis = []
-                if credenciais:
+                # Fallback: se não tiver ambientes na Tuya, tenta extrair das credenciais antigas (retrocompatibilidade temporária)
+                if not ambientes_disponiveis and credenciais:
                     for chave in credenciais.keys():
                         if "_" in chave and chave.split("_", 1)[1] not in ambientes_disponiveis:
                             ambientes_disponiveis.append(chave.split("_", 1)[1])
@@ -298,7 +304,6 @@ async def process_agent_command(
                 acao = resultado.get("ifttt_action")
                 ambiente = resultado.get("ambiente")
                 mensagem_wpp = resultado.get("mensagem_wpp")
-                texto_parecer = resultado.get("texto_parecer")
 
                 # --- Filtro de Memória Orgânica ---
                 if resultado.get("salvar_memoria") is True:
@@ -317,14 +322,15 @@ async def process_agent_command(
                 intencao = None
                 ambiente = None
                 mensagem_wpp = None
-                texto_parecer = None
                 credenciais = await buscar_credenciais_revenda(db, payload.id_grupo)
 
         # Fallback de Palavras-Chave (Keyword Matching)
-        if not intencao:
+        if not intencao or intencao == "sem_acao":
             logger.info("   [Fallback] Identificando ação via Keyword Matching...")
-            acao = identificar_acao(payload.mensagem)
-            intencao, mensagem_wpp = get_intencao_and_message(acao)
+            acao_fallback = identificar_acao(payload.mensagem)
+            if acao_fallback:
+                acao = acao_fallback
+                intencao, mensagem_wpp = get_intencao_and_message(acao)
 
         # -----------------------------------------------------------------
         # PASSO 2: Montar a resposta com base na ação identificada
@@ -332,15 +338,43 @@ async def process_agent_command(
         elapsed_ms = int((time.monotonic() - start_time) * 1000)
 
         if acao:
-            # Busca o link IFTTT do banco de dados 
+            # 1. TENTA EXECUTAR NATIVAMENTE NA TUYA
+            tuya_success = None
+            try:
+                # Busca a revenda (home) pelo nome exato vindo do WhatsApp
+                home_data = await get_home_by_nome(db, payload.nome_revenda)
+                if home_data:
+                    home_id = home_data["home_id"]
+                    
+                    # O ambiente pode vir nulo. Se for nulo, procuramos por cenas sem ambiente ou ignoramos?
+                    # Como na Tuya geralmente as cenas têm nome de ambiente, tratamos ambiente None como string vazia ou tratamos depois.
+                    amb = ambiente if ambiente else ""
+                    
+                    scene_data = await get_scene_by_ambiente(db, home_id, amb, acao)
+                    if scene_data:
+                        scene_id = scene_data["scene_id"]
+                        logger.info(f"   [Tuya] Cenário encontrado: {scene_data['nome_cena']} (ID: {scene_id}). Disparando...")
+                        
+                        # Dispara a cena via API Tuya
+                        result_tuya = await tuya_service.execute_scene(home_id, scene_id)
+                        tuya_success = result_tuya
+                    else:
+                        logger.info(f"   [Tuya] Nenhuma cena encontrada para ambiente '{amb}' e ação '{acao}'.")
+                else:
+                    logger.info(f"   [Tuya] Revenda '{payload.nome_revenda}' não encontrada na base Tuya.")
+            except Exception as e_tuya:
+                logger.error(f"   [Tuya] Erro ao tentar disparar cena: {e_tuya}")
+                tuya_success = False
+
+            # 2. BUSCA O IFTTT COMO PLANO B (Fallback)
             link_ifttt = await buscar_link_ifttt(credenciais, acao, ambiente)
 
             logger.info(
                 f"✅ Ação identificada: '{acao}' | "
                 f"Ambiente: '{ambiente}' | "
                 f"Intenção: '{intencao}' | "
-                f"Link IFTTT: '{link_ifttt}' | "
-                f"Revenda: '{payload.nome_revenda}'"
+                f"Tuya Success: {tuya_success} | "
+                f"Link IFTTT (Fallback): '{link_ifttt}'"
             )
 
             await registrar_log(
@@ -352,8 +386,7 @@ async def process_agent_command(
                 status_op="sucesso",
                 tempo_resposta_ms=elapsed_ms,
                 acao_executada=acao,
-                ambiente=ambiente,
-                texto_parecer=texto_parecer
+                ambiente=ambiente
             )
 
             return AgentResponse(
@@ -362,9 +395,9 @@ async def process_agent_command(
                 dispositivo_id=None,
                 ifttt_action=acao,
                 link_ifttt=link_ifttt,
+                tuya_success=tuya_success,
                 parametros={},
                 mensagem_wpp=mensagem_wpp,
-                texto_parecer=texto_parecer,
             )
 
         else:
@@ -384,8 +417,7 @@ async def process_agent_command(
                 status_op="sem_acao",
                 tempo_resposta_ms=elapsed_ms,
                 acao_executada=None,
-                ambiente=None,
-                texto_parecer=texto_parecer
+                ambiente=None
             )
 
             return AgentResponse(
@@ -395,7 +427,6 @@ async def process_agent_command(
                 ifttt_action=None,         # ← n8n NÃO dispara o IFTTT
                 parametros={},
                 mensagem_wpp=mensagem_wpp,
-                texto_parecer=texto_parecer,
             )
 
     except Exception as exc:
@@ -451,4 +482,3 @@ async def aprender_conhecimento(
                 "message": "Erro ao ingerir conhecimento no banco vetorial.",
             },
         ) from exc
-

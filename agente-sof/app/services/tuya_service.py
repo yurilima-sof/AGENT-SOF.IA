@@ -1,0 +1,173 @@
+import time
+import hmac
+import hashlib
+import json
+import logging
+import httpx
+from urllib.parse import urlparse
+from app.config import get_settings
+
+logger = logging.getLogger(__name__)
+settings = get_settings()
+
+class TuyaService:
+    def __init__(self):
+        self.base_url = settings.tuya_base_url
+        self.client_id = settings.tuya_client_id
+        self.client_secret = settings.tuya_client_secret
+        self.access_token = None
+        self.token_expire_time = 0
+        
+        # O Tuya exige o hash SHA256 para corpos vazios
+        self.EMPTY_BODY_HASH = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+    def _get_timestamp(self) -> str:
+        return str(int(time.time() * 1000))
+
+    def _calc_sign(self, method: str, path: str, t: str, payload: str = None, access_token: str = "") -> str:
+        """
+        Calcula a assinatura exigida pela Tuya OpenAPI (HMAC-SHA256).
+        """
+        if not self.client_id or not self.client_secret:
+            raise ValueError("As credenciais da Tuya (CLIENT_ID ou CLIENT_SECRET) não estão configuradas no .env")
+
+        # Hash do payload
+        if payload is None or payload == "":
+            content_hash = self.EMPTY_BODY_HASH
+        else:
+            content_hash = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+        # StringToSign = HTTPMethod + "\n" + Content-SHA256 + "\n" + Headers + "\n" + Url
+        # Headers costuma ser vazio na formatação padrão se não especificado o signature_headers
+        string_to_sign = f"{method}\n{content_hash}\n\n{path}"
+        
+        # Message = client_id + access_token + t + string_to_sign
+        message = self.client_id + access_token + t + string_to_sign
+        
+        # HMAC-SHA256
+        sign = hmac.new(
+            self.client_secret.encode("utf-8"),
+            msg=message.encode("utf-8"),
+            digestmod=hashlib.sha256
+        ).hexdigest().upper()
+        
+        return sign
+
+    async def get_access_token(self) -> str:
+        """
+        Obtém o token de acesso da Tuya e armazena em cache (na memória)
+        até a expiração.
+        """
+        current_time = time.time()
+        # Renova o token se estiver faltando menos de 60 segundos para expirar
+        if self.access_token and current_time < (self.token_expire_time - 60):
+            return self.access_token
+
+        path = "/v1.0/token?grant_type=1"
+        t = self._get_timestamp()
+        sign = self._calc_sign("GET", path, t)
+
+        headers = {
+            "client_id": self.client_id,
+            "sign": sign,
+            "t": t,
+            "sign_method": "HMAC-SHA256"
+        }
+
+        url = f"{self.base_url}{path}"
+        logger.info(f"🔑 Solicitando novo access_token da Tuya OpenAPI...")
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers)
+            
+            if response.status_code != 200:
+                logger.error(f"❌ Erro HTTP {response.status_code} ao buscar token da Tuya: {response.text}")
+                raise Exception(f"Falha na API da Tuya: {response.status_code}")
+                
+            data = response.json()
+            if not data.get("success", False):
+                logger.error(f"❌ Erro da Tuya (Token): {data}")
+                raise Exception(f"Erro Tuya: {data.get('msg')}")
+
+            result = data.get("result", {})
+            self.access_token = result.get("access_token")
+            expire_time_seconds = result.get("expire_time", 7200)
+            self.token_expire_time = current_time + expire_time_seconds
+            
+            logger.info("✅ Novo access_token da Tuya obtido com sucesso.")
+            return self.access_token
+
+    async def _request(self, method: str, path: str, body: dict = None) -> dict:
+        """
+        Gera a assinatura correta (com o access_token) e envia a requisição para a Tuya.
+        """
+        token = await self.get_access_token()
+        t = self._get_timestamp()
+        
+        payload_str = ""
+        if body:
+            # Importante não ter espaços, conforme padrão de assinatura
+            payload_str = json.dumps(body, separators=(",", ":"))
+            
+        sign = self._calc_sign(method.upper(), path, t, payload=payload_str, access_token=token)
+        
+        headers = {
+            "client_id": self.client_id,
+            "access_token": token,
+            "sign": sign,
+            "t": t,
+            "sign_method": "HMAC-SHA256",
+            "Content-Type": "application/json"
+        }
+        
+        url = f"{self.base_url}{path}"
+        
+        async with httpx.AsyncClient() as client:
+            if method.upper() == "GET":
+                response = await client.get(url, headers=headers)
+            elif method.upper() == "POST":
+                response = await client.post(url, headers=headers, content=payload_str)
+            else:
+                raise ValueError(f"Método HTTP {method} não suportado pelo wrapper.")
+                
+            data = response.json()
+            if not data.get("success", False):
+                logger.error(f"❌ Falha na requisição Tuya {method} {path}: {data}")
+                raise Exception(f"Tuya API Error: {data.get('msg', 'Unknown Error')}")
+                
+            return data.get("result")
+
+    # =========================================================================
+    # ENDPOINTS ESPECÍFICOS (Baseados na Documentação)
+    # =========================================================================
+    
+    async def get_homes_by_uid(self, uid: str) -> list:
+        """
+        Retorna a lista detalhada de residências (homes) vinculadas ao UID.
+        GET /v1.0/users/{uid}/homes
+        """
+        logger.info(f"🏠 Buscando Homes para o UID {uid}...")
+        path = f"/v1.0/users/{uid}/homes"
+        return await self._request("GET", path)
+
+    async def get_scenes_by_home(self, home_id: str) -> list:
+        """
+        Retorna as cenas configuradas dentro de uma residência específica.
+        GET /v1.1/homes/{home_id}/scenes
+        """
+        logger.info(f"🎬 Buscando Cenas para a Home {home_id}...")
+        path = f"/v1.1/homes/{home_id}/scenes"
+        return await self._request("GET", path)
+        
+    async def execute_scene(self, home_id: str, scene_id: str) -> bool:
+        """
+        Executa uma cena específica em uma residência.
+        POST /v1.0/homes/{home_id}/scenes/{scene_id}/trigger
+        """
+        logger.info(f"🚀 Executando cena {scene_id} na Home {home_id}...")
+        path = f"/v1.0/homes/{home_id}/scenes/{scene_id}/trigger"
+        # O body para trigger de cenas é tipically vazio
+        await self._request("POST", path, body={})
+        return True
+
+tuya_service = TuyaService()

@@ -9,7 +9,7 @@ _KEYWORDS: dict[str, list[str]] = {
         "frio", "fria", "gelado", "congelar", "esfriar",
         "freezer", "freeze", "quente demais", "muito quente",
         "calor", "ta quente", "tá quente", "opção 1", "opcao 1",
-        "🔥", "opção1", "opcao1", "ação:freezer", "t-low", "baixo", "low",
+        "🔥", "opção1", "opcao1", "ação:freezer", "t-low", "tlow", "baixo", "low",
     ],
     "esquentar": [
         "esquentar", "aquecer", "warm", "high", "t-high",
@@ -26,7 +26,7 @@ _KEYWORDS: dict[str, list[str]] = {
         "podem desligar todas", "opção 3", "opcao 3", "❌",
         "opção3", "opcao3", "ação:off",
         "revenda fechada hoje", "estamos fechado",
-        "por favor desligar maquinas",
+        "por favor desligar maquinas", "toff", "t-off"
     ],
     "ligar": [
         "ligar arcondicionado", "ligar ar-condicionado", "ligar ar condicionado",

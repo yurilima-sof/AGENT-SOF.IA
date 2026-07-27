@@ -148,6 +148,14 @@ class AgentResponse(BaseModel):
         examples=["https://maker.ifttt.com/trigger/..."],
     )
 
+    tuya_success: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Indica se a ação foi disparada com sucesso diretamente na API da Tuya."
+        ),
+        examples=[True, False, None],
+    )
+
     parametros: Dict[str, Any] = Field(
         default_factory=dict,  # Valor padrão: dicionário vazio {}.
         description=(
@@ -167,18 +175,6 @@ class AgentResponse(BaseModel):
         examples=[
             "Claro, ligando o ar da recepção em 22 graus. ❄️",
             "Desligando todas as luzes do escritório. ✅",
-        ],
-    )
-
-    texto_parecer: Optional[str] = Field(
-        default=None,
-        description=(
-            "Parecer técnico/operacional formatado para registro no banco de dados "
-            "(status, categoria, resumo da ação). Opcional, será preenchido pelo LLM "
-            "em intenções rastreáveis."
-        ),
-        examples=[
-            "MAI/26: Loja Quente | Status: Pendente | Ação SOF: Relato de loja abafada sem intervenção possível. [14/05/26]"
         ],
     )
 
