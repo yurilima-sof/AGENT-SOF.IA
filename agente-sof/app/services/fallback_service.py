@@ -6,17 +6,17 @@ logger = logging.getLogger(__name__)
 # Mapeamento de palavras-chave → ação IFTTT
 _KEYWORDS: dict[str, list[str]] = {
     "freezer": [
-        "frio", "fria", "gelado", "congelar", "esfriar",
-        "freezer", "freeze", "quente demais", "muito quente",
-        "calor", "ta quente", "tá quente", "opção 1", "opcao 1",
-        "🔥", "opção1", "opcao1", "ação:freezer", "t-low", "tlow", "baixo", "low",
+        "quente", "quente demais", "muito quente", "calor", "ta quente", "tá quente",
+        "sala quente", "loja quente", "abafado", "abafada", "congelar", "esfriar", "gelar",
+        "freezer", "freeze", "opção 1", "opcao 1", "🔥", "opção1", "opcao1",
+        "ação:freezer", "t-low", "tlow", "baixo", "low",
         "16", "17", "18", "19", "20", "16c", "17c", "18c", "19c", "20c",
     ],
     "esquentar": [
-        "esquentar", "aquecer", "warm", "high", "t-high",
-        "thigh", "frio demais", "muito frio", "gelado demais",
-        "ta frio", "tá frio", "opção 2", "opcao 2", "🥶",
-        "opção2", "opcao2", "ação:esquentar",
+        "frio", "fria", "gelado", "gelada", "sala fria", "sala gelada", "loja fria",
+        "frio demais", "muito frio", "gelado demais", "ta frio", "tá frio",
+        "esquentar", "aquecer", "warm", "high", "t-high", "thigh",
+        "opção 2", "opcao 2", "🥶", "opção2", "opcao2", "ação:esquentar",
         "24", "25", "26", "27", "24c", "25c", "26c", "27c",
     ],
     "medio": [
