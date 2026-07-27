@@ -434,13 +434,15 @@ async def process_agent_command(
 
         # Tenta registrar o erro no log mesmo em caso de falha
         await registrar_log(
+            db=db,
             id_grupo=payload.id_grupo,
             nome_revenda=payload.nome_revenda,
             mensagem_original=payload.mensagem,
             intencao=None,
             status_op="erro",
             tempo_resposta_ms=elapsed_ms,
-            detalhes={"erro": str(exc)},
+            acao_executada=None,
+            ambiente=None,
         )
 
         logger.exception(f"❌ Erro ao processar requisição: {exc}")
