@@ -7,13 +7,36 @@ logger = logging.getLogger(__name__)
 async def get_home_by_nome(db: AsyncSession, nome_revenda: str) -> dict:
     """
     Busca a Home (residência) da Tuya baseando-se no nome da revenda recebido pelo WhatsApp/n8n.
-    Exemplo de nome_revenda: '[SOF] Testes' ou '[Recife/PE] Audi BV'
+    Suporta busca exata, ILIKE insensível a maiúsculas e busca flexível por palavras-chave.
     """
-    query = text("SELECT * FROM tuya_clientes_homes WHERE nome_home = :nome_revenda LIMIT 1")
-    result = await db.execute(query, {"nome_revenda": nome_revenda})
+    if not nome_revenda:
+        return None
+
+    # 1. Tenta correspondência exata insensível a maiúsculas/minúsculas
+    query = text("SELECT * FROM tuya_clientes_homes WHERE nome_home ILIKE :nome LIMIT 1")
+    result = await db.execute(query, {"nome": nome_revenda})
     row = result.fetchone()
     if row:
         return dict(row._mapping)
+
+    # 2. Tenta busca por palavras relevantes (ex: 'Teste sof' -> '%teste%' AND '%sof%')
+    palavras = [p.strip() for p in nome_revenda.replace("[", " ").replace("]", " ").replace("/", " ").split() if len(p.strip()) >= 3]
+    if palavras:
+        condicoes = " AND ".join([f"nome_home ILIKE :p{i}" for i in range(len(palavras))])
+        query_flexible = text(f"SELECT * FROM tuya_clientes_homes WHERE {condicoes} LIMIT 1")
+        params = {f"p{i}": f"%{palavras[i]}%" for i in range(len(palavras))}
+        result = await db.execute(query_flexible, params)
+        row = result.fetchone()
+        if row:
+            return dict(row._mapping)
+
+    # 3. Fallback: busca por substring no nome
+    query_any = text("SELECT * FROM tuya_clientes_homes WHERE nome_home ILIKE :contains LIMIT 1")
+    result = await db.execute(query_any, {"contains": f"%{nome_revenda}%"})
+    row = result.fetchone()
+    if row:
+        return dict(row._mapping)
+
     return None
 
 async def get_ambientes_by_cliente(db: AsyncSession, nome_revenda: str) -> list[str]:
@@ -25,10 +48,10 @@ async def get_ambientes_by_cliente(db: AsyncSession, nome_revenda: str) -> list[
         SELECT DISTINCT c.ambiente 
         FROM tuya_clientes_cenas c
         LEFT JOIN tuya_clientes_homes h ON c.home_id = h.home_id
-        WHERE (h.nome_home = :nome_revenda OR c.sigla_cliente = :nome_revenda)
+        WHERE (h.nome_home ILIKE :nome_revenda OR h.nome_home ILIKE :contains OR c.sigla_cliente ILIKE :nome_revenda)
           AND c.ambiente != '' AND c.ambiente IS NOT NULL
     """)
-    result = await db.execute(query, {"nome_revenda": nome_revenda})
+    result = await db.execute(query, {"nome_revenda": nome_revenda, "contains": f"%{nome_revenda}%"})
     return [row[0] for row in result.fetchall()]
 
 # Mapeamento de sinônimos de ação
