@@ -426,7 +426,7 @@ async def process_agent_command(
                 dispositivo_id=None,
                 ifttt_action=None,         # ← n8n NÃO dispara o IFTTT
                 parametros={},
-                mensagem_wpp=mensagem_wpp,
+                mensagem_wpp=mensagem_wpp or "Olá! Como posso te ajudar com a temperatura do ambiente hoje?",
             )
 
     except Exception as exc:

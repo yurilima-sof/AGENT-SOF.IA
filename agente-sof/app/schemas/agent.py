@@ -166,8 +166,8 @@ class AgentResponse(BaseModel):
         examples=[{"temperatura": 22}, {"brilho": 80}, {}],
     )
 
-    mensagem_wpp: str = Field(
-        ...,
+    mensagem_wpp: Optional[str] = Field(
+        default="Olá! Como posso te ajudar com a temperatura do ambiente hoje?",
         description=(
             "Mensagem de resposta amigável para ser enviada de volta ao usuário "
             "pelo WhatsApp. Deve ser clara, concisa e em português do Brasil."
