@@ -127,6 +127,10 @@ class TuyaService:
                 response = await client.get(url, headers=headers)
             elif method.upper() == "POST":
                 response = await client.post(url, headers=headers, content=payload_str)
+            elif method.upper() == "PUT":
+                response = await client.put(url, headers=headers, content=payload_str)
+            elif method.upper() == "DELETE":
+                response = await client.delete(url, headers=headers)
             else:
                 raise ValueError(f"Método HTTP {method} não suportado pelo wrapper.")
                 
@@ -166,8 +170,38 @@ class TuyaService:
         """
         logger.info(f"🚀 Executando cena {scene_id} na Home {home_id}...")
         path = f"/v1.0/homes/{home_id}/scenes/{scene_id}/trigger"
-        # O body para trigger de cenas é tipically vazio
         await self._request("POST", path, body={})
         return True
+
+    async def get_automations_by_home(self, home_id: str) -> list:
+        """
+        Retorna as automações/regras inteligentes de uma residência.
+        GET /v1.0/homes/{home_id}/automations
+        """
+        logger.info(f"⚡ Buscando Automações para a Home {home_id}...")
+        path = f"/v1.0/homes/{home_id}/automations"
+        try:
+            return await self._request("GET", path)
+        except Exception as e:
+            logger.warning(f"⚠️ Erro em /v1.0/homes/{home_id}/automations: {e}. Tentando fallback v1.1...")
+            path_v11 = f"/v1.1/homes/{home_id}/automations"
+            return await self._request("GET", path_v11)
+
+    async def set_automation_status(self, home_id: str, automation_id: str, enable: bool = True) -> bool:
+        """
+        Ativa (enable=True) ou Desativa (enable=False) uma automação na Tuya.
+        PUT /v1.0/homes/{home_id}/automations/{automation_id}/actions/enable ou /disable
+        """
+        action_name = "enable" if enable else "disable"
+        logger.info(f"⚙️ Alterando status da automação {automation_id} para '{action_name}' na Home {home_id}...")
+        path = f"/v1.0/homes/{home_id}/automations/{automation_id}/actions/{action_name}"
+        try:
+            await self._request("PUT", path, body={})
+            return True
+        except Exception as e:
+            logger.warning(f"⚠️ Tentando rota alternativa para automação: {e}")
+            path_alt = f"/v1.1/homes/{home_id}/automations/{automation_id}/actions/{action_name}"
+            await self._request("PUT", path_alt, body={})
+            return True
 
 tuya_service = TuyaService()

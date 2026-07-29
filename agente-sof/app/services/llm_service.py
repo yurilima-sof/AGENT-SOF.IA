@@ -54,20 +54,20 @@ class LLMService:
 
             "Você deve responder EXCLUSIVAMENTE em formato JSON com a seguinte estrutura:\n"
             "{\n"
-            "  \"intencao\": \"ligar_resfriamento\" | \"ligar_aquecimento\" | \"ligar_temperatura_media\" | \"desligar_dispositivos\" | \"ligar_dispositivos\" | \"sem_acao\",\n"
-            "  \"ifttt_action\": \"freezer\" | \"esquentar\" | \"medio\" | \"off\" | \"ligar\" | null,\n"
+            "  \"intencao\": \"ligar_resfriamento\" | \"ligar_aquecimento\" | \"ligar_temperatura_media\" | \"desligar_dispositivos\" | \"ligar_dispositivos\" | \"pausar_automacao\" | \"sem_acao\",\n"
+            "  \"ifttt_action\": \"freezer\" | \"esquentar\" | \"medio\" | \"off\" | \"ligar\" | \"desativar_automacao\" | null,\n"
             "  \"ambiente\": \"nome do ambiente (slug) ou null\",\n"
             "  \"mensagem_wpp\": \"Sua resposta amigável para o WhatsApp\",\n"
             "  \"salvar_memoria\": true | false\n"
             "}\n\n"
             
             "Filtro de Memória Orgânica (salvar_memoria):\n"
-            "- Defina como true APENAS se a mensagem do usuário ditar uma regra, preferência duradoura, padrão de temperatura ou hábito que o bot deve lembrar para o futuro (ex: 'sempre ligamos no medio de manhã', 'nossa loja é muito gelada às 14h').\n"
+            "- Defina como true APENAS se a mensagem do usuário ditar uma regra, preferência duradoura, padrão de temperatura ou hábito que o bot deve lembrar para o futuro (ex: 'sempre ligamos no medio de manhã', 'nossa loja é muito gelada às 14h', 'vamos ter reunião até 20h').\n"
             "- Defina como false para comandos normais ('liga o ar'), reclamações pontuais ('tá quente hoje'), saudações e lixo.\n\n"
             
             "Regra de Execução Imediata vs Futura:\n"
             "- Se o usuário estiver APENAS declarando uma regra para o futuro (ex: 'Queremos que todos os dias as 14:15 esteja frio' ou 'A partir de amanhã, faça X'), você NÃO deve executar a ação agora. Retorne `ifttt_action: null` e `intencao: sem_acao`, mas mantenha `salvar_memoria: true`.\n"
-            "- Retorne uma ação no `ifttt_action` APENAS se o comando for para ser executado NESTE EXATO MOMENTO.\n\n"
+            "- Retorne uma ação no `ifttt_action` APENAS se o comando for para ser executado NESTE EXATO MOMENTO (incluindo desativar automações de desligamento para reuniões agora).\n\n"
             
             "Hierarquia de Conhecimento e Comandos:\n"
             "- Se o histórico do RAG trouxer informações marcadas como [REGRA ESPECÍFICA DA REVENDA], elas ANULAM as orientações de [REGRA GLOBAL] em caso de conflito.\n"
@@ -89,7 +89,11 @@ class LLMService:
             "5. Se o usuário pedir para ligar as máquinas/equipamentos/ar-condicionado de forma geral (sem especificar calor/frio):\n"
             "   - 'intencao': 'ligar_dispositivos'\n"
             "   - 'ifttt_action': 'ligar'\n"
-            "6. Qualquer outra conversa (saudações, agradecimentos, perguntas gerais):\n"
+            "6. Se o usuário informar que haverá REUNIÃO PROLONGADA (ex: 'vamos ter reunião até as 20h', 'reunião estendida', 'não desliga o ar hoje') ou pedir para desativar os desligamentos automáticos programados:\n"
+            "   - 'intencao': 'pausar_automacao'\n"
+            "   - 'ifttt_action': 'desativar_automacao'\n"
+            "   - 'salvar_memoria': true\n"
+            "7. Qualquer outra conversa (saudações, agradecimentos, perguntas gerais):\n"
             "   - 'intencao': 'sem_acao'\n"
             "   - 'ifttt_action': null\n\n"
             

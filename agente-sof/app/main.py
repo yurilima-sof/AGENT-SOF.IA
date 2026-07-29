@@ -346,20 +346,43 @@ async def process_agent_command(
                 if home_data:
                     home_id = home_data["home_id"]
                     
-                    # O ambiente pode vir nulo. Se for nulo, procuramos por cenas sem ambiente ou ignoramos?
-                    # Como na Tuya geralmente as cenas têm nome de ambiente, tratamos ambiente None como string vazia ou tratamos depois.
-                    amb = ambiente if ambiente else ""
-                    
-                    scene_data = await get_scene_by_ambiente(db, home_id, amb, acao)
-                    if scene_data:
-                        scene_id = scene_data["scene_id"]
-                        logger.info(f"   [Tuya] Cenário encontrado: {scene_data['nome_cena']} (ID: {scene_id}). Disparando...")
-                        
-                        # Dispara a cena via API Tuya
-                        result_tuya = await tuya_service.execute_scene(home_id, scene_id)
-                        tuya_success = result_tuya
+                    if acao == "desativar_automacao" or intencao == "pausar_automacao":
+                        # Busca automações ativas na Tuya Cloud e desativa regras de desligamento/timer
+                        logger.info(f"   [Tuya] Buscando automações da residência {home_id} para pausar automações para reunião/fechamento...")
+                        automacoes = await tuya_service.get_automations_by_home(home_id)
+                        desativadas_ids = []
+                        if automacoes and isinstance(automacoes, list):
+                            for auto in automacoes:
+                                auto_id = auto.get("id") or auto.get("automation_id")
+                                is_enabled = auto.get("enabled", True)
+                                if auto_id and is_enabled:
+                                    logger.info(f"   [Tuya] Desativando automação temporariamente: '{auto.get('name')}' (ID: {auto_id})")
+                                    await tuya_service.set_automation_status(home_id, auto_id, enable=False)
+                                    desativadas_ids.append(auto_id)
+                        tuya_success = (len(desativadas_ids) > 0)
+
+                        # Agenda a REATIVAÇÃO AUTOMÁTICA em segundo plano no horário solicitado
+                        if desativadas_ids:
+                            from app.services.scheduler_service import scheduler_service
+                            horario_fim = scheduler_service.extrair_horario_termino(payload.mensagem)
+                            await scheduler_service.agendar_reativacao_automacao(
+                                id_grupo=payload.id_grupo,
+                                nome_revenda=payload.nome_revenda,
+                                home_id=home_id,
+                                automacao_ids=desativadas_ids,
+                                horario_execucao=horario_fim
+                            )
                     else:
-                        logger.info(f"   [Tuya] Nenhuma cena encontrada para ambiente '{amb}' e ação '{acao}'.")
+                        # O ambiente pode vir nulo. Se for nulo, procuramos por cenas sem ambiente ou ignoramos
+                        amb = ambiente if ambiente else ""
+                        scene_data = await get_scene_by_ambiente(db, home_id, amb, acao)
+                        if scene_data:
+                            scene_id = scene_data["scene_id"]
+                            logger.info(f"   [Tuya] Cenário encontrado: {scene_data['nome_cena']} (ID: {scene_id}). Disparando...")
+                            result_tuya = await tuya_service.execute_scene(home_id, scene_id)
+                            tuya_success = result_tuya
+                        else:
+                            logger.info(f"   [Tuya] Nenhuma cena encontrada para ambiente '{amb}' e ação '{acao}'.")
                 else:
                     logger.info(f"   [Tuya] Revenda '{payload.nome_revenda}' não encontrada na base Tuya.")
             except Exception as e_tuya:
@@ -484,3 +507,39 @@ async def aprender_conhecimento(
                 "message": "Erro ao ingerir conhecimento no banco vetorial.",
             },
         ) from exc
+
+
+from app.services.proactive_service import proactive_service
+
+@app.post(
+    "/proactive/fechamento",
+    summary="Perguntar proativamente sobre Fechamento de Mês",
+    tags=["Proativo"],
+)
+async def checar_fechamento_proativo(
+    _api_key: str = Depends(verify_api_key),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Endpoint invocado pelo n8n ou cron nos finais de tarde para que a SOF.IA pergunte 
+    proativamente nos grupos das revendas ativas se haverá Fechamento de Mês hoje.
+    """
+    is_fim = proactive_service.is_fim_de_mes()
+    revendas = await proactive_service.obter_revendas_ativas(db)
+    
+    mensagens_geradas = []
+    for rev in revendas:
+        msg = proactive_service.gerar_mensagem_fechamento_mes(rev["nome_revenda"])
+        mensagens_geradas.append({
+            "id_grupo": rev["id_grupo_wpp"],
+            "nome_revenda": rev["nome_revenda"],
+            "mensagem_wpp": msg,
+            "is_fim_de_mes": is_fim
+        })
+        
+    return {
+        "status": "ok",
+        "is_fim_de_mes": is_fim,
+        "total_revendas": len(mensagens_geradas),
+        "mensagens": mensagens_geradas
+    }
