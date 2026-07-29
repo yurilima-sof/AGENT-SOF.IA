@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 async def get_home_by_nome(db: AsyncSession, nome_revenda: str) -> dict:
     """
     Busca a Home (residência) da Tuya baseando-se no nome da revenda recebido pelo WhatsApp/n8n.
-    Suporta busca exata, ILIKE insensível a maiúsculas e busca flexível por palavras-chave.
+    Suporta busca exata, busca por código numérico de revenda (ex: 0019), ILIKE e palavras-chave.
     """
     if not nome_revenda:
         return None
@@ -19,7 +19,26 @@ async def get_home_by_nome(db: AsyncSession, nome_revenda: str) -> dict:
     if row:
         return dict(row._mapping)
 
-    # 2. Tenta busca por palavras relevantes (ex: 'Teste sof' -> '%teste%' AND '%sof%')
+    # 2. Tenta extrair dígitos de código de revenda (ex: 'Revenda 0019' -> '0019' ou '019')
+    import re
+    numeros = re.findall(r'\d+', nome_revenda)
+    if numeros:
+        for num in numeros:
+            num_pattern = f"%{num.zfill(4)}%"
+            num_simple = f"%{num}%"
+            query_num = text("""
+                SELECT h.* FROM tuya_clientes_homes h
+                JOIN tuya_clientes_cenas c ON h.home_id = c.home_id
+                WHERE h.nome_home ILIKE :num_p OR h.nome_home ILIKE :num_s 
+                   OR c.ambiente ILIKE :num_p OR c.nome_cena ILIKE :num_p
+                LIMIT 1
+            """)
+            result_num = await db.execute(query_num, {"num_p": num_pattern, "num_s": num_simple})
+            row_num = result_num.fetchone()
+            if row_num:
+                return dict(row_num._mapping)
+
+    # 3. Tenta busca por palavras relevantes (ex: 'Teste sof' -> '%teste%' AND '%sof%')
     palavras = [p.strip() for p in nome_revenda.replace("[", " ").replace("]", " ").replace("/", " ").split() if len(p.strip()) >= 3]
     if palavras:
         condicoes = " AND ".join([f"nome_home ILIKE :p{i}" for i in range(len(palavras))])
@@ -30,7 +49,7 @@ async def get_home_by_nome(db: AsyncSession, nome_revenda: str) -> dict:
         if row:
             return dict(row._mapping)
 
-    # 3. Fallback: busca por substring no nome
+    # 4. Fallback: busca por substring no nome
     query_any = text("SELECT * FROM tuya_clientes_homes WHERE nome_home ILIKE :contains LIMIT 1")
     result = await db.execute(query_any, {"contains": f"%{nome_revenda}%"})
     row = result.fetchone()
@@ -63,47 +82,80 @@ ACTION_SYNONYMS: dict[str, list[str]] = {
     "ligar": ["ligar", "on", "t-on", "ton"],
 }
 
+# Mapeamento estendido de sinônimos de ambiente (ex: "primeiro_andar" -> 1º andar / [1])
+AMBIENTE_SYNONYMS: dict[str, list[str]] = {
+    "primeiro_andar": ["%1%", "%[1]%", "%primeiro%", "%p1%", "%andar 1%"],
+    "primeiro": ["%1%", "%[1]%", "%primeiro%", "%p1%"],
+    "terreo": ["%shnv%", "%terreo%", "%térreo%", "%showroom%", "%piso 0%", "%t%"],
+    "térreo": ["%shnv%", "%terreo%", "%térreo%", "%showroom%"],
+    "shnv": ["%shnv%", "%terreo%", "%térreo%"],
+    "diretoria": ["%diretoria%", "%dir%"],
+    "reuniao": ["%reuniao%", "%reunião%"],
+}
+
 async def get_scene_by_ambiente(db: AsyncSession, home_id: str, ambiente: str, acao: str) -> dict:
     """
     Busca a Cena (scene_id) da Tuya baseando-se no home_id, ambiente e ação solicitada.
+    Suporta mapeamento flexível de sinônimos de ambiente e de ação.
     """
-    sinonimos = ACTION_SYNONYMS.get(acao.lower() if acao else "", [acao])
+    sinonimos_acao = ACTION_SYNONYMS.get(acao.lower() if acao else "", [acao])
     
-    # 1. Tenta buscar por equivalência exata de ação ou sinônimos
-    query = text("""
-        SELECT * FROM tuya_clientes_cenas 
-        WHERE home_id = :home_id
-          AND (ambiente ILIKE :ambiente OR :ambiente_vazio = TRUE)
-          AND (LOWER(acao) = ANY(:sinonimos))
-        LIMIT 1
-    """)
-    result = await db.execute(query, {
-        "home_id": home_id,
-        "ambiente": f"%{ambiente}%" if ambiente else "",
-        "ambiente_vazio": not bool(ambiente),
-        "sinonimos": sinonimos
-    })
-    row = result.fetchone()
-    if row:
-        return dict(row._mapping)
+    # Prepara padrões flexíveis de ambiente
+    amb_patterns = []
+    if ambiente:
+        amb_clean = ambiente.lower().strip().replace(" ", "_")
+        if amb_clean in AMBIENTE_SYNONYMS:
+            amb_patterns = AMBIENTE_SYNONYMS[amb_clean]
+        elif "primeiro" in amb_clean or "1" in amb_clean:
+            amb_patterns = ["%1%", "%[1]%", "%primeiro%"]
+        elif "terreo" in amb_clean or "térreo" in amb_clean or "shnv" in amb_clean:
+            amb_patterns = ["%shnv%", "%terreo%", "%térreo%"]
+        else:
+            amb_patterns = [f"%{ambiente}%"]
 
-    # 2. Fallback: Se não encontrou pela coluna 'acao', busca no 'nome_cena' ou 'ambiente' pelas palavras-chave da ação
+    patterns_acao = [f"%{s}%" for s in sinonimos_acao]
+
+    # 1. Tenta buscar combinando ambiente (se fornecido) e ação
+    if amb_patterns:
+        query = text("""
+            SELECT * FROM tuya_clientes_cenas 
+            WHERE home_id = :home_id
+              AND (
+                LOWER(ambiente) LIKE ANY(:amb_patterns) OR
+                LOWER(nome_cena) LIKE ANY(:amb_patterns)
+              )
+              AND (
+                LOWER(acao) = ANY(:sinonimos_acao) OR
+                LOWER(nome_cena) LIKE ANY(:patterns_acao) OR
+                LOWER(ambiente) LIKE ANY(:patterns_acao)
+              )
+            LIMIT 1
+        """)
+        result = await db.execute(query, {
+            "home_id": home_id,
+            "amb_patterns": amb_patterns,
+            "sinonimos_acao": sinonimos_acao,
+            "patterns_acao": patterns_acao
+        })
+        row = result.fetchone()
+        if row:
+            return dict(row._mapping)
+
+    # 2. Fallback sem filtro de ambiente (ou se ambiente não foi especificado)
     query_fallback = text("""
         SELECT * FROM tuya_clientes_cenas 
         WHERE home_id = :home_id
-          AND (ambiente ILIKE :ambiente OR :ambiente_vazio = TRUE)
           AND (
-            LOWER(nome_cena) LIKE ANY(:patterns) OR
-            LOWER(ambiente) LIKE ANY(:patterns)
+            LOWER(acao) = ANY(:sinonimos_acao) OR
+            LOWER(nome_cena) LIKE ANY(:patterns_acao) OR
+            LOWER(ambiente) LIKE ANY(:patterns_acao)
           )
         LIMIT 1
     """)
-    patterns = [f"%{s}%" for s in sinonimos]
     result_fb = await db.execute(query_fallback, {
         "home_id": home_id,
-        "ambiente": f"%{ambiente}%" if ambiente else "",
-        "ambiente_vazio": not bool(ambiente),
-        "patterns": patterns
+        "sinonimos_acao": sinonimos_acao,
+        "patterns_acao": patterns_acao
     })
     row_fb = result_fb.fetchone()
     if row_fb:
