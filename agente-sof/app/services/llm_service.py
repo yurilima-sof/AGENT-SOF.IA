@@ -31,6 +31,19 @@ class LLMService:
         Consulta o RAG por histórico contextual, envia a pergunta + contexto ao gemini-2.5-flash
         e retorna a classificação estruturada no formato compatível com AgentResponse.
         """
+        # 0. Verificação Determinística de Pausa de Automação / Reunião / Fechamento de Mês
+        mensagem_lower = mensagem.lower()
+        palavras_pausa = ["reunião", "reuniao", "fechamento de mês", "fechamento de mes", "não desliga", "nao desliga", "pausar automação", "pausar automacao"]
+        if any(p in mensagem_lower for p in palavras_pausa):
+            logger.info(f"   [LLM] Regra determinística de Pausa de Automação / Reunião ativada para mensagem: '{mensagem}'")
+            return {
+                "intencao": "pausar_automacao",
+                "ifttt_action": "desativar_automacao",
+                "ambiente": None,
+                "mensagem_wpp": "Compreendido! 🕒 Já pausei as automações de desligamento automático para sua reunião. Ao final do horário estendido, cuidarei da reativação e desligamento para você! 😊",
+                "salvar_memoria": True
+            }
+
         # 1. Recupera contexto relevante do RAG (histórico de chat)
         contexto_rag = ""
         try:
