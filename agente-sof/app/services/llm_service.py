@@ -145,8 +145,8 @@ class LLMService:
                 f"Mensagem atual do Usuário: '{mensagem}'"
             )
 
-        # 4. Envia para a API do Gemini com mecanismo de lista resiliente de modelos
-        model_names_to_try = ["gemini-2.0-flash", "gemini-1.5-flash", "models/gemini-1.5-flash", "gemini-1.5-pro"]
+        # 4. Envia para a API do Gemini com prioridade para a versão estável gemini-1.5-flash
+        model_names_to_try = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-2.0-flash", "gemini-1.5-pro"]
         response = None
         last_error = None
         
