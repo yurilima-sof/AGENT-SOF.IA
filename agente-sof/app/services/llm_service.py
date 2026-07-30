@@ -145,8 +145,20 @@ class LLMService:
                 f"Mensagem atual do Usuário: '{mensagem}'"
             )
 
-        # 4. Envia para a API do Gemini com prioridade para a versão estável gemini-1.5-flash
-        model_names_to_try = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-2.0-flash", "gemini-1.5-pro"]
+        # 4. Envia para a API do Gemini descobrindo dinamicamente os modelos suportados pela API Key
+        model_names_to_try = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash-exp", "gemini-1.5-pro"]
+        try:
+            models_list = list(genai.list_models())
+            available = [m.name for m in models_list if "generateContent" in m.supported_generation_methods]
+            if available:
+                # Prioriza os modelos Flash da lista real retornada pelo Google
+                flash_models = [m for m in available if "flash" in m.lower()]
+                other_models = [m for m in available if m not in flash_models]
+                model_names_to_try = flash_models + other_models
+                logger.info(f"   [Gemini] Modelos suportados pela API Key: {model_names_to_try[:3]}")
+        except Exception as e_list:
+            logger.warning(f"⚠️ Não foi possível listar modelos do Gemini ({e_list}). Usando baselines padrão.")
+
         response = None
         last_error = None
         
