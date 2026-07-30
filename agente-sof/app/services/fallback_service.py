@@ -25,7 +25,8 @@ _KEYWORDS: dict[str, list[str]] = {
         "21", "22", "23", "21c", "22c", "23c",
     ],
     "off": [
-        "desligar maquinas", "off", "parar", "cancelar",
+        "desligar arcondicionado", "desligar ar-condicionado", "desligar ar condicionado", "desligar o ar", "desliga o ar",
+        "desligar maquinas", "desligar", "desliga", "off", "parar", "cancelar",
         "podem desligar todas", "opção 3", "opcao 3", "❌",
         "opção3", "opcao3", "ação:off",
         "revenda fechada hoje", "estamos fechado",

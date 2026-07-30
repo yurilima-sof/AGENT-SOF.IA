@@ -145,11 +145,11 @@ class LLMService:
                 f"Mensagem atual do Usuário: '{mensagem}'"
             )
 
-        logger.info(f"   Enviando requisição ao gemini-2.5-flash...")
+        logger.info(f"   Enviando requisição ao gemini-1.5-flash...")
 
         # 4. Envia para a API do Gemini de forma assíncrona usando GenerativeModel
         model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash",
+            model_name="gemini-1.5-flash",
             system_instruction=system_prompt
         )
         response = await model.generate_content_async(
