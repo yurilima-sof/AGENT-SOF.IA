@@ -145,21 +145,35 @@ class LLMService:
                 f"Mensagem atual do Usuário: '{mensagem}'"
             )
 
-        logger.info(f"   Enviando requisição ao gemini-1.5-flash...")
+        # 4. Envia para a API do Gemini com mecanismo de lista resiliente de modelos
+        model_names_to_try = ["gemini-2.0-flash", "gemini-1.5-flash", "models/gemini-1.5-flash", "gemini-1.5-pro"]
+        response = None
+        last_error = None
+        
+        for m_name in model_names_to_try:
+            try:
+                logger.info(f"   Tentando requisição ao modelo {m_name}...")
+                model = genai.GenerativeModel(
+                    model_name=m_name,
+                    system_instruction=system_prompt
+                )
+                response = await model.generate_content_async(
+                    user_content,
+                    generation_config=genai.GenerationConfig(
+                        response_mime_type="application/json",
+                        temperature=0.0,
+                        max_output_tokens=1000
+                    )
+                )
+                if response and response.text:
+                    logger.info(f"✅ Resposta do Gemini obtida com sucesso usando {m_name}.")
+                    break
+            except Exception as e_m:
+                logger.warning(f"⚠️ Modelo {m_name} indisponível ({e_m}). Tentando próximo modelo...")
+                last_error = e_m
 
-        # 4. Envia para a API do Gemini de forma assíncrona usando GenerativeModel
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction=system_prompt
-        )
-        response = await model.generate_content_async(
-            user_content,
-            generation_config=genai.GenerationConfig(
-                response_mime_type="application/json",
-                temperature=0.0,
-                max_output_tokens=1000
-            )
-        )
+        if not response or not response.text:
+            raise last_error or Exception("Nenhum modelo Gemini respondeu com sucesso.")
 
         content = response.text
         logger.info(f"   Resposta do Gemini recebida com sucesso.")
