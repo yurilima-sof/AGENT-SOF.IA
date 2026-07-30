@@ -73,9 +73,16 @@ class LLMService:
             "- Se o histórico do RAG trouxer informações marcadas como [REGRA ESPECÍFICA DA REVENDA], elas ANULAM as orientações de [REGRA GLOBAL] em caso de conflito.\n"
             "- Sempre verifique no histórico (RAG) a progressão de comandos da revenda. Por exemplo, se eles preferem iniciar com temperatura 'medio' e depois ir para 'freezer', ignore a Regra de Decisão padrão abaixo e siga a preferência da revenda.\n\n"
 
+            "REGRA DE SOBREPOSIÇÃO ABSOLUTA (PRIORIDADE CRÍTICA):\n"
+            "Se a mensagem ATUAL do usuário mencionar REUNIÃO (ex: 'vamos ter reunião', 'reunião até as 20h', 'reunião na sala de testes'), FECHAMENTO DE MÊS ou solicitar para 'não desligar o ar até Xh' / pausar automações:\n"
+            "- A intenção OBRIGATORIAMENTE DEVE SER: `pausar_automacao`\n"
+            "- O ifttt_action OBRIGATORIAMENTE DEVE SER: `desativar_automacao`\n"
+            "- A flag salvar_memoria OBRIGATORIAMENTE DEVE SER: `true`\n"
+            "- IGNORE qualquer comando antigo ou histórico do RAG que tenha associado essas palavras a 'freezer' ou 'ligar_resfriamento'.\n\n"
+
             "Regras de Decisão Semântica (Padrão e Prioridade):\n"
             "1. PRIORIDADE MÁXIMA - REUNIÃO PROLONGADA / FECHAMENTO DE MÊS / PAUSAR AUTOMAÇÃO:\n"
-            "   Se o usuário informar que haverá REUNIÃO (ex: 'vamos ter reunião até as 20h', 'reunião na sala de testes', 'reunião estendida', 'não desliga o ar hoje até Xh'), FECHAMENTO DE MÊS ou pedir para pausar/desativar os desligamentos automáticos programados:\n"
+            "   Se o usuário informar que haverá REUNIÃO, FECHAMENTO DE MÊS ou pedir para pausar/desativar os desligamentos automáticos programados:\n"
             "   - 'intencao': 'pausar_automacao'\n"
             "   - 'ifttt_action': 'desativar_automacao'\n"
             "   - 'salvar_memoria': true\n"
