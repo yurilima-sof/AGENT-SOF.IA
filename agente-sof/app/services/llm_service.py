@@ -145,54 +145,44 @@ class LLMService:
                 f"Mensagem atual do Usuário: '{mensagem}'"
             )
 
-        # 4. Envia para a API do Gemini descobrindo dinamicamente os modelos suportados pela API Key
-        model_names_to_try = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash-exp", "gemini-1.5-pro"]
+        # 4. Envia para a API do Gemini (Solução Definitiva - Direta e sem Loop)
+        m_name = getattr(settings, 'gemini_model', 'gemini-flash-latest')
+        logger.info(f"   [Gemini] Iniciando requisição direta ao modelo {m_name}...")
+
         try:
-            models_list = list(genai.list_models())
-            available = [m.name for m in models_list if "generateContent" in m.supported_generation_methods]
-            if available:
-                # Prioriza os modelos Flash da lista real retornada pelo Google
-                flash_models = [m for m in available if "flash" in m.lower()]
-                other_models = [m for m in available if m not in flash_models]
-                model_names_to_try = flash_models + other_models
-                logger.info(f"   [Gemini] Modelos suportados pela API Key: {model_names_to_try[:3]}")
-        except Exception as e_list:
-            logger.warning(f"⚠️ Não foi possível listar modelos do Gemini ({e_list}). Usando baselines padrão.")
-
-        response = None
-        last_error = None
-        
-        for m_name in model_names_to_try:
-            try:
-                logger.info(f"   Tentando requisição ao modelo {m_name}...")
-                model = genai.GenerativeModel(
-                    model_name=m_name,
-                    system_instruction=system_prompt
+            model = genai.GenerativeModel(
+                model_name=m_name,
+                system_instruction=system_prompt
+            )
+            
+            response = await model.generate_content_async(
+                user_content,
+                generation_config=genai.GenerationConfig(
+                    response_mime_type="application/json",
+                    temperature=0.0,
+                    max_output_tokens=1000
                 )
-                response = await model.generate_content_async(
-                    user_content,
-                    generation_config=genai.GenerationConfig(
-                        response_mime_type="application/json",
-                        temperature=0.0,
-                        max_output_tokens=1000
-                    )
-                )
-                if response and response.text:
-                    logger.info(f"✅ Resposta do Gemini obtida com sucesso usando {m_name}.")
-                    break
-            except Exception as e_m:
-                logger.warning(f"⚠️ Modelo {m_name} indisponível ({e_m}). Tentando próximo modelo...")
-                last_error = e_m
-
-        if not response or not response.text:
-            raise last_error or Exception("Nenhum modelo Gemini respondeu com sucesso.")
-
-        content = response.text
-        logger.info(f"   Resposta do Gemini recebida com sucesso.")
-        
-        # 5. Converte o JSON string para dict do Python
-        dados_resposta = json.loads(content)
-        return dados_resposta
+            )
+            
+            if not response or not response.text:
+                raise ValueError("Resposta vazia da API do Gemini.")
+                
+            logger.info(f"✅ Resposta do Gemini obtida com sucesso usando {m_name}.")
+            
+            # 5. Converte o JSON string para dict do Python
+            return json.loads(response.text)
+            
+        except Exception as e:
+            logger.error(f"⚠️ Erro Crítico ao chamar o Gemini ({m_name}): {e}")
+            
+            # FALLBACK DE SEGURANÇA PARA PRODUÇÃO
+            return {
+                "intencao": "sem_acao",
+                "ifttt_action": None,
+                "ambiente": None,
+                "mensagem_wpp": "Puxa, estou passando por uma instabilidade técnica rápida aqui no meu sistema. Pode tentar novamente em alguns minutos? 🛠️",
+                "salvar_memoria": False
+            }
 
 
 # Instância única para importação

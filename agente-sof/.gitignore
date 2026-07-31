@@ -28,6 +28,8 @@ build/
 *.egg
 
 # --- IDEs e Editores ---
+.agents/
+.gemini/
 .vscode/
 .idea/
 *.swp
@@ -64,6 +66,8 @@ _chat.txt
 # --- Scripts Locais de Utilidade e Dados Extraídos ---
 utils/
 extracao_tuya_completa.md
+relatorio_devices_*.md
 testar_agente.py
+
 
 
