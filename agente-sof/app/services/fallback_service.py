@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -10,19 +11,22 @@ _KEYWORDS: dict[str, list[str]] = {
         "sala quente", "loja quente", "abafado", "abafada", "congelar", "esfriar", "gelar",
         "freezer", "freeze", "opção 1", "opcao 1", "🔥", "opção1", "opcao1",
         "ação:freezer", "t-low", "tlow", "baixo", "low",
-        "16", "17", "18", "19", "20", "16c", "17c", "18c", "19c", "20c",
+        "16c", "17c", "18c", "19c", "20c", "16°c", "17°c", "18°c", "19°c", "20°c",
+        "16°", "17°", "18°", "19°", "20°", "16 graus", "17 graus", "18 graus", "19 graus", "20 graus",
     ],
     "esquentar": [
         "frio", "fria", "gelado", "gelada", "sala fria", "sala gelada", "loja fria",
         "frio demais", "muito frio", "gelado demais", "ta frio", "tá frio",
         "esquentar", "aquecer", "warm", "high", "t-high", "thigh",
         "opção 2", "opcao 2", "🥶", "opção2", "opcao2", "ação:esquentar",
-        "24", "25", "26", "27", "24c", "25c", "26c", "27c",
+        "24c", "25c", "26c", "27c", "24°c", "25°c", "26°c", "27°c",
+        "24°", "25°", "26°", "27°", "24 graus", "25 graus", "26 graus", "27 graus",
     ],
     "medio": [
         "medio", "médio", "medium", "t-medium", "t-médium",
         "temperatura média", "primeiro calor",
-        "21", "22", "23", "21c", "22c", "23c",
+        "21c", "22c", "23c", "21°c", "22°c", "23°c",
+        "21°", "22°", "23°", "21 graus", "22 graus", "23 graus",
     ],
     "off": [
         "desligar arcondicionado", "desligar ar-condicionado", "desligar ar condicionado", "desligar o ar", "desliga o ar",
@@ -64,11 +68,13 @@ _KEYWORDS_ORDENADAS: list[tuple[str, str]] = sorted(
 
 def identificar_acao(mensagem: str) -> Optional[str]:
     """
-    Analisa a mensagem do usuário e identifica a ação IoT correspondente.
+    Analisa a mensagem do usuário e identifica a ação IoT correspondente com limites de palavras (word boundaries).
     """
     texto = mensagem.lower().strip()
     for keyword, acao in _KEYWORDS_ORDENADAS:
-        if keyword in texto:
+        # Usa limite de palavra para evitar falso positivo em sub-strings ou números de máquinas (ex: 'maquina 19')
+        pattern = r"\b" + re.escape(keyword) + r"\b"
+        if re.search(pattern, texto):
             logger.info(f"   Keyword detectada: '{keyword}' → ação: '{acao}'")
             return acao
     return None

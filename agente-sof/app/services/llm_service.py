@@ -169,8 +169,23 @@ class LLMService:
                 
             logger.info(f"✅ Resposta do Gemini obtida com sucesso usando {m_name}.")
             
-            # 5. Converte o JSON string para dict do Python
-            return json.loads(response.text)
+            # 5. Converte o JSON string para dict do Python com sanitização de segurança
+            raw_json = response.text.strip()
+            if raw_json.startswith("```"):
+                lines = raw_json.splitlines()
+                if lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines and lines[-1].startswith("```"):
+                    lines = lines[:-1]
+                raw_json = "\n".join(lines).strip()
+                
+            try:
+                return json.loads(raw_json)
+            except json.JSONDecodeError:
+                # Tenta reparar aspas/quebras de linha internas se houver
+                import re
+                cleaned = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', raw_json)
+                return json.loads(cleaned)
             
         except Exception as e:
             logger.error(f"⚠️ Erro Crítico ao chamar o Gemini ({m_name}): {e}")
