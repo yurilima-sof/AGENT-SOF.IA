@@ -298,7 +298,7 @@ async def process_agent_command(
                         if "_" in chave and chave.split("_", 1)[1] not in ambientes_disponiveis:
                             ambientes_disponiveis.append(chave.split("_", 1)[1])
 
-                logger.info("   [LLM] Processando mensagem com Google Gemini-2.5-Flash...")
+                logger.info(f"   [LLM] Processando mensagem com Google {settings.gemini_model}...")
                 resultado = await llm_service.processar_mensagem(payload.mensagem, payload.id_grupo, ambientes_disponiveis)
                 intencao = resultado.get("intencao")
                 acao = resultado.get("ifttt_action")
