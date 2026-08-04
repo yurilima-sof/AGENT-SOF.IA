@@ -26,9 +26,15 @@ class LLMService:
         if settings.gemini_api_key:
             genai.configure(api_key=settings.gemini_api_key)
 
-    async def processar_mensagem(self, mensagem: str, id_grupo: str, ambientes_disponiveis: list[str] = None) -> Dict[str, Any]:
+    async def processar_mensagem(
+        self,
+        mensagem: str,
+        id_grupo: str,
+        ambientes_disponiveis: list[str] = None,
+        historico_recente: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
-        Consulta o RAG por histórico contextual, envia a pergunta + contexto ao gemini-2.5-flash
+        Consulta o RAG por histórico contextual, analisa histórico de curto prazo, envia a pergunta + contexto ao gemini-2.5-flash
         e retorna a classificação estruturada no formato compatível com AgentResponse.
         """
         # 0. Verificação Determinística de Pausa de Automação / Reunião / Fechamento de Mês
@@ -44,7 +50,7 @@ class LLMService:
                 "salvar_memoria": True
             }
 
-        # 1. Recupera contexto relevante do RAG (histórico de chat)
+        # 1. Recupera contexto relevante do RAG (histórico de longo prazo)
         contexto_rag = ""
         try:
             contexto_rag = await rag_service.get_relevant_context(mensagem, id_grupo)
@@ -85,6 +91,18 @@ class LLMService:
             "Hierarquia de Conhecimento e Comandos:\n"
             "- Se o histórico do RAG trouxer informações marcadas como [REGRA ESPECÍFICA DA REVENDA], elas ANULAM as orientações de [REGRA GLOBAL] em caso de conflito.\n"
             "- Sempre verifique no histórico (RAG) a progressão de comandos da revenda. Por exemplo, se eles preferem iniciar com temperatura 'medio' e depois ir para 'freezer', ignore a Regra de Decisão padrão abaixo e siga a preferência da revenda.\n\n"
+
+            "MEMÓRIA DE CURTO PRAZO E MENSAGENS SEQUENCIAIS NO WHATSAPP:\n"
+            "- No WhatsApp, o usuário frequentemente digita mensagens picadas em sequência (ex: 'Loja quente' seguido por 'Térreo').\n"
+            "- Se o HISTÓRICO RECENTE DA CONVERSA trouxer um comando incompleto anterior (ex: pedir para esfriar sem especificar o ambiente) E a mensagem atual informar o ambiente (ex: 'Térreo'), COMBINE as informações e execute a ação para aquele ambiente!\n\n"
+
+            "REGRA MANDATÓRIA DE ESCALONAMENTO PROGRESSIVO DE RESFRIAMENTO (1º, 2º E 3º CHAMADOS DE CALOR):\n"
+            "Quando a mensagem do usuário for uma solicitação ou reclamação genérica de calor/resfriamento (ex: 'loja quente', 'tá quente', 'esfria a sala', 'diminui a temperatura', 'loja abafada'):\n"
+            "1. Você DEVE analisar o HISTÓRICO RECENTE DA CONVERSA (últimos 15 minutos) para contar quantas solicitações de resfriamento anteriores foram feitas neste grupo:\n"
+            "   - 1º CHAMADO (Nenhum chamado de resfriamento recente no histórico): OBRIGATORIAMENTE acione 1 - T-Medium (`ifttt_action: \"medio\"`, `intencao: \"ligar_temperatura_media\"`). Responda amigavelmente informando que iniciou a climatização na temperatura média (T-Medium).\n"
+            "   - 2º CHAMADO (Já existe 1 chamado prévio de resfriamento recente no histórico): OBRIGATORIAMENTE acione 2 - T-low (`ifttt_action: \"freezer\"`, `intencao: \"ligar_resfriamento\"`). Responda informando que intensificou o resfriamento para T-Low.\n"
+            "   - 3º CHAMADO OU MAIS (Já existem 2 ou mais chamados prévios no histórico): OBRIGATORIAMENTE acione 3 - T-Freezer (`ifttt_action: \"freezer\"`, `intencao: \"ligar_resfriamento\"`). Responda informando que ativou o resfriamento máximo T-Freezer.\n"
+            "2. EXCEÇÃO EXPLÍCITA: Se a mensagem do usuário solicitar EXPLICITAMENTE uma temperatura específica (ex: 'liga direto no freezer', 'põe no medio', 'coloca no t-low'), RESPEITE o comando direto do usuário imediatamente.\n\n"
 
             "REGRA DE SOBREPOSIÇÃO ABSOLUTA (PRIORIDADE CRÍTICA):\n"
             "Se a mensagem ATUAL do usuário mencionar REUNIÃO (ex: 'vamos ter reunião', 'reunião até as 20h', 'reunião na sala de testes'), FECHAMENTO DE MÊS ou solicitar para 'não desligar o ar até Xh' / pausar automações:\n"
@@ -133,17 +151,23 @@ class LLMService:
             "4. Mantenha a resposta concisa (limite de 2 a 3 linhas) e use emojis de forma sutil."
         )
 
-        # 3. Constrói o Prompt do Usuário com o contexto RAG e Ambientes
+        # 3. Constrói o Prompt do Usuário com o contexto RAG, Ambientes e Histórico Recente de Curto Prazo
         ambientes_str = ", ".join(ambientes_disponiveis) if ambientes_disponiveis else "Nenhum (Ambiente Único)"
         
-        user_content = f"AMBIENTES CADASTRADOS PARA ESTA REVENDA: [{ambientes_str}]\n\nMensagem do Usuário: '{mensagem}'"
-        if contexto_rag:
-            user_content = (
-                f"AMBIENTES CADASTRADOS PARA ESTA REVENDA: [{ambientes_str}]\n\n"
-                f"Histórico relevante de conversas anteriores da revenda:\n"
-                f"\"\"\"\n{contexto_rag}\n\"\"\"\n\n"
-                f"Mensagem atual do Usuário: '{mensagem}'"
+        user_content_parts = [f"AMBIENTES CADASTRADOS PARA ESTA REVENDA: [{ambientes_str}]"]
+        
+        if historico_recente:
+            user_content_parts.append(
+                f"HISTÓRICO RECENTE DA CONVERSA (Últimos minutos):\n\"\"\"\n{historico_recente}\n\"\"\""
             )
+            
+        if contexto_rag:
+            user_content_parts.append(
+                f"Histórico relevante de regras anteriores da revenda (RAG):\n\"\"\"\n{contexto_rag}\n\"\"\""
+            )
+
+        user_content_parts.append(f"Mensagem atual do Usuário: '{mensagem}'")
+        user_content = "\n\n".join(user_content_parts)
 
         # 4. Envia para a API do Gemini (Solução Definitiva - Direta e sem Loop)
         m_name = getattr(settings, 'gemini_model', 'gemini-flash-latest')

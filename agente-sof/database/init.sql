@@ -185,3 +185,20 @@ CREATE TABLE IF NOT EXISTS tuya_clientes_cenas (
 CREATE INDEX IF NOT EXISTS idx_tuya_cenas_home ON tuya_clientes_cenas(home_id);
 CREATE INDEX IF NOT EXISTS idx_tuya_cenas_ambiente ON tuya_clientes_cenas(ambiente);
 
+-- =============================================================================
+-- TABELA 6: chat_historico_recente (Memória de Curto Prazo)
+-- =============================================================================
+-- Armazena o histórico recente de conversas por grupo de WhatsApp para dar
+-- memória de curto prazo ao agente (sliding window de 15 minutos).
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS chat_historico_recente (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id_grupo_wpp VARCHAR(100) NOT NULL,
+    autor VARCHAR(20) NOT NULL, -- 'usuario' ou 'sofia'
+    conteudo TEXT NOT NULL,
+    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_historico_grupo_tempo 
+ON chat_historico_recente(id_grupo_wpp, criado_em DESC);
+

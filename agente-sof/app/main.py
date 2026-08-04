@@ -93,6 +93,7 @@ from app.database import get_db
 # Importações dos novos serviços e CRUDs
 from app.crud.revendas import buscar_credenciais_revenda
 from app.crud.logs import registrar_log
+from app.crud.chat_history import salvar_mensagem_historico, obter_historico_recente
 from app.services.fallback_service import identificar_acao, get_intencao_and_message
 from app.crud.tuya import get_home_by_nome, get_scene_by_ambiente
 from app.services.tuya_service import tuya_service
@@ -273,6 +274,9 @@ async def process_agent_command(
     )
 
     try:
+        # Grava a mensagem recebida do usuário na memória de curto prazo
+        await salvar_mensagem_historico(db, payload.id_grupo, "usuario", payload.mensagem)
+
         # -----------------------------------------------------------------
         # PASSO 1: Identificar a ação e intenção (LLM com RAG ou Fallback)
         # -----------------------------------------------------------------
@@ -298,8 +302,16 @@ async def process_agent_command(
                         if "_" in chave and chave.split("_", 1)[1] not in ambientes_disponiveis:
                             ambientes_disponiveis.append(chave.split("_", 1)[1])
 
+                # Busca o histórico recente de conversas dos últimos 15 minutos
+                historico_recente = await obter_historico_recente(db, payload.id_grupo, limite=6, minutos=15)
+
                 logger.info(f"   [LLM] Processando mensagem com Google {settings.gemini_model}...")
-                resultado = await llm_service.processar_mensagem(payload.mensagem, payload.id_grupo, ambientes_disponiveis)
+                resultado = await llm_service.processar_mensagem(
+                    payload.mensagem, 
+                    payload.id_grupo, 
+                    ambientes_disponiveis,
+                    historico_recente
+                )
                 intencao = resultado.get("intencao")
                 acao = resultado.get("ifttt_action")
                 ambiente = resultado.get("ambiente")
@@ -446,6 +458,10 @@ async def process_agent_command(
                 ambiente=ambiente
             )
 
+            resp_wpp_final = mensagem_wpp
+            if resp_wpp_final:
+                await salvar_mensagem_historico(db, payload.id_grupo, "sofia", resp_wpp_final)
+
             return AgentResponse(
                 intencao=intencao,
                 ambiente=ambiente,
@@ -454,7 +470,7 @@ async def process_agent_command(
                 link_ifttt=link_ifttt,
                 tuya_success=tuya_success,
                 parametros={},
-                mensagem_wpp=mensagem_wpp,
+                mensagem_wpp=resp_wpp_final,
             )
 
         else:
@@ -477,13 +493,16 @@ async def process_agent_command(
                 ambiente=None
             )
 
+            resp_wpp_final = mensagem_wpp or "Olá! Como posso te ajudar com a temperatura do ambiente hoje?"
+            await salvar_mensagem_historico(db, payload.id_grupo, "sofia", resp_wpp_final)
+
             return AgentResponse(
                 intencao=intencao or "sem_acao",
                 ambiente=ambiente if 'ambiente' in locals() else None,
                 dispositivo_id=None,
                 ifttt_action=None,         # ← n8n NÃO dispara o IFTTT
                 parametros={},
-                mensagem_wpp=mensagem_wpp or "Olá! Como posso te ajudar com a temperatura do ambiente hoje?",
+                mensagem_wpp=resp_wpp_final,
             )
 
     except Exception as exc:
