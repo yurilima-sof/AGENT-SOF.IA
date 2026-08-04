@@ -210,6 +210,20 @@ app = create_app()
 # ENDPOINTS
 # =============================================================================
 
+@app.on_event("startup")
+async def on_startup():
+    """
+    Auto-Migration: Garante que a tabela chat_historico_recente exista no banco ao iniciar a aplicação.
+    """
+    try:
+        from app.database import AsyncSessionLocal
+        from app.crud.chat_history import inicializar_tabela_historico
+        async with AsyncSessionLocal() as session:
+            await inicializar_tabela_historico(session)
+            logger.info("✅ Tabela de memória recente (chat_historico_recente) verificada/inicializada com sucesso.")
+    except Exception as e:
+        logger.warning(f"⚠️ Aviso no startup ao checar tabela chat_historico_recente: {e}")
+
 @app.get(
     "/health",
     summary="Verificação de Saúde",
