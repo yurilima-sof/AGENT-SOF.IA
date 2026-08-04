@@ -288,6 +288,9 @@ async def process_agent_command(
     )
 
     try:
+        # Busca o histórico recente de conversas dos últimos 15 minutos (ANTERIOR à mensagem atual)
+        historico_recente = await obter_historico_recente(db, payload.id_grupo, limite=6, minutos=15)
+
         # Grava a mensagem recebida do usuário na memória de curto prazo
         await salvar_mensagem_historico(db, payload.id_grupo, "usuario", payload.mensagem)
 
@@ -315,9 +318,6 @@ async def process_agent_command(
                     for chave in credenciais.keys():
                         if "_" in chave and chave.split("_", 1)[1] not in ambientes_disponiveis:
                             ambientes_disponiveis.append(chave.split("_", 1)[1])
-
-                # Busca o histórico recente de conversas dos últimos 15 minutos
-                historico_recente = await obter_historico_recente(db, payload.id_grupo, limite=6, minutos=15)
 
                 logger.info(f"   [LLM] Processando mensagem com Google {settings.gemini_model}...")
                 resultado = await llm_service.processar_mensagem(
