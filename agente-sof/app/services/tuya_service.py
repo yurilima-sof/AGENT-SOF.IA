@@ -244,8 +244,9 @@ class TuyaService:
 
     async def check_home_devices_online(self, home_id: str) -> dict:
         """
-        Verifica se os dispositivos de uma residência estão online.
-        Retorna um dicionário com estatísticas e se estão todos offline.
+        Verifica se os dispositivos IR (Emissores de Infravermelho / Hubs IR) da residência estão online.
+        Como as cenas Tuya acionam os aparelhos através dos transmissores IR físicos, a verificação valida se os 
+        dispositivos IR / Hubs responsáveis pelo sinal estão ativos.
         Fail-safe: Se a consulta falhar ou não houver dispositivos registrados, assume online = True.
         """
         try:
@@ -255,16 +256,46 @@ class TuyaService:
                 return {"all_offline": False, "online_count": 0, "total_count": 0, "checked": False}
 
             total_count = len(devices)
+            
+            # Identifica especificamente os Dispositivos IR Físicos e Hubs (categorias 'wnykq', 'wg2', 'wg', etc., ou nomes com IR/Controle/Hub/TP)
+            ir_categories = {"wnykq", "wg2", "wg", "gateway", "hub"}
+            ir_devices = [
+                d for d in devices 
+                if d.get("category") in ir_categories 
+                   or "IR" in d.get("name", "").upper() 
+                   or "CONTROLE" in d.get("name", "").upper() 
+                   or "HUB" in d.get("name", "").upper()
+                   or "TP" in d.get("name", "").upper()
+            ]
+
             online_count = sum(1 for d in devices if d.get("online", True) is True)
-            offline_count = total_count - online_count
+            
+            # Status focado nos Dispositivos IR Físicos
+            ir_total = len(ir_devices)
+            ir_online = sum(1 for d in ir_devices if d.get("online", True) is True)
 
-            logger.info(f"📊 Status dos dispositivos (Home {home_id}): {online_count}/{total_count} online, {offline_count} offline.")
+            logger.info(
+                f"📊 Status da Home {home_id}: "
+                f"Total Geral: {online_count}/{total_count} online | "
+                f"Dispositivos IR Físicos: {ir_online}/{ir_total} online"
+            )
 
-            all_offline = (total_count > 0 and online_count == 0)
+            # Regra de desconexão focada nos Dispositivos IR que executam as Cenas:
+            # 1. Se existirem transmissores IR cadastrados e TODOS estiverem offline (ir_online == 0)
+            # 2. OU se todos os dispositivos da casa estiverem offline
+            all_offline = False
+            if ir_total > 0 and ir_online == 0:
+                logger.warning(f"🔌 Todos os transmissores IR físicos (Hubs/Controles) da Home {home_id} estão OFFLINE ({ir_online}/{ir_total}).")
+                all_offline = True
+            elif total_count > 0 and online_count == 0:
+                all_offline = True
+
             return {
                 "all_offline": all_offline,
                 "online_count": online_count,
                 "total_count": total_count,
+                "ir_online": ir_online,
+                "ir_total": ir_total,
                 "checked": True
             }
         except Exception as e:
