@@ -76,11 +76,11 @@ async def obter_historico_recente(
             SELECT autor, conteudo, criado_em
             FROM chat_historico_recente
             WHERE id_grupo_wpp = :id_grupo
-              AND criado_em >= NOW() - (:minutos || ' minutes')::INTERVAL
+              AND criado_em >= NOW() - (INTERVAL '1 minute' * :minutos)
             ORDER BY criado_em DESC
             LIMIT :limite
         """)
-        result = await db.execute(query, {"id_grupo": id_grupo_wpp, "minutos": minutos, "limite": limite})
+        result = await db.execute(query, {"id_grupo": id_grupo_wpp, "minutos": int(minutos), "limite": int(limite)})
         rows = result.fetchall()
 
         if not rows:
@@ -110,9 +110,9 @@ async def limpar_historico_antigo(db: AsyncSession, minutos: int = 60) -> None:
         await db.execute(
             text("""
                 DELETE FROM chat_historico_recente
-                WHERE criado_em < NOW() - (:minutos || ' minutes')::INTERVAL
+                WHERE criado_em < NOW() - (INTERVAL '1 minute' * :minutos)
             """),
-            {"minutos": minutos}
+            {"minutos": int(minutos)}
         )
         await db.commit()
     except Exception as e:
