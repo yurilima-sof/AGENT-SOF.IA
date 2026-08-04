@@ -345,6 +345,40 @@ async def process_agent_command(
                 home_data = await get_home_by_nome(db, payload.nome_revenda)
                 if home_data:
                     home_id = home_data["home_id"]
+
+                    # VERIFICAÇÃO PRÉVIA: Checa se os dispositivos da revenda estão online
+                    device_status = await tuya_service.check_home_devices_online(home_id)
+                    if device_status.get("all_offline") is True:
+                        elapsed_ms = int((time.monotonic() - start_time) * 1000)
+                        logger.warning(f"🔌 Dispositivos da revenda '{payload.nome_revenda}' (Home {home_id}) estão OFFLINE. Abortando comando.")
+
+                        msg_offline = (
+                            "Ops! Verifiquei aqui e os dispositivos da revenda estão offline no momento. 🔌 "
+                            "Por favor, verifique a conexão com a internet/energia e tente novamente em alguns minutos!"
+                        )
+
+                        await registrar_log(
+                            db=db,
+                            id_grupo=payload.id_grupo,
+                            nome_revenda=payload.nome_revenda,
+                            mensagem_original=payload.mensagem,
+                            intencao=intencao,
+                            status_op="dispositivo_offline",
+                            tempo_resposta_ms=elapsed_ms,
+                            acao_executada=acao,
+                            ambiente=ambiente
+                        )
+
+                        return AgentResponse(
+                            intencao=intencao,
+                            ambiente=ambiente,
+                            dispositivo_id=None,
+                            ifttt_action=None,      # Cancela o disparo do IFTTT
+                            link_ifttt=None,        # Cancela o webhook
+                            tuya_success=False,
+                            parametros={},
+                            mensagem_wpp=msg_offline,
+                        )
                     
                     if acao == "desativar_automacao" or intencao == "pausar_automacao":
                         # Busca automações ativas na Tuya Cloud e desativa regras de desligamento/timer

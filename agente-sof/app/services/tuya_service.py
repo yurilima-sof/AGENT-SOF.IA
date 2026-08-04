@@ -21,6 +21,10 @@ class TuyaService:
         # O Tuya exige o hash SHA256 para corpos vazios
         self.EMPTY_BODY_HASH = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
+        # Cache de status de dispositivos em memória (TTL: 60 segundos)
+        self._devices_cache: dict[str, tuple[float, list]] = {}
+        self._devices_cache_ttl = 60
+
     def _get_timestamp(self) -> str:
         return str(int(time.time() * 1000))
 
@@ -203,5 +207,68 @@ class TuyaService:
             path_alt = f"/v1.1/homes/{home_id}/automations/{automation_id}/actions/{action_name}"
             await self._request("PUT", path_alt, body={})
             return True
+
+    async def get_devices_by_home(self, home_id: str) -> list:
+        """
+        Retorna a lista de dispositivos cadastrados em uma residência (home).
+        Usa cache em memória por 60 segundos para evitar requisições desnecessárias à Tuya OpenAPI.
+        GET /v1.0/homes/{home_id}/devices
+        """
+        now = time.time()
+        if home_id in self._devices_cache:
+            cache_time, cached_devices = self._devices_cache[home_id]
+            if now - cache_time < self._devices_cache_ttl:
+                logger.info(f"📱 Usando status de dispositivos em cache para Home {home_id} ({len(cached_devices)} dispositivos)")
+                return cached_devices
+
+        logger.info(f"📱 Consultando status de dispositivos na Tuya para Home {home_id}...")
+        path = f"/v1.0/homes/{home_id}/devices"
+        try:
+            devices = await self._request("GET", path)
+            if devices is None:
+                devices = []
+            self._devices_cache[home_id] = (now, devices)
+            return devices
+        except Exception as e:
+            logger.warning(f"⚠️ Erro ao buscar dispositivos da Home {home_id} na Tuya: {e}. Tentando fallback v1.1...")
+            try:
+                path_v11 = f"/v1.1/homes/{home_id}/devices"
+                devices = await self._request("GET", path_v11)
+                if devices is None:
+                    devices = []
+                self._devices_cache[home_id] = (now, devices)
+                return devices
+            except Exception as e2:
+                logger.warning(f"⚠️ Não foi possível obter lista de dispositivos para Home {home_id}: {e2}")
+                return []
+
+    async def check_home_devices_online(self, home_id: str) -> dict:
+        """
+        Verifica se os dispositivos de uma residência estão online.
+        Retorna um dicionário com estatísticas e se estão todos offline.
+        Fail-safe: Se a consulta falhar ou não houver dispositivos registrados, assume online = True.
+        """
+        try:
+            devices = await self.get_devices_by_home(home_id)
+            if not devices:
+                logger.info(f"ℹ️ Nenhum dispositivo listado via API para Home {home_id}. Prosseguindo no modo fail-safe.")
+                return {"all_offline": False, "online_count": 0, "total_count": 0, "checked": False}
+
+            total_count = len(devices)
+            online_count = sum(1 for d in devices if d.get("online", True) is True)
+            offline_count = total_count - online_count
+
+            logger.info(f"📊 Status dos dispositivos (Home {home_id}): {online_count}/{total_count} online, {offline_count} offline.")
+
+            all_offline = (total_count > 0 and online_count == 0)
+            return {
+                "all_offline": all_offline,
+                "online_count": online_count,
+                "total_count": total_count,
+                "checked": True
+            }
+        except Exception as e:
+            logger.warning(f"⚠️ Erro ao checar conectividade dos dispositivos para Home {home_id}: {e}. Ativando fallback permissivo.")
+            return {"all_offline": False, "online_count": 0, "total_count": 0, "checked": False}
 
 tuya_service = TuyaService()

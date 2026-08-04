@@ -4,6 +4,15 @@ from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
+def _to_dict(row):
+    if row is None:
+        return None
+    if hasattr(row, "_mapping"):
+        return dict(row._mapping)
+    if isinstance(row, dict):
+        return row
+    return dict(row)
+
 async def get_home_by_nome(db: AsyncSession, nome_revenda: str) -> dict:
     """
     Busca a Home (residência) da Tuya baseando-se no nome da revenda recebido pelo WhatsApp/n8n.
@@ -17,7 +26,7 @@ async def get_home_by_nome(db: AsyncSession, nome_revenda: str) -> dict:
     result = await db.execute(query, {"nome": nome_revenda})
     row = result.fetchone()
     if row:
-        return dict(row._mapping)
+        return _to_dict(row)
 
     # 2. Tenta extrair dígitos de código de revenda (ex: 'Revenda 0019' -> '0019' ou '019')
     import re
@@ -36,7 +45,7 @@ async def get_home_by_nome(db: AsyncSession, nome_revenda: str) -> dict:
             result_num = await db.execute(query_num, {"num_p": num_pattern, "num_s": num_simple})
             row_num = result_num.fetchone()
             if row_num:
-                return dict(row_num._mapping)
+                return _to_dict(row_num)
 
     # 3. Tenta busca por palavras relevantes (ex: 'Teste sof' -> '%teste%' AND '%sof%')
     palavras = [p.strip() for p in nome_revenda.replace("[", " ").replace("]", " ").replace("/", " ").split() if len(p.strip()) >= 3]
@@ -47,14 +56,14 @@ async def get_home_by_nome(db: AsyncSession, nome_revenda: str) -> dict:
         result = await db.execute(query_flexible, params)
         row = result.fetchone()
         if row:
-            return dict(row._mapping)
+            return _to_dict(row)
 
     # 4. Fallback: busca por substring no nome
     query_any = text("SELECT * FROM tuya_clientes_homes WHERE nome_home ILIKE :contains LIMIT 1")
     result = await db.execute(query_any, {"contains": f"%{nome_revenda}%"})
     row = result.fetchone()
     if row:
-        return dict(row._mapping)
+        return _to_dict(row)
 
     return None
 
@@ -139,7 +148,7 @@ async def get_scene_by_ambiente(db: AsyncSession, home_id: str, ambiente: str, a
         })
         row = result.fetchone()
         if row:
-            return dict(row._mapping)
+            return _to_dict(row)
 
     # 2. Fallback sem filtro de ambiente (ou se ambiente não foi especificado)
     query_fallback = text("""
@@ -159,7 +168,7 @@ async def get_scene_by_ambiente(db: AsyncSession, home_id: str, ambiente: str, a
     })
     row_fb = result_fb.fetchone()
     if row_fb:
-        return dict(row_fb._mapping)
+        return _to_dict(row_fb)
 
     return None
 

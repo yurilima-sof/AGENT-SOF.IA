@@ -69,5 +69,7 @@ extracao_tuya_completa.md
 relatorio_devices_*.md
 testar_agente.py
 test_grupo_thiago.py
+tests/
+tests/test_device_offline_check.py
 
 

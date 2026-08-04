@@ -80,7 +80,7 @@ class Settings(BaseSettings):
     # - env_file_encoding: garante suporte a caracteres especiais no .env
     # - case_sensitive: variáveis de ambiente são case-insensitive (DATABASE_URL == database_url)
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", "../.env", "../../.env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",  # Ignora variáveis de ambiente que não estão mapeadas aqui.

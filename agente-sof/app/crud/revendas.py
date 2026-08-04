@@ -20,8 +20,15 @@ async def buscar_credenciais_revenda(db: AsyncSession, id_grupo: str) -> Optiona
             {"id_grupo": id_grupo}
         )
         row = result.fetchone()
-        if row and row.credenciais_tuya:
-            return row.credenciais_tuya
+        if row:
+            if hasattr(row, "credenciais_tuya"):
+                return row.credenciais_tuya
+            elif isinstance(row, dict):
+                return row.get("credenciais_tuya")
+            elif hasattr(row, "_mapping"):
+                return row._mapping.get("credenciais_tuya")
+            elif isinstance(row, (tuple, list)):
+                return row[0]
         return None
     except Exception as e:
         logger.warning(f"⚠️ Erro ao consultar mapa_revendas: {e}")
