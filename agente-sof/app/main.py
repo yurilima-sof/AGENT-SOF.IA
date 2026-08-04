@@ -350,8 +350,8 @@ async def process_agent_command(
                 mensagem_wpp = None
                 credenciais = await buscar_credenciais_revenda(db, payload.id_grupo)
 
-        # Fallback de Palavras-Chave (Keyword Matching)
-        if not intencao or intencao == "sem_acao":
+        # Fallback de Palavras-Chave (Keyword Matching) - Executado APENAS se a IA falhar totalmente (intencao is None)
+        if not intencao:
             logger.info("   [Fallback] Identificando ação via Keyword Matching...")
             acao_fallback = identificar_acao(payload.mensagem)
             if acao_fallback:
