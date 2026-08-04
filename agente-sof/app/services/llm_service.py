@@ -174,19 +174,32 @@ class LLMService:
         logger.info(f"   [Gemini] Iniciando requisição direta ao modelo {m_name}...")
 
         try:
-            model = genai.GenerativeModel(
-                model_name=m_name,
-                system_instruction=system_prompt
-            )
-            
-            response = await model.generate_content_async(
-                user_content,
-                generation_config=genai.GenerationConfig(
-                    response_mime_type="application/json",
-                    temperature=0.0,
-                    max_output_tokens=1000
+            try:
+                model = genai.GenerativeModel(
+                    model_name=m_name,
+                    system_instruction=system_prompt
                 )
-            )
+                
+                response = await model.generate_content_async(
+                    user_content,
+                    generation_config=genai.GenerationConfig(
+                        response_mime_type="application/json",
+                        temperature=0.0,
+                        max_output_tokens=1000
+                    )
+                )
+            except Exception as e_sys:
+                logger.warning(f"⚠️ Chamada com system_instruction falhou ({e_sys}). Tentando modo de prompt unificado...")
+                model = genai.GenerativeModel(model_name=m_name)
+                full_prompt = f"{system_prompt}\n\n{user_content}"
+                response = await model.generate_content_async(
+                    full_prompt,
+                    generation_config=genai.GenerationConfig(
+                        response_mime_type="application/json",
+                        temperature=0.0,
+                        max_output_tokens=1000
+                    )
+                )
             
             if not response or not response.text:
                 raise ValueError("Resposta vazia da API do Gemini.")
