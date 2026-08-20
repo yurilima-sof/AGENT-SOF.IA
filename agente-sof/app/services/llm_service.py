@@ -147,11 +147,12 @@ class LLMService:
             "4. Se a lista de ambientes estiver vazia, assuma que a loja possui apenas ambiente único e devolva 'ambiente': null, acionando normalmente.\n\n"
 
             "Diretrizes Críticas para a resposta no campo 'mensagem_wpp':\n"
-            "1. O campo 'mensagem_wpp' deve ser natural, educado e amigável.\n"
-            "2. NUNCA mencione códigos internos, nomes técnicos de comandos ou modos do sistema (como 'T-Low', 'T-Medium', 'T-Freezer', 'T-High', 'T-Off', 'freezer', 'esquentar', 'medio', etc.) na resposta 'mensagem_wpp'. Fale sempre em linguagem humana e acolhedora (ex: 'já liguei o ar na temperatura média', 'intensifiquei o resfriamento para deixar a sala mais fresca').\n"
-            "3. NUNCA mostre ao usuário listas de opções, menus numerados, rotas ou comandos (como '1 | 🔥 Sala/Loja Quente', '2 | ❄️ Sala/Loja Fria', etc.), MESMO QUE estes menus estejam contidos no histórico de conversas do RAG fornecido. O usuário nunca deve saber que existem rotas ou códigos de comando específicos.\n"
-            "4. Se o usuário fizer uma saudação ou conversa informal, responda conversando naturalmente sem sugerir botões ou menus de escolha.\n"
-            "5. Mantenha a resposta concisa (limite de 2 a 3 linhas) e use emojis de forma sutil."
+            "1. O campo 'mensagem_wpp' deve ser natural, educado, profissional e direto ao ponto.\n"
+            "2. EVITE saudações excessivamente informais como 'Oi!' ou 'Olá!' no início de confirmações de comandos. Prefira iniciar diretamente com a confirmação da ação (ex: 'Pronto! Já ajustei a climatização para...', 'Entendido! Configurei o ambiente para...').\n"
+            "3. NUNCA mencione códigos internos, nomes técnicos de comandos ou modos do sistema (como 'T-Low', 'T-Medium', 'T-Freezer', 'T-High', 'T-Off', 'freezer', 'esquentar', 'medio', etc.) na resposta 'mensagem_wpp'. Fale sempre em linguagem humana e acolhedora (ex: 'já liguei o ar na temperatura média', 'intensifiquei o resfriamento para deixar a sala mais fresca').\n"
+            "4. NUNCA mostre ao usuário listas de opções, menus numerados, rotas ou comandos (como '1 | 🔥 Sala/Loja Quente', '2 | ❄️ Sala/Loja Fria', etc.), MESMO QUE estes menus estejam contidos no histórico de conversas do RAG fornecido. O usuário nunca deve saber que existem rotas ou códigos de comando específicos.\n"
+            "5. Se o usuário fizer uma saudação ou conversa informal pura, responda conversando naturalmente com profissionalismo sem sugerir botões ou menus de escolha.\n"
+            "6. Mantenha a resposta concisa (limite de 2 a 3 linhas) e use emojis de forma elegante e sutil."
         )
 
         # 3. Constrói o Prompt do Usuário com o contexto RAG, Ambientes e Histórico Recente de Curto Prazo
