@@ -17,6 +17,12 @@ async def get_home_by_nome(db: AsyncSession, nome_revenda: str) -> dict:
     """
     Busca a Home (residência) da Tuya baseando-se no nome da revenda recebido pelo WhatsApp/n8n.
     Suporta busca exata, busca por código numérico de revenda (ex: 0019), ILIKE e palavras-chave.
+
+    ATENÇÃO (achado L7): busca fuzzy por texto livre — duas revendas com nomes parecidos
+    podem colidir na mesma home. NÃO usar no caminho de comando (produção); mantido só
+    como utilitário administrativo/diagnóstico (ex.: script de backfill de tuya_home_id).
+    A resolução em produção é `app.crud.revendas.resolver_home_id_por_grupo`, que usa
+    exclusivamente `id_grupo_wpp`.
     """
     if not nome_revenda:
         return None

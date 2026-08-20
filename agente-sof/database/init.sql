@@ -57,6 +57,9 @@ CREATE TABLE IF NOT EXISTS mapa_revendas (
     -- }
     credenciais_tuya JSONB NOT NULL DEFAULT '{}',
 
+    -- Home ID da Tuya vinculada diretamente à revenda pelo ID de Grupo do WhatsApp (Isolamento Multi-tenant U-07)
+    tuya_home_id VARCHAR(100),
+
     -- Flag para desativar uma revenda sem deletá-la do banco.
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
 
@@ -64,6 +67,8 @@ CREATE TABLE IF NOT EXISTS mapa_revendas (
     criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     atualizado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_mapa_revendas_home_id ON mapa_revendas(tuya_home_id);
 
 -- Comentários descritivos nas colunas (boa prática para documentação do schema).
 COMMENT ON TABLE mapa_revendas IS 'Tabela central multi-tenant: mapeia grupos de WhatsApp para revendas e suas credenciais Tuya.';
