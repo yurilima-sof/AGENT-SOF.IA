@@ -32,8 +32,8 @@ services:
     build: .
     container_name: agente_sof_api
     restart: unless-stopped
-    # Acesso direto via IP Público na porta 8000 (Sem Caddy / Sem SSL)
-    # NOTA: Quando configurar o Caddy com domínio HTTPS, altere para "127.0.0.1:8000:8000" para blindar a porta.
+    # Acesso direto via IP público na porta 8000 (sem proxy reverso/TLS por enquanto).
+    # TODO: colocar atrás de um proxy com HTTPS (Caddy, Nginx, Cloudflare Tunnel) assim que possível.
     ports:
       - "8000:8000"
     env_file:
@@ -44,27 +44,6 @@ services:
       db:
         condition: service_healthy
 
-  # ---------------------------------------------------------------------------
-  # Proxy Reverso (Caddy - SSL Automático)
-  # ---------------------------------------------------------------------------
-  caddy:
-    image: caddy:2-alpine
-    container_name: agente_sof_proxy
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - api
-
 volumes:
   postgres_data:
-    driver: local
-  caddy_data:
-    driver: local
-  caddy_config:
     driver: local

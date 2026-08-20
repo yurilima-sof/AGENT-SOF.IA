@@ -82,7 +82,7 @@ agente-sof/
 │   └── seed_grupos.sql         #    Dados oficiais de homologação e produção
 ├── tests/                      # 🧪 Suíte de validação automatizada
 │   └── test_grupo_thiago.py    #    Script de simulação em lote de chamadas
-├── docker-compose.yml          # 🐳 Orquestração do banco, API e proxy reverso Caddy
+├── docker-compose.yml          # 🐳 Orquestração do banco e da API (porta 8000 exposta direto, sem proxy/TLS por ora)
 ├── requirements.txt            # 📦 Dependências do ecossistema Python
 └── cloudflared.exe             # 🌐 Executável auxiliar do Cloudflare Tunnel
 ```
@@ -141,7 +141,7 @@ A API possui documentação automática e interativa do **Swagger UI** disponív
   "intencao": "ligar_resfriamento",
   "dispositivo_id": null,
   "ifttt_action": "freezer",
-  "link_ifttt": "https://maker.ifttt.com/trigger/Teste_ligar/with/key/boVO_...",
+  "link_ifttt": "https://maker.ifttt.com/trigger/Teste_ligar/with/key/SUA_CHAVE_IFTTT_AQUI",
   "parametros": {},
   "mensagem_wpp": "Entendido! ❄️ Ativando modo resfriamento. Aguarde alguns instantes."
 }
@@ -257,7 +257,9 @@ Ideal para desenvolvimento ágil com suporte a recarga automática (*Hot-Reload*
 ---
 
 ### 🐳 Método B: Execução em Docker Completo
-Simula o comportamento real de produção (incluindo o proxy reverso Caddy).
+Simula o comportamento real de produção. A API sobe exposta direto na porta 8000 (HTTP,
+sem TLS por enquanto — colocar atrás de um proxy com HTTPS antes de expor para clientes
+externos é recomendado, mas não bloqueia o piloto controlado).
 
 1. **Suba a infraestrutura completa:**
    ```powershell
@@ -324,6 +326,6 @@ Para receber requisições em tempo real do n8n na nuvem sem precisar abrir port
    ```
 
 > [!TIP]
-> **Acesso via IP Público vs Caddy:** Se você estiver utilizando acesso direto via IP público (`http://IP_DA_VPS:8000`), a porta `"8000:8000"` no `docker-compose.yml` deve permanecer liberada. Quando você configurar um domínio com o **Caddy** (HTTPS), recomendamos alterar a porta para `"127.0.0.1:8000:8000"` para que todo o tráfego passe obrigatoriamente pelo proxy seguro nas portas 80/443.
+> **Acesso via IP Público:** hoje a API sobe exposta direto em `http://IP_DA_VPS:8000` (porta `"8000:8000"` no `docker-compose.yml`), sem HTTPS. Antes de expor para clientes fora de um piloto controlado, coloque um proxy reverso com TLS na frente (Caddy, Nginx, Cloudflare Tunnel) e mude a porta para `"127.0.0.1:8000:8000"` para que o tráfego externo passe só pelo proxy.
 
 
