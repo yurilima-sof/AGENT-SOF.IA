@@ -1,0 +1,16 @@
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "integration: marca testes que exigem banco de dados ou serviços externos",
+    "llm_eval: marca avaliações de acurácia semântica com o modelo Gemini real"
+]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]

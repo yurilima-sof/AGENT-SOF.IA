@@ -18,6 +18,8 @@ fastapi==0.111.0
 # Uvicorn: servidor ASGI de alta performance para rodar o FastAPI.
 # [standard] inclui extras como watchfiles (hot reload) e httptools.
 uvicorn[standard]==0.30.1
+websockets>=12.0
+
 
 
 # --- Validação de Dados ---
@@ -66,3 +68,5 @@ google-generativeai==0.8.6
 # --- Utilitários ---
 # python-multipart: necessário para upload de arquivos (manuais PDF no futuro).
 python-multipart>=0.0.27
+tzdata>=2026.1
+

@@ -64,12 +64,10 @@ _chat.txt
 *.bin
 
 # --- Scripts Locais de Utilidade e Dados Extraídos ---
+# utils/ contém dados reais de cliente (home_ids, inserts SQL) — mantido fora do controle
+# de versão. tests/ e testar_agente.py voltaram a ser versionados (achado Q1).
 utils/
 extracao_tuya_completa.md
 relatorio_devices_*.md
-testar_agente.py
-test_grupo_thiago.py
-tests/
-tests/test_device_offline_check.py
 
 
