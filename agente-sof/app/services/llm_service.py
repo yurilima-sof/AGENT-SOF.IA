@@ -173,7 +173,7 @@ class LLMService:
         user_content = "\n\n".join(user_content_parts)
 
         # 4. Envia para a API do Gemini (Solução Definitiva - Direta e sem Loop)
-        m_name = getattr(settings, 'gemini_model', 'gemini-2.5-flash')
+        m_name = getattr(settings, 'gemini_model', 'gemini-3.6-flash')
         logger.info(f"   [Gemini] Iniciando requisição direta ao modelo {m_name}...")
 
         try:
