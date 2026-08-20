@@ -96,6 +96,25 @@ class Settings(BaseSettings):
         """Retorna True se a aplicação está rodando em modo desenvolvimento."""
         return self.app_env == "development"
 
+    from pydantic import model_validator
+
+    @model_validator(mode="after")
+    def _proibir_defaults_em_producao(self):
+        if self.app_env != "production":
+            return self
+        defaults_inseguros = {"dev-api-key-insegura", "chave-insegura-apenas-para-desenvolvimento"}
+        problemas = []
+        if self.api_key in defaults_inseguros or len(self.api_key) < 32:
+            problemas.append("API_KEY (deve ser alterada e possuir >=32 caracteres)")
+        if self.secret_key in defaults_inseguros or len(self.secret_key) < 32:
+            problemas.append("SECRET_KEY (deve ser alterada e possuir >=32 caracteres)")
+        if not self.gemini_api_key:
+            problemas.append("GEMINI_API_KEY (obrigatória em produção)")
+        if problemas:
+            from app.core.exceptions import ConfigError
+            raise ConfigError(f"Configuração insegura para ambiente de produção: {', '.join(problemas)}")
+        return self
+
 
 # =============================================================================
 # PADRÃO SINGLETON COM lru_cache
