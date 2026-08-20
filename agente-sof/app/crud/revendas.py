@@ -5,6 +5,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+async def inicializar_colunas_revendas(db: AsyncSession) -> None:
+    """
+    Garante que colunas necessárias (como tuya_home_id) existam na tabela mapa_revendas (Auto-Migration).
+    """
+    try:
+        await db.execute(text("""
+            ALTER TABLE mapa_revendas ADD COLUMN IF NOT EXISTS tuya_home_id VARCHAR(100);
+        """))
+        await db.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_mapa_revendas_home_id ON mapa_revendas(tuya_home_id);
+        """))
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        logger.warning(f"⚠️ Não foi possível inicializar colunas de mapa_revendas: {e}")
+
 async def buscar_credenciais_revenda(db: AsyncSession, id_grupo: str) -> Optional[dict]:
     """
     Consulta a tabela mapa_revendas para obter todas as credenciais_tuya do grupo.
@@ -31,6 +47,7 @@ async def buscar_credenciais_revenda(db: AsyncSession, id_grupo: str) -> Optiona
                 return row[0]
         return None
     except Exception as e:
+        await db.rollback()
         logger.warning(f"⚠️ Erro ao consultar mapa_revendas: {e}")
         return None
 
@@ -63,5 +80,6 @@ async def resolver_home_id_por_grupo(db: AsyncSession, id_grupo: str, nome_reven
         logger.warning(f"⚠️ Revenda '{id_grupo}' sem tuya_home_id cadastrado em mapa_revendas. Comando Tuya nativo indisponível (sem fallback por nome, ver L7).")
         return None
     except Exception as e:
+        await db.rollback()
         logger.warning(f"⚠️ Erro ao resolver home_id para grupo '{id_grupo}': {e}")
         return None

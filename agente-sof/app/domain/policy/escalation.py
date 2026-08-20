@@ -19,7 +19,7 @@ def determinar_acao_e_intencao(
             return (
                 "medio",
                 "ligar_temperatura_media",
-                "Entendido! 🌡️ Iniciando climatização em temperatura média (T-Medium). Se continuar quente nos próximos minutos, me avise!"
+                "Entendido! 🌡️ Iniciando climatização em temperatura média. Se continuar quente nos próximos minutos, me avise!"
             )
         else:
             # L2: só existem dois níveis físicos hoje (medio / freezer) — a partir da 2ª
@@ -28,21 +28,21 @@ def determinar_acao_e_intencao(
             return (
                 "freezer",
                 "ligar_resfriamento",
-                "Entendido! ❄️ Ativando resfriamento no modo máximo (T-Freezer)."
+                "Entendido! ❄️ Intensificando o resfriamento para deixar o ambiente mais fresco rapidamente."
             )
 
     elif familia == FamiliaIntencao.TEMPERATURA_MEDIA:
         return (
             "medio", 
             "ligar_temperatura_media", 
-            "Entendido! 🌡️ Ajustando para temperatura média (T-Medium)."
+            "Entendido! 🌡️ Ajustando para temperatura média e agradável."
         )
 
     elif familia == FamiliaIntencao.AQUECIMENTO:
         return (
             "esquentar", 
             "ligar_aquecimento", 
-            "Entendido! 🔥 Ativando aquecimento do ambiente (T-High)."
+            "Entendido! 🔥 Ativando aquecimento do ambiente."
         )
 
     elif familia == FamiliaIntencao.DESLIGAR:

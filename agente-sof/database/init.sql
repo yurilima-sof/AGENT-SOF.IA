@@ -167,7 +167,8 @@ CREATE TABLE IF NOT EXISTS tuya_clientes_homes (
     tuya_uid VARCHAR(100) NOT NULL,
     home_id VARCHAR(100) NOT NULL,
     nome_home VARCHAR(200) NOT NULL,
-    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_tuya_homes_sigla_home UNIQUE (sigla_cliente, home_id)
 );
 CREATE INDEX IF NOT EXISTS idx_tuya_homes_sigla ON tuya_clientes_homes(sigla_cliente);
 CREATE INDEX IF NOT EXISTS idx_tuya_homes_nome ON tuya_clientes_homes(nome_home);

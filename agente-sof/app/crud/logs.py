@@ -49,5 +49,6 @@ async def registrar_log(
         )
         await db.commit()
     except Exception as e:
+        await db.rollback()
         # Erros de log não devem falhar a requisição principal
         logger.error(f"❌ Falha crítica ao gravar log da operação: {e}")

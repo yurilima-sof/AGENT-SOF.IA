@@ -135,15 +135,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     logger.info(f"   Modo     : Tuya API Direta + IFTTT Fallback")
     logger.info("=" * 60)
 
-    # Auto-Migration: Garante que a tabela chat_historico_recente exista no banco ao iniciar a aplicação
+    # Auto-Migration: Garante tabelas e colunas necessárias no banco ao iniciar a aplicação
     try:
         from app.database import async_session_maker
         from app.crud.chat_history import inicializar_tabela_historico
+        from app.crud.revendas import inicializar_colunas_revendas
         async with async_session_maker() as session:
             await inicializar_tabela_historico(session)
-            logger.info("✅ Tabela de memória recente (chat_historico_recente) verificada/inicializada com sucesso.")
+            await inicializar_colunas_revendas(session)
+            logger.info("✅ Estrutura do banco de dados (tabelas e colunas) verificada/inicializada com sucesso.")
     except Exception as e:
-        logger.warning(f"⚠️ Aviso no startup ao checar tabela chat_historico_recente: {e}")
+        logger.warning(f"⚠️ Aviso no startup ao checar estrutura do banco: {e}")
 
     yield
 
