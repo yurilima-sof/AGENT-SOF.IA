@@ -17,7 +17,6 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status, Body
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
@@ -94,8 +93,7 @@ from app.database import get_db
 from app.crud.revendas import buscar_credenciais_revenda
 from app.crud.logs import registrar_log
 from app.crud.chat_history import salvar_mensagem_historico, obter_historico_recente
-from app.services.fallback_service import identificar_acao, get_intencao_and_message
-from app.crud.tuya import get_home_by_nome, get_scene_by_ambiente
+from app.crud.tuya import get_scene_by_ambiente
 from app.services.tuya_service import tuya_service
 
 async def buscar_link_ifttt(credenciais: dict, acao: str, ambiente: Optional[str] = None) -> Optional[str]:
@@ -137,8 +135,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     logger.info(f"   Modo     : Tuya API Direta + IFTTT Fallback")
     logger.info("=" * 60)
 
-    # TODO (Fase 2): Inicializar pool de conexões com o banco
-    # TODO (Fase 2): Carregar índice RAG
+    # Auto-Migration: Garante que a tabela chat_historico_recente exista no banco ao iniciar a aplicação
+    try:
+        from app.database import async_session_maker
+        from app.crud.chat_history import inicializar_tabela_historico
+        async with async_session_maker() as session:
+            await inicializar_tabela_historico(session)
+            logger.info("✅ Tabela de memória recente (chat_historico_recente) verificada/inicializada com sucesso.")
+    except Exception as e:
+        logger.warning(f"⚠️ Aviso no startup ao checar tabela chat_historico_recente: {e}")
 
     yield
 
@@ -169,25 +174,23 @@ def create_app() -> FastAPI:
     # Integra o rate limiter ao app
     app_instance.state.limiter = limiter
 
+    from fastapi.responses import JSONResponse
+
     @app_instance.exception_handler(RateLimitExceeded)
     async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
         logger.warning(f"⚠️ Rate limit excedido para IP: {request.client.host}")
-        return HTTPException(
+        return JSONResponse(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail={
-                "error": "rate_limit_exceeded",
-                "message": "Muitas requisições. Aguarde um momento e tente novamente.",
+            content={
+                "detail": {
+                    "error": "rate_limit_exceeded",
+                    "message": "Muitas requisições. Aguarde um momento e tente novamente.",
+                }
             },
         )
 
-    # CORS
-    app_instance.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    # CORS: middleware removido (S5). O único consumidor é o n8n, servidor-a-servidor,
+    # sem navegador no fluxo — CORS aberto não protege nada aqui, só amplia superfície.
 
     @app_instance.middleware("http")
     async def log_requests(request: Request, call_next):
@@ -204,25 +207,6 @@ def create_app() -> FastAPI:
     return app_instance
 
 app = create_app()
-
-
-# =============================================================================
-# ENDPOINTS
-# =============================================================================
-
-@app.on_event("startup")
-async def on_startup():
-    """
-    Auto-Migration: Garante que a tabela chat_historico_recente exista no banco ao iniciar a aplicação.
-    """
-    try:
-        from app.database import AsyncSessionLocal
-        from app.crud.chat_history import inicializar_tabela_historico
-        async with AsyncSessionLocal() as session:
-            await inicializar_tabela_historico(session)
-            logger.info("✅ Tabela de memória recente (chat_historico_recente) verificada/inicializada com sucesso.")
-    except Exception as e:
-        logger.warning(f"⚠️ Aviso no startup ao checar tabela chat_historico_recente: {e}")
 
 @app.get(
     "/health",
@@ -297,6 +281,8 @@ async def process_agent_command(
         # -----------------------------------------------------------------
         # PASSO 1: Identificar a ação e intenção (LLM com RAG ou Fallback)
         # -----------------------------------------------------------------
+        # Pré-inicializa variáveis de ação e busca credenciais do grupo no banco
+        credenciais = await buscar_credenciais_revenda(db, payload.id_grupo)
         acao = None
         intencao = None
         ambiente = None
@@ -304,16 +290,13 @@ async def process_agent_command(
 
         if settings.gemini_api_key:
             try:
-                logger.info("   [Banco] Buscando credenciais e ambientes cadastrados...")
+                logger.info("   [Banco] Buscando ambientes cadastrados para a revenda...")
                 
                 # NOVO FLUXO: Busca ambientes cadastrados diretamente das Cenas Tuya
                 from app.crud.tuya import get_ambientes_by_cliente
                 ambientes_disponiveis = await get_ambientes_by_cliente(db, payload.nome_revenda)
                 
-                # Retém a busca de credenciais antigas caso precise para logs
-                credenciais = await buscar_credenciais_revenda(db, payload.id_grupo)
-                
-                # Fallback: se não tiver ambientes na Tuya, tenta extrair das credenciais antigas (retrocompatibilidade temporária)
+                # Fallback: se não tiver ambientes na Tuya, tenta extrair das credenciais antigas
                 if not ambientes_disponiveis and credenciais:
                     for chave in credenciais.keys():
                         if "_" in chave and chave.split("_", 1)[1] not in ambientes_disponiveis:
@@ -348,15 +331,16 @@ async def process_agent_command(
                 intencao = None
                 ambiente = None
                 mensagem_wpp = None
-                credenciais = await buscar_credenciais_revenda(db, payload.id_grupo)
 
         # Fallback de Palavras-Chave (Keyword Matching) - Executado APENAS se a IA falhar totalmente (intencao is None)
         if not intencao:
-            logger.info("   [Fallback] Identificando ação via Keyword Matching...")
-            acao_fallback = identificar_acao(payload.mensagem)
-            if acao_fallback:
-                acao = acao_fallback
-                intencao, mensagem_wpp = get_intencao_and_message(acao)
+            logger.info("   [Fallback] Identificando ação via Keyword Matching e Políticas de Domínio...")
+            from app.domain.policy.keyword_fallback import classificar_familia
+            from app.domain.policy.escalation import determinar_acao_e_intencao
+
+            familia_fallback = classificar_familia(payload.mensagem)
+            if familia_fallback:
+                acao, intencao, mensagem_wpp = determinar_acao_e_intencao(familia_fallback, chamados_recentes=0)
 
         # -----------------------------------------------------------------
         # PASSO 2: Montar a resposta com base na ação identificada
@@ -367,10 +351,10 @@ async def process_agent_command(
             # 1. TENTA EXECUTAR NATIVAMENTE NA TUYA
             tuya_success = None
             try:
-                # Busca a revenda (home) pelo nome exato vindo do WhatsApp
-                home_data = await get_home_by_nome(db, payload.nome_revenda)
-                if home_data:
-                    home_id = home_data["home_id"]
+                # RESOLUÇÃO MULTI-TENANT SEGURA (U-07): Resolve home_id via id_grupo_wpp
+                from app.crud.revendas import resolver_home_id_por_grupo
+                home_id = await resolver_home_id_por_grupo(db, payload.id_grupo, payload.nome_revenda)
+                if home_id:
 
                     # VERIFICAÇÃO PRÉVIA: Checa se os dispositivos da revenda estão online
                     device_status = await tuya_service.check_home_devices_online(home_id)
