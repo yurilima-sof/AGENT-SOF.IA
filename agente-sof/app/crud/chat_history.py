@@ -19,6 +19,8 @@ async def inicializar_tabela_historico(db: AsyncSession) -> None:
                 conteudo TEXT NOT NULL,
                 criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
             );
+        """))
+        await db.execute(text("""
             CREATE INDEX IF NOT EXISTS idx_chat_historico_grupo_tempo 
             ON chat_historico_recente(id_grupo_wpp, criado_em DESC);
         """))
