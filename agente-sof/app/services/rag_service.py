@@ -29,18 +29,24 @@ class RAGService:
         """
 
 
-        # 1. Gera o embedding da pergunta do usuário usando o Gemini (768 dimensões)
+        # 1. Gera o embedding da pergunta do usuário usando o Gemini (768 dimensões com gemini-embedding-001)
         try:
-            response = genai.embed_content(
-                model="models/gemini-embedding-001",
-                content=query,
-                task_type="retrieval_query",
-                output_dimensionality=768,
+            import asyncio
+            # Define timeout estrito de 3s para NUNCA travar a API se a Google oscilar em prod
+            response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    genai.embed_content,
+                    model="models/gemini-embedding-001",
+                    content=query,
+                    task_type="retrieval_query",
+                    output_dimensionality=768,
+                ),
+                timeout=3.0
             )
             query_embedding = response["embedding"]
         except Exception as e:
-            # Fallback seguro caso a chamada de API falhe
-            logger.warning(f"Erro ao gerar embedding da consulta com Gemini: {e}")
+            # Fallback seguro: NUNCA quebra a API se a chamada de embedding falhar/expirar
+            logger.warning(f"⚠️ Erro/Timeout ao gerar embedding da consulta com Gemini ({e}). Prosseguindo sem RAG.")
             return ""
 
         # 2. Executa a busca por similaridade de cosseno (operador <=>) no banco de dados
