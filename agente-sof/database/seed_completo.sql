@@ -1,5 +1,5 @@
 -- =============================================================================
--- database/seed_completo.sql - Povoamento Completo do Banco (Revendas + Tuya)
+-- database/seed_completo.sql - Povoamento Completo e Oficial (Revendas + Tuya)
 -- =============================================================================
 -- Executar no container Docker PostgreSQL:
 -- docker exec -i agente_sof_db psql -U agente_user -d agente_sof_db < database/seed_completo.sql
@@ -18,185 +18,7 @@ BEGIN
     END IF;
 END $$;
 
-
--- 2. DADOS DE GRUPOS WHATSAPP (mapa_revendas)
--- =============================================================================
--- database/seed_grupos.sql - Dados Iniciais de Grupos/Revendas para Testes
--- =============================================================================
--- COMO USAR:
---   Execute este script DEPOIS que o banco já estiver rodando:
---   docker exec -i agente_sof_db psql -U agente_user -d agente_sof_db < database/seed_grupos.sql
---
--- IMPORTANTE:
---   Os links IFTTT abaixo foram extraídos do fluxo n8n atual.
---   Grupos com links comentados (pendentes) são inseridos mas sem URLs ativas.
---   O campo `ativo` = false bloqueia grupos sem configuração IFTTT.
--- =============================================================================
-
--- Limpa registros anteriores de seed (idempotente: pode rodar várias vezes).
--- Em produção, USE APENAS INSERT ... ON CONFLICT para não perder dados reais!
-DELETE FROM mapa_revendas WHERE id_grupo_wpp LIKE '%-group';
-
-
--- =============================================================================
--- GRUPOS COM IFTTT CONFIGURADO E ATIVO ✅
--- =============================================================================
-
-INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, ativo) VALUES
-(
-  '120363298041373758-group',
-  'Revenda 0019',
-  'XX',
-  '{
-    "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0019_freezer/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0019_esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0019_off/with/key/SUA_CHAVE_IFTTT_AQUI"
-  }',
-  true
-),
-(
-  '120363401204481216-group',
-  'Revenda 0047',
-  'XX',
-  '{
-    "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0047_Esfriar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0047_Esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0047_OFF/with/key/SUA_CHAVE_IFTTT_AQUI"
-  }',
-  true
-),
-(
-  '120363298127856818-group',
-  'Revenda 0016',
-  'XX',
-  '{
-    "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0016_freezer/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0016_Esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0016_OFF/with/key/SUA_CHAVE_IFTTT_AQUI"
-  }',
-  true
-),
-(
-  '120363279998161437-group',
-  'Revenda 0020',
-  'XX',
-  '{
-    "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0020_freezer/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0020_Esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0020_OFF/with/key/SUA_CHAVE_IFTTT_AQUI"
-  }',
-  true
-),
-(
-  '120363199036541250-group',
-  'Revenda 0002',
-  'XX',
-  '{
-    "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0002_freezer/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0002_Esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0002_OFF/with/key/SUA_CHAVE_IFTTT_AQUI"
-  }',
-  true
-),
-(
-  '120363282476786392-group',
-  'Revenda 0021',
-  'XX',
-  '{
-    "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0021_freezer/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0021_Esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0021_OFF/with/key/SUA_CHAVE_IFTTT_AQUI"
-  }',
-  true
-),
-(
-  '120363279978711780-group',
-  'Revenda 0009',
-  'XX',
-  '{
-    "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0009_Freezer/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0009_esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0009_off/with/key/SUA_CHAVE_IFTTT_AQUI"
-  }',
-  true
-),
-(
-  '120363281098848004-group',
-  'Revenda 0018',
-  'XX',
-  '{
-    "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0018_freezer/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0018_Esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0018_OFF/with/key/SUA_CHAVE_IFTTT_AQUI"
-  }',
-  true
-),
-(
-  '120363422455765261-group',
-  'Grupo Thiago (Teste)',
-  'XX',
-  '{
-    "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/thiago_on/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": null,
-    "off": "https://maker.ifttt.com/trigger/thiago_off/with/key/SUA_CHAVE_IFTTT_AQUI"
-  }',
-  true
-);
-
-
--- =============================================================================
--- GRUPOS PENDENTES DE CONFIGURAÇÃO IFTTT ⚠️ (ativo = false)
--- =============================================================================
--- Estão no mapa mas não serão acionados até configurar os links IFTTT.
-
-INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, ativo) VALUES
-('120363324972918585-group', 'Revenda 0015 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363399960956454-group', 'Revenda 0076 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363421263750896-group', 'Revenda 0063 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363418714887384-group', 'Revenda 0037 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363401359633431-group', 'Revenda 0040 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363419939662342-group', 'Revenda 0052 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363418878294124-group', 'Revenda 0045 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363419677042527-group', 'Revenda 0042 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363400265141468-group', 'Revenda 0048 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363404164054502-group', 'Revenda 0039 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363283372696640-group', 'Revenda 0033 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363418500883724-group', 'Revenda 0051 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363418248455431-group', 'Revenda 0049 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363416691329634-group', 'Revenda 0044 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363420148871001-group', 'Revenda 0041 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363299730692570-group', 'Revenda 0032 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363402155032954-group', 'Revenda 0064 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363299584288213-group', 'Revenda 0034 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false),
-('120363416873746928-group', 'Revenda 0065 (Pendente)', 'XX', '{"tipo": "ifttt", "status": "pendente_configuracao"}', false);
-
-
--- =============================================================================
--- VERIFICAÇÃO FINAL
--- =============================================================================
-SELECT
-  id_grupo_wpp,
-  nome_revenda,
-  ativo,
-  credenciais_tuya->>'tipo' AS tipo_integracao,
-  CASE
-    WHEN credenciais_tuya->>'status' = 'pendente_configuracao' THEN '⚠️  PENDENTE'
-    WHEN ativo = true THEN '✅ ATIVO'
-    ELSE '❌ INATIVO'
-  END AS situacao
-FROM mapa_revendas
-ORDER BY ativo DESC, nome_revenda;
-
--- 3. HOMES E CENAS TUYA (tuya_clientes_homes / tuya_clientes_cenas)
+-- 2. DADOS DE HOMES E CENAS TUYA
 -- Script Gerado Automaticamente para inserir Homes e Cenas da Tuya
 
 INSERT INTO tuya_clientes_homes (id, sigla_cliente, tuya_uid, home_id, nome_home) VALUES ('18fb4147-a71c-4f2d-9dbe-a081b000b2f3', 'pe', 'az1758205559313AAFQn', '265054363', '[SOF] Testes') ON CONFLICT (sigla_cliente, home_id) DO NOTHING;
@@ -586,28 +408,72 @@ INSERT INTO tuya_clientes_cenas (id, sigla_cliente, home_id, ambiente, scene_id,
 INSERT INTO tuya_clientes_cenas (id, sigla_cliente, home_id, ambiente, scene_id, nome_cena, acao) VALUES ('ca9d9e62-6fb4-402f-a44d-69ba22fc56d0', 'pb', '265046253', '0082 T-OFF', 'Qx3CV4Yk7gG2WQ7A', '0082.T-OFF', '') ON CONFLICT (scene_id) DO NOTHING;
 
 
--- =============================================================================
--- 4. VINCULAÇÃO AUTOMÁTICA DE TUYA_HOME_ID NAS REVENDAS
--- =============================================================================
+-- 3. MAPEAMENTO OFICIAL DE REVENDAS / GRUPOS DO WHATSAPP
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363401204481216-group', 'Fiori Jeep Lauro de Freitas (Código 0047)', 'BR', '{"tipo": "tuya_direto"}', '231567691', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363324972918585-group', 'Toyolex Pitimbú (Código 0015)', 'BR', '{"tipo": "tuya_direto"}', '263338987', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363399960956454-group', 'Toyolex Aracaju (Código 0076)', 'BR', '{"tipo": "tuya_direto"}', '225764371', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363421263750896-group', 'Fiori Fiat Camp. Grande (Código 0063)', 'BR', '{"tipo": "tuya_direto"}', '237914424', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363298041373758-group', 'JEEP + RAM Rui Barbosa (Código 0019)', 'BR', '{"tipo": "tuya_direto"}', '231567691', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363298127856818-group', 'Toyolex + Lexus Imbiribeira (Código 0016)', 'BR', '{"tipo": "tuya_direto"}', '235802587', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363279998161437-group', 'BYD Boa Viagem (Código 0020)', 'BR', '{"tipo": "tuya_direto"}', '225599627', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363199036541250-group', 'Auto Oriente Espinheiro (Código 0002)', 'BR', '{"tipo": "tuya_direto"}', '258999508', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363282476786392-group', 'VW Bremen Boa Viagem (Código 0021)', 'BR', '{"tipo": "tuya_direto"}', '235796633', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363279978711780-group', 'Toyolex Rui Barbosa (Código 0009)', 'BR', '{"tipo": "tuya_direto"}', '225764371', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363042087699383-group', 'Automatização AR | SAEL (Código 0010)', 'BR', '{"tipo": "tuya_direto"}', NULL, true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363418714887384-group', 'Fiori Jeep Feira de Santana (Código 0037)', 'BR', '{"tipo": "tuya_direto"}', '231567691', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363074619989814-group', 'Auto Oriente Caruaru (Código 0013)', 'BR', '{"tipo": "tuya_direto"}', '265553041', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363026165235169-group', 'PATEO AFOGADOS (Código 0012)', 'BR', '{"tipo": "tuya_direto"}', '285173135', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363416873746928-group', 'BYD Campina Grande (Código 0065)', 'BR', '{"tipo": "tuya_direto"}', '237911804', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363402155032954-group', 'Fiori JEEP Camp. Grande (Código 0064)', 'BR', '{"tipo": "tuya_direto"}', '237911851', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363299584288213-group', 'Land Rover João Pessoa (Código 0034)', 'BR', '{"tipo": "tuya_direto"}', '263465680', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363299485424719-group', 'Audi Center Boa Viagem (Código 0022)', 'BR', '{"tipo": "tuya_direto"}', '279332225', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363299730692570-group', 'Fiori João Pessoa (Código 0032)', 'BR', '{"tipo": "tuya_direto"}', '263460377', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363049421575324-group', 'Autonunes Chevrolet - Caruaru (Código 0014)', 'BR', '{"tipo": "tuya_direto"}', '265553090', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363281098848004-group', 'Toyolex Afogados (Código 0018)', 'BR', '{"tipo": "tuya_direto"}', '230905042', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363401359633431-group', 'Auto Parvi Feira de Santana (Código 0040)', 'BR', '{"tipo": "tuya_direto"}', '258999508', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363419939662342-group', 'Jeep Retiro (Código 0052)', 'BR', '{"tipo": "tuya_direto"}', '231567691', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363418878294124-group', 'Pateo Hyundai Retiro (Código 0045)', 'BR', '{"tipo": "tuya_direto"}', '285173135', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363419677042527-group', 'BYD Retiro (Código 0042)', 'BR', '{"tipo": "tuya_direto"}', NULL, true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363400265141468-group', 'Bremen Tancredo Neves (Código 0048)', 'BR', '{"tipo": "tuya_direto"}', '235796633', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363404164054502-group', 'Pateo Hyundai Feira de Santana (Código 0039)', 'BR', '{"tipo": "tuya_direto"}', '285173135', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363283372696640-group', 'Pateo Hyundai João Pessoa (Código 0033)', 'BR', '{"tipo": "tuya_direto"}', '263461975', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363418500883724-group', 'BYD Feira de Santana (Código 0051)', 'BR', '{"tipo": "tuya_direto"}', NULL, true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363418248455431-group', 'Fiori Tancredo Neves (Código 0049)', 'BR', '{"tipo": "tuya_direto"}', '263460377', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363416691329634-group', 'Bremen Retiro Salvador (Código 0044)', 'BR', '{"tipo": "tuya_direto"}', '235796633', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363420148871001-group', 'BYD Patamares (Código 0041)', 'BR', '{"tipo": "tuya_direto"}', NULL, true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363298192536606-group', 'BYD João Pessoa (Código 0031)', 'BR', '{"tipo": "tuya_direto"}', '263457722', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363047050722956-group', 'SOF - Operação (Código 0000)', 'BR', '{"tipo": "tuya_direto"}', NULL, true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363404051409506-group', '[SOF | Fiori Jeep/RAM] Manaus/AM (Código 0066)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363403176143695-group', '[SOF | Pateo Hyundai] Manaus/AM (Código 0068)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363421125963743-group', '[SOF | Toyolex] Manaus/AM (Código 0069)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363420840870320-group', '[SOF | América Ford] Manaus/AM (Código 0070)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363405627429780-group', '[SOF | BYD] Manaus/AM (Código 0071)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363423033633437-group', '[SOF | Way] Manaus/AM (Código 0072)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363406238466004-group', '[SOF | Auto Parvi] Manaus/AM (Código 0073)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363405828144683-group', '[SOF | Mardisa Automóveis] Manaus (Código 0074)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363420335354065-group', '[SOF | Mardisa Caminhões] Manaus/AM (Código 0075)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363405242956571-group', '[SOF | Toyolex Holandeses] São Luis (Código 0053)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363425041434789-group', '[SOF | Bremen Holandeses] São Luis (Código 0054)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363423892612608-group', '[SOF | Mardisa Holandeses] São Luis (Código 0055)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363424935308930-group', '[SOF | Toyolex Aeroporto] São Luis/ (Código 0056)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363421767576432-group', '[SOF | Bremen Aeroporto] São Luis/ (Código 0057)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363404720568567-group', '[SOF | Pateo Holandeses] São Luis/ (Código 0058)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363422916281908-group', '[SOF | Bremen Bequimão] São Luis/MA (Código 0059)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363423300500894-group', '[SOF | Pateo Bequimão] São Luis/MA (Código 0060)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363407470597087-group', '[SOF | Mardisa Cam Aero.] São Luis/ (Código 0078)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363423538481064-group', '[SOF | Way Holandeses] São Luis/MA (Código 0061)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363423764317569-group', '[SOF | Fiori] Imperatriz/MA (Código 0062)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
+INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya, tuya_home_id, ativo) VALUES ('120363422455765261-group', 'Grupo Thiago (Teste) (Código 9999)', 'BR', '{"tipo": "tuya_direto"}', '265054363', true) ON CONFLICT (id_grupo_wpp) DO UPDATE SET tuya_home_id = EXCLUDED.tuya_home_id, nome_revenda = EXCLUDED.nome_revenda, ativo = true;
 
--- Mapeamento para o grupo de testes / Thiago
-UPDATE mapa_revendas 
-SET tuya_home_id = '265054363' 
-WHERE id_grupo_wpp = '120363422455765261-group' OR nome_revenda ILIKE '%Thiago%' OR nome_revenda ILIKE '%Teste%';
-
--- Mapeamento automático entre mapa_revendas e tuya_clientes_homes por nome
-UPDATE mapa_revendas m
-SET tuya_home_id = h.home_id
-FROM tuya_clientes_homes h
-WHERE m.tuya_home_id IS NULL
-  AND (
-    h.nome_home ILIKE '%' || m.nome_revenda || '%' OR
-    m.nome_revenda ILIKE '%' || h.nome_home || '%'
-  );
+-- Ajustes adicionais de cenas para acionamento direto (T-HIGH, T-MEDIUM, T-OFF, T-LOW)
+UPDATE tuya_clientes_cenas SET acao = 'esquentar' WHERE nome_cena ILIKE '%T-HIGH%';
+UPDATE tuya_clientes_cenas SET acao = 'medio' WHERE nome_cena ILIKE '%T-MEDIUM%';
+UPDATE tuya_clientes_cenas SET acao = 'off' WHERE nome_cena ILIKE '%T-OFF%' OR nome_cena ILIKE '%OFF%';
+UPDATE tuya_clientes_cenas SET acao = 'freezer' WHERE nome_cena ILIKE '%T-LOW%' OR nome_cena ILIKE '%FREEZER%' OR nome_cena ILIKE '%FREEZE%';
 
 COMMIT;
 
--- Relatório de validação pós-povoamento
+-- Relatório de Validação
 SELECT 
     m.nome_revenda,
     m.id_grupo_wpp,
@@ -616,4 +482,4 @@ SELECT
 FROM mapa_revendas m
 LEFT JOIN tuya_clientes_cenas c ON m.tuya_home_id = c.home_id
 GROUP BY m.nome_revenda, m.id_grupo_wpp, m.tuya_home_id
-ORDER BY m.nome_revenda;
+ORDER BY total_cenas_tuya DESC, m.nome_revenda;
