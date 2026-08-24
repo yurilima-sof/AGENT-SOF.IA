@@ -19,7 +19,7 @@ async def inicializar_colunas_revendas(db: AsyncSession) -> None:
         await db.commit()
     except Exception as e:
         await db.rollback()
-        logger.warning(f"⚠️ Não foi possível inicializar colunas de mapa_revendas: {e}")
+        logger.error(f"⚠️ Não foi possível inicializar colunas de mapa_revendas: {e}", extra={"status": "erro"}, exc_info=True)
 
 async def buscar_credenciais_revenda(db: AsyncSession, id_grupo: str) -> Optional[dict]:
     """
@@ -48,7 +48,7 @@ async def buscar_credenciais_revenda(db: AsyncSession, id_grupo: str) -> Optiona
         return None
     except Exception as e:
         await db.rollback()
-        logger.warning(f"⚠️ Erro ao consultar mapa_revendas: {e}")
+        logger.error(f"⚠️ Erro ao consultar mapa_revendas: {e}", extra={"status": "erro"}, exc_info=True)
         return None
 
 async def resolver_home_id_por_grupo(db: AsyncSession, id_grupo: str, nome_revenda_fallback: Optional[str] = None) -> Optional[str]:
@@ -81,5 +81,5 @@ async def resolver_home_id_por_grupo(db: AsyncSession, id_grupo: str, nome_reven
         return None
     except Exception as e:
         await db.rollback()
-        logger.warning(f"⚠️ Erro ao resolver home_id para grupo '{id_grupo}': {e}")
+        logger.error(f"⚠️ Erro ao resolver home_id para grupo '{id_grupo}': {e}", extra={"status": "erro"}, exc_info=True)
         return None

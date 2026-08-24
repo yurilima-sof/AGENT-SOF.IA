@@ -1,9 +1,9 @@
+﻿# =============================================================================
+# requirements.txt - DependÃªncias do Projeto Agente SOF
 # =============================================================================
-# requirements.txt - Dependências do Projeto Agente SOF
-# =============================================================================
-# Instalar todas as dependências: pip install -r requirements.txt
+# Instalar todas as dependÃªncias: pip install -r requirements.txt
 #
-# Dica: Em produção, use um ambiente virtual (venv):
+# Dica: Em produÃ§Ã£o, use um ambiente virtual (venv):
 #   python -m venv venv
 #   source venv/bin/activate  (Linux/Mac)
 #   venv\Scripts\activate     (Windows)
@@ -12,7 +12,7 @@
 
 
 # --- Framework Web e Servidor ASGI ---
-# FastAPI: framework moderno, rápido e com validação automática via Pydantic.
+# FastAPI: framework moderno, rÃ¡pido e com validaÃ§Ã£o automÃ¡tica via Pydantic.
 fastapi==0.111.0
 
 # Uvicorn: servidor ASGI de alta performance para rodar o FastAPI.
@@ -22,51 +22,53 @@ websockets>=12.0
 
 
 
-# --- Validação de Dados ---
-# Pydantic v2: validação de dados com type hints. Já vem com o FastAPI,
-# mas fixamos a versão explicitamente para evitar surpresas.
+# --- ValidaÃ§Ã£o de Dados ---
+# Pydantic v2: validaÃ§Ã£o de dados com type hints. JÃ¡ vem com o FastAPI,
+# mas fixamos a versÃ£o explicitamente para evitar surpresas.
 pydantic>=2.13.0,<3.0.0
 
-# Pydantic Settings: gerencia configurações via variáveis de ambiente.
+# Pydantic Settings: gerencia configuraÃ§Ãµes via variÃ¡veis de ambiente.
 pydantic-settings==2.6.1
 
 
 # --- Banco de Dados ---
-# SQLAlchemy: ORM robusto para Python. Usaremos a versão assíncrona.
+# SQLAlchemy: ORM robusto para Python. Usaremos a versÃ£o assÃ­ncrona.
 sqlalchemy[asyncio]==2.0.31
 
-# asyncpg: driver PostgreSQL assíncrono de alta performance (para SQLAlchemy async).
+# asyncpg: driver PostgreSQL assÃ­ncrono de alta performance (para SQLAlchemy async).
 asyncpg==0.31.0
 
-# psycopg2-binary: driver síncrono, útil para scripts e ferramentas de migração.
+# psycopg2-binary: driver sÃ­ncrono, Ãºtil para scripts e ferramentas de migraÃ§Ã£o.
 psycopg2-binary==2.9.12
 
-# Alembic: ferramenta de migração de banco de dados (versionamento do schema).
-# Usaremos quando precisarmos alterar as tabelas depois da criação inicial.
+# Alembic: ferramenta de migraÃ§Ã£o de banco de dados (versionamento do schema).
+# Usaremos quando precisarmos alterar as tabelas depois da criaÃ§Ã£o inicial.
 alembic==1.13.1
 
 
-# --- Variáveis de Ambiente ---
-# python-dotenv: carrega variáveis do arquivo .env automaticamente.
+# --- VariÃ¡veis de Ambiente ---
+# python-dotenv: carrega variÃ¡veis do arquivo .env automaticamente.
 python-dotenv>=1.2.2
 
 
-# --- HTTP Client (para comunicação futura com a API Tuya) ---
-# httpx: cliente HTTP assíncrono moderno, compatível com FastAPI/asyncio.
+# --- HTTP Client (para comunicaÃ§Ã£o futura com a API Tuya) ---
+# httpx: cliente HTTP assÃ­ncrono moderno, compatÃ­vel com FastAPI/asyncio.
 httpx==0.28.1
 
 
-# --- Segurança e Rate Limiting ---
+# --- SeguranÃ§a e Rate Limiting ---
 # slowapi: rate limiting para FastAPI baseado em limites por IP.
 slowapi==0.1.9
 
 
 # --- IA e RAG ---
-# Usamos Native RAG (SQLAlchemy + pgvector direto) ao invés do LangChain
-# para garantir o máximo de performance e mínimo de uso de RAM no Docker.
+# Usamos Native RAG (SQLAlchemy + pgvector direto) ao invÃ©s do LangChain
+# para garantir o mÃ¡ximo de performance e mÃ­nimo de uso de RAM no Docker.
 google-generativeai==0.8.6
-# --- Utilitários ---
-# python-multipart: necessário para upload de arquivos (manuais PDF no futuro).
+# --- UtilitÃ¡rios ---
+# python-multipart: necessÃ¡rio para upload de arquivos (manuais PDF no futuro).
 python-multipart>=0.0.27
 tzdata>=2026.1
+
+sentry-sdk[fastapi]
 

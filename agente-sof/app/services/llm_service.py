@@ -229,7 +229,7 @@ class LLMService:
                 return json.loads(cleaned)
             
         except Exception as e:
-            logger.error(f"⚠️ Erro Crítico ao chamar o Gemini ({m_name}): {e}")
+            logger.error(f"⚠️ Erro Crítico ao chamar o Gemini ({m_name}): {e}", extra={"status": "erro"}, exc_info=True)
             
             # FALLBACK DE SEGURANÇA PARA PRODUÇÃO
             return {

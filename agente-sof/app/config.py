@@ -75,6 +75,9 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = Field(default=None, description="Chave da API Google Gemini.")
     gemini_model: str = Field(default="gemini-3.6-flash", description="Modelo do Google Gemini a ser utilizado.")
 
+    # --- Sentry ---
+    sentry_dsn: str | None = Field(default=None, description="SENTRY_DSN para monitoramento de erros.")
+
     # Configuração do Pydantic Settings:
     # - env_file: lê as variáveis do arquivo .env
     # - env_file_encoding: garante suporte a caracteres especiais no .env

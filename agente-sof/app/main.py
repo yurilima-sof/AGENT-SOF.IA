@@ -42,6 +42,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
+if settings.sentry_dsn:
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        traces_sample_rate=0.1,
+        environment=settings.app_env
+    )
+    logger.info("✅ Sentry SDK inicializado.")
+
 
 # =============================================================================
 # SEGURANÇA: AUTENTICAÇÃO VIA API KEY
@@ -105,17 +114,26 @@ async def buscar_link_ifttt(credenciais: dict, acao: str, ambiente: Optional[str
     if not credenciais:
         return None
         
+    link_encontrado = None
+    
     if ambiente:
         chave_ambiente = f"{acao}_{ambiente}"
         if chave_ambiente in credenciais:
             logger.info(f"   Link IFTTT específico encontrado para ambiente: '{chave_ambiente}'")
-            return credenciais[chave_ambiente]
-        logger.info(f"   Link IFTTT para '{chave_ambiente}' não encontrado. Tentando fallback para geral.")
+            link_encontrado = credenciais[chave_ambiente]
+        else:
+            logger.info(f"   Link IFTTT para '{chave_ambiente}' não encontrado. Tentando fallback para geral.")
         
-    if acao in credenciais:
+    if not link_encontrado and acao in credenciais:
         logger.info(f"   Link IFTTT geral encontrado para '{acao}'")
-        return credenciais[acao]
+        link_encontrado = credenciais[acao]
         
+    if link_encontrado:
+        if "SUA_CHAVE" in link_encontrado:
+            logger.warning(f"🚨 AVISO: Link IFTTT para '{acao}' contém placeholder 'SUA_CHAVE'. Cadastro inválido! Ignorando fallback IFTTT.")
+            return None
+        return link_encontrado
+
     logger.info(f"   Nenhum link IFTTT encontrado para '{acao}'")
     return None
 
@@ -140,16 +158,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         from app.database import async_session_maker
         from app.crud.chat_history import inicializar_tabela_historico
         from app.crud.revendas import inicializar_colunas_revendas
+        from app.crud.agendamentos import inicializar_tabela_agendamentos
         async with async_session_maker() as session:
             await inicializar_tabela_historico(session)
             await inicializar_colunas_revendas(session)
+            await inicializar_tabela_agendamentos(session)
             logger.info("✅ Estrutura do banco de dados (tabelas e colunas) verificada/inicializada com sucesso.")
+            
+        from app.services.scheduler_service import scheduler_service
+        await scheduler_service.carregar_agendamentos_pendentes()
     except Exception as e:
-        logger.warning(f"⚠️ Aviso no startup ao checar estrutura do banco: {e}")
+        logger.error(f"⚠️ Aviso no startup ao checar estrutura do banco ou agendamentos: {e}", extra={"status": "erro"}, exc_info=True)
 
     yield
 
     logger.info("🛑 Encerrando a aplicação...")
+    try:
+        from app.services.tuya_service import tuya_service
+        await tuya_service.close()
+        logger.info("✅ Conexões Tuya (httpx) encerradas.")
+    except Exception as e:
+        logger.warning(f"⚠️ Erro ao encerrar tuya_service: {e}")
 
 
 # =============================================================================
@@ -322,13 +351,13 @@ async def process_agent_command(
                         logger.info("   [RAG] Memória orgânica útil detectada! Salvando regra no banco vetorial.")
                         await rag_service.ingest_message(payload.id_grupo, payload.mensagem)
                     except Exception as e_rag:
-                        logger.warning(f"⚠️ Falha ao auto-salvar memória orgânica: {e_rag}")
+                        logger.error(f"⚠️ Falha ao auto-salvar memória orgânica: {e_rag}", extra={"status": "erro"}, exc_info=True)
 
                 # Normalização de nulos vindos da resposta JSON do LLM
                 if acao == "null" or acao == "None" or not acao:
                     acao = None
             except Exception as e:
-                logger.warning(f"⚠️ Falha no processamento com LLM/Gemini (aplicando Fallback): {e}")
+                logger.error(f"⚠️ Falha no processamento com LLM/Gemini (aplicando Fallback): {e}", extra={"status": "erro"}, exc_info=True)
                 acao = None
                 intencao = None
                 ambiente = None
@@ -410,7 +439,19 @@ async def process_agent_command(
                         # Agenda a REATIVAÇÃO AUTOMÁTICA em segundo plano no horário solicitado
                         if desativadas_ids:
                             from app.services.scheduler_service import scheduler_service
-                            horario_fim = scheduler_service.extrair_horario_termino(payload.mensagem)
+                            from app.domain.policy.time_parser import extrair_horario_termino
+                            from zoneinfo import ZoneInfo
+                            from datetime import datetime, timedelta
+                            
+                            RECIFE_TZ = ZoneInfo("America/Recife")
+                            agora_recife = datetime.now(RECIFE_TZ)
+                            horario_fim = extrair_horario_termino(payload.mensagem, agora=agora_recife)
+                            
+                            if horario_fim is None:
+                                # Decisão explícita (a): manter fallback de +2h
+                                # Optamos por manter como fallback para não interromper o fluxo com perguntas ao usuário agora.
+                                horario_fim = agora_recife + timedelta(hours=2)
+                                
                             await scheduler_service.agendar_reativacao_automacao(
                                 id_grupo=payload.id_grupo,
                                 nome_revenda=payload.nome_revenda,
@@ -432,11 +473,20 @@ async def process_agent_command(
                 else:
                     logger.info(f"   [Tuya] Revenda '{payload.nome_revenda}' não encontrada na base Tuya.")
             except Exception as e_tuya:
-                logger.error(f"   [Tuya] Erro ao tentar disparar cena: {e_tuya}")
+                logger.error(f"   [Tuya] Erro ao tentar disparar cena: {e_tuya}", extra={"status": "erro"}, exc_info=True)
                 tuya_success = False
 
             # 2. BUSCA O IFTTT COMO PLANO B (Fallback)
             link_ifttt = await buscar_link_ifttt(credenciais, acao, ambiente)
+
+            if tuya_success in (None, False) and not link_ifttt:
+                logger.warning(f"⚠️ Ação '{acao}' solicitada no ambiente '{ambiente or 'geral'}', mas NENHUMA cena Tuya ou link IFTTT foi encontrado. Avisando usuário.")
+                mensagem_wpp = (
+                    f"Desculpe, eu entendi que você quer executar a ação '{acao}' no ambiente '{ambiente or 'geral'}', "
+                    "mas ainda não tenho essa configuração cadastrada para esta revenda. "
+                    "Por favor, solicite o cadastro dessa cena/ação à equipe técnica."
+                )
+                acao = None # Cancela a intenção de disparar algo que não existe
 
             logger.info(
                 f"✅ Ação identificada: '{acao}' | "
@@ -452,7 +502,7 @@ async def process_agent_command(
                 nome_revenda=payload.nome_revenda,
                 mensagem_original=payload.mensagem,
                 intencao=intencao,
-                status_op="sucesso",
+                status_op="sucesso" if (tuya_success or link_ifttt) else "sem_cena",
                 tempo_resposta_ms=elapsed_ms,
                 acao_executada=acao,
                 ambiente=ambiente
@@ -521,7 +571,7 @@ async def process_agent_command(
             ambiente=None,
         )
 
-        logger.exception(f"❌ Erro ao processar requisição: {exc}")
+        logger.exception(f"❌ Erro ao processar requisição: {exc}", extra={"status": "erro"})
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -552,7 +602,7 @@ async def aprender_conhecimento(
             mensagem=f"Conhecimento ingerido com sucesso para o grupo {payload.id_grupo}."
         )
     except Exception as exc:
-        logger.exception(f"Erro ao ingerir conhecimento: {exc}")
+        logger.exception(f"Erro ao ingerir conhecimento: {exc}", extra={"status": "erro"})
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={

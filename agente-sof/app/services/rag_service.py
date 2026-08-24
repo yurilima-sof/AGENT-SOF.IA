@@ -46,7 +46,7 @@ class RAGService:
             query_embedding = response["embedding"]
         except Exception as e:
             # Fallback seguro: NUNCA quebra a API se a chamada de embedding falhar/expirar
-            logger.warning(f"⚠️ Erro/Timeout ao gerar embedding da consulta com Gemini ({e}). Prosseguindo sem RAG.")
+            logger.error(f"⚠️ Erro/Timeout ao gerar embedding da consulta com Gemini ({e}). Prosseguindo sem RAG.", extra={"status": "erro"}, exc_info=True)
             return ""
 
         # 2. Executa a busca por similaridade de cosseno (operador <=>) no banco de dados
@@ -89,15 +89,20 @@ class RAGService:
         Gera embedding para a nova mensagem e insere no banco vetorial.
         """
         try:
-            response = genai.embed_content(
-                model="models/gemini-embedding-001",
-                content=message,
-                task_type="retrieval_document",
-                output_dimensionality=768,
+            import asyncio
+            response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    genai.embed_content,
+                    model="models/gemini-embedding-001",
+                    content=message,
+                    task_type="retrieval_document",
+                    output_dimensionality=768,
+                ),
+                timeout=5.0
             )
             embedding = response["embedding"]
         except Exception as e:
-            logger.warning(f"Erro ao gerar embedding para ingestão: {e}")
+            logger.error(f"Erro ao gerar embedding para ingestão: {e}", extra={"status": "erro"}, exc_info=True)
             raise
             
         async with async_session_maker() as session:

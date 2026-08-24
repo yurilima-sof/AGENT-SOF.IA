@@ -27,9 +27,9 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'XX',
   '{
     "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0019_freezer/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0019_esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0019_off/with/key/SUA_CHAVE_IFTTT_AQUI"
+    
+    
+    
   }',
   true
 ),
@@ -39,9 +39,9 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'XX',
   '{
     "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0047_Esfriar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0047_Esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0047_OFF/with/key/SUA_CHAVE_IFTTT_AQUI"
+    
+    
+    
   }',
   true
 ),
@@ -51,9 +51,9 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'XX',
   '{
     "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0016_freezer/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0016_Esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0016_OFF/with/key/SUA_CHAVE_IFTTT_AQUI"
+    
+    
+    
   }',
   true
 ),
@@ -63,9 +63,9 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'XX',
   '{
     "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0020_freezer/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0020_Esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0020_OFF/with/key/SUA_CHAVE_IFTTT_AQUI"
+    
+    
+    
   }',
   true
 ),
@@ -75,9 +75,9 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'XX',
   '{
     "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0002_freezer/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0002_Esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0002_OFF/with/key/SUA_CHAVE_IFTTT_AQUI"
+    
+    
+    
   }',
   true
 ),
@@ -87,9 +87,9 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'XX',
   '{
     "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0021_freezer/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0021_Esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0021_OFF/with/key/SUA_CHAVE_IFTTT_AQUI"
+    
+    
+    
   }',
   true
 ),
@@ -99,9 +99,9 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'XX',
   '{
     "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0009_Freezer/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0009_esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0009_off/with/key/SUA_CHAVE_IFTTT_AQUI"
+    
+    
+    
   }',
   true
 ),
@@ -111,9 +111,9 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'XX',
   '{
     "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/0018_freezer/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "esquentar": "https://maker.ifttt.com/trigger/0018_Esquentar/with/key/SUA_CHAVE_IFTTT_AQUI",
-    "off": "https://maker.ifttt.com/trigger/0018_OFF/with/key/SUA_CHAVE_IFTTT_AQUI"
+    
+    
+    
   }',
   true
 ),
@@ -123,9 +123,9 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'XX',
   '{
     "tipo": "ifttt",
-    "freezer": "https://maker.ifttt.com/trigger/thiago_on/with/key/SUA_CHAVE_IFTTT_AQUI",
+    
     "esquentar": null,
-    "off": "https://maker.ifttt.com/trigger/thiago_off/with/key/SUA_CHAVE_IFTTT_AQUI"
+    
   }',
   true
 );

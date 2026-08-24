@@ -18,12 +18,22 @@ class TuyaService:
         self.access_token = None
         self.token_expire_time = 0
         
-        # O Tuya exige o hash SHA256 para corpos vazios
         self.EMPTY_BODY_HASH = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
         # Cache de status de dispositivos em memória (TTL: 60 segundos)
         self._devices_cache: dict[str, tuple[float, list]] = {}
         self._devices_cache_ttl = 60
+        self._client: httpx.AsyncClient = None
+
+    def get_client(self) -> httpx.AsyncClient:
+        if self._client is None:
+            self._client = httpx.AsyncClient()
+        return self._client
+
+    async def close(self):
+        if self._client:
+            await self._client.aclose()
+            self._client = None
 
     def _get_timestamp(self) -> str:
         return str(int(time.time() * 1000))
@@ -81,25 +91,25 @@ class TuyaService:
         url = f"{self.base_url}{path}"
         logger.info(f"🔑 Solicitando novo access_token da Tuya OpenAPI...")
         
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=headers)
+        client = self.get_client()
+        response = await client.get(url, headers=headers)
+        
+        if response.status_code != 200:
+            logger.error(f"❌ Erro HTTP {response.status_code} ao buscar token da Tuya: {response.text}")
+            raise Exception(f"Falha na API da Tuya: {response.status_code}")
             
-            if response.status_code != 200:
-                logger.error(f"❌ Erro HTTP {response.status_code} ao buscar token da Tuya: {response.text}")
-                raise Exception(f"Falha na API da Tuya: {response.status_code}")
-                
-            data = response.json()
-            if not data.get("success", False):
-                logger.error(f"❌ Erro da Tuya (Token): {data}")
-                raise Exception(f"Erro Tuya: {data.get('msg')}")
+        data = response.json()
+        if not data.get("success", False):
+            logger.error(f"❌ Erro da Tuya (Token): {data}")
+            raise Exception(f"Erro Tuya: {data.get('msg')}")
 
-            result = data.get("result", {})
-            self.access_token = result.get("access_token")
-            expire_time_seconds = result.get("expire_time", 7200)
-            self.token_expire_time = current_time + expire_time_seconds
-            
-            logger.info("✅ Novo access_token da Tuya obtido com sucesso.")
-            return self.access_token
+        result = data.get("result", {})
+        self.access_token = result.get("access_token")
+        expire_time_seconds = result.get("expire_time", 7200)
+        self.token_expire_time = current_time + expire_time_seconds
+        
+        logger.info("✅ Novo access_token da Tuya obtido com sucesso.")
+        return self.access_token
 
     async def _request(self, method: str, path: str, body: dict = None) -> dict:
         """
@@ -126,24 +136,24 @@ class TuyaService:
         
         url = f"{self.base_url}{path}"
         
-        async with httpx.AsyncClient() as client:
-            if method.upper() == "GET":
-                response = await client.get(url, headers=headers)
-            elif method.upper() == "POST":
-                response = await client.post(url, headers=headers, content=payload_str)
-            elif method.upper() == "PUT":
-                response = await client.put(url, headers=headers, content=payload_str)
-            elif method.upper() == "DELETE":
-                response = await client.delete(url, headers=headers)
-            else:
-                raise ValueError(f"Método HTTP {method} não suportado pelo wrapper.")
-                
-            data = response.json()
-            if not data.get("success", False):
-                logger.error(f"❌ Falha na requisição Tuya {method} {path}: {data}")
-                raise Exception(f"Tuya API Error: {data.get('msg', 'Unknown Error')}")
-                
-            return data.get("result")
+        client = self.get_client()
+        if method.upper() == "GET":
+            response = await client.get(url, headers=headers)
+        elif method.upper() == "POST":
+            response = await client.post(url, headers=headers, content=payload_str)
+        elif method.upper() == "PUT":
+            response = await client.put(url, headers=headers, content=payload_str)
+        elif method.upper() == "DELETE":
+            response = await client.delete(url, headers=headers)
+        else:
+            raise ValueError(f"Método HTTP {method} não suportado pelo wrapper.")
+            
+        data = response.json()
+        if not data.get("success", False):
+            logger.error(f"❌ Falha na requisição Tuya {method} {path}: {data}")
+            raise Exception(f"Tuya API Error: {data.get('msg', 'Unknown Error')}")
+            
+        return data.get("result")
 
     # =========================================================================
     # ENDPOINTS ESPECÍFICOS (Baseados na Documentação)
@@ -177,6 +187,40 @@ class TuyaService:
         await self._request("POST", path, body={})
         return True
 
+    async def create_scene(self, home_id: str, name: str, background: str, actions: list) -> str:
+        """
+        Cria uma nova cena inteligente dentro de uma residência na Tuya OpenAPI.
+        POST /v1.0/homes/{home_id}/scenes
+        """
+        logger.info(f"➕ Criando nova cena '{name}' na Home {home_id}...")
+        path = f"/v1.0/homes/{home_id}/scenes"
+        payload = {
+            "name": name,
+            "background": background,
+            "actions": actions
+        }
+        res = await self._request("POST", path, body=payload)
+        scene_id = res if isinstance(res, str) else res.get("scene_id")
+        logger.info(f"✅ Cena '{name}' criada com sucesso! ID: {scene_id}")
+        return scene_id
+
+    async def update_scene(self, home_id: str, scene_id: str, name: str, background: str, actions: list) -> bool:
+        """
+        Atualiza (substituição completa) uma cena existente dentro de uma residência na Tuya OpenAPI.
+        PUT /v1.0/homes/{home_id}/scenes/{scene_id}
+        """
+        logger.info(f"✏️ Atualizando cena {scene_id} ('{name}') na Home {home_id}...")
+        path = f"/v1.0/homes/{home_id}/scenes/{scene_id}"
+        payload = {
+            "name": name,
+            "background": background,
+            "actions": actions
+        }
+        res = await self._request("PUT", path, body=payload)
+        logger.info(f"✅ Cena {scene_id} atualizada com sucesso!")
+        return res is True or res == True
+
+
     async def get_automations_by_home(self, home_id: str) -> list:
         """
         Retorna as automações/regras inteligentes de uma residência.
@@ -187,7 +231,7 @@ class TuyaService:
         try:
             return await self._request("GET", path)
         except Exception as e:
-            logger.warning(f"⚠️ Erro em /v1.0/homes/{home_id}/automations: {e}. Tentando fallback v1.1...")
+            logger.error(f"⚠️ Erro em /v1.0/homes/{home_id}/automations: {e}. Tentando fallback v1.1...", extra={"status": "erro"}, exc_info=True)
             path_v11 = f"/v1.1/homes/{home_id}/automations"
             return await self._request("GET", path_v11)
 
@@ -203,7 +247,7 @@ class TuyaService:
             await self._request("PUT", path, body={})
             return True
         except Exception as e:
-            logger.warning(f"⚠️ Tentando rota alternativa para automação: {e}")
+            logger.error(f"⚠️ Tentando rota alternativa para automação: {e}", extra={"status": "erro"}, exc_info=True)
             path_alt = f"/v1.1/homes/{home_id}/automations/{automation_id}/actions/{action_name}"
             await self._request("PUT", path_alt, body={})
             return True
@@ -230,7 +274,7 @@ class TuyaService:
             self._devices_cache[home_id] = (now, devices)
             return devices
         except Exception as e:
-            logger.warning(f"⚠️ Erro ao buscar dispositivos da Home {home_id} na Tuya: {e}. Tentando fallback v1.1...")
+            logger.error(f"⚠️ Erro ao buscar dispositivos da Home {home_id} na Tuya: {e}. Tentando fallback v1.1...", extra={"status": "erro"}, exc_info=True)
             try:
                 path_v11 = f"/v1.1/homes/{home_id}/devices"
                 devices = await self._request("GET", path_v11)
@@ -239,7 +283,7 @@ class TuyaService:
                 self._devices_cache[home_id] = (now, devices)
                 return devices
             except Exception as e2:
-                logger.warning(f"⚠️ Não foi possível obter lista de dispositivos para Home {home_id}: {e2}")
+                logger.error(f"⚠️ Não foi possível obter lista de dispositivos para Home {home_id}: {e2}", extra={"status": "erro"}, exc_info=True)
                 return []
 
     async def check_home_devices_online(self, home_id: str) -> dict:
@@ -299,7 +343,7 @@ class TuyaService:
                 "checked": True
             }
         except Exception as e:
-            logger.warning(f"⚠️ Erro ao checar conectividade dos dispositivos para Home {home_id}: {e}. Ativando fallback permissivo.")
+            logger.error(f"⚠️ Erro ao checar conectividade dos dispositivos para Home {home_id}: {e}. Ativando fallback permissivo.", extra={"status": "erro"}, exc_info=True)
             return {"all_offline": False, "online_count": 0, "total_count": 0, "checked": False}
 
 tuya_service = TuyaService()
