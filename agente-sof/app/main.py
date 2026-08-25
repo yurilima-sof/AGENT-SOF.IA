@@ -10,25 +10,26 @@
 
 
 import logging
-import secrets
 import time
 import json
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status, Body
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from sqlalchemy import text
 
 from app.config import get_settings
+from app.core.security import verify_api_key, verify_admin_api_key
 from app.database import async_session_maker
 from app.schemas.agent import AgentRequest, AgentResponse, ErrorResponse
 from app.schemas.rag import RagIngestRequest, RagIngestResponse
 from app.services.llm_service import llm_service
 from app.services.rag_service import rag_service
+from app.services.tuya_dispatch_service import disparar_acao_fisica
+from app.routers.admin import router as admin_router
 
 # =============================================================================
 # CONFIGURAÇÃO DO LOGGER
@@ -55,33 +56,10 @@ if settings.sentry_dsn:
 # =============================================================================
 # SEGURANÇA: AUTENTICAÇÃO VIA API KEY
 # =============================================================================
+# `verify_api_key` e `verify_admin_api_key` moraram em app/core/security.py
+# (compartilhadas com app/routers/admin.py, evitando import circular).
 # O n8n deve enviar no header: Authorization: Bearer <API_KEY>
-# A comparação é feita com secrets.compare_digest (timing-safe) para
-# prevenir ataques de timing que poderiam adivinhar a chave.
 # =============================================================================
-
-_bearer_scheme = HTTPBearer(
-    description="Chave de autenticação da API. Envie no formato: Bearer <API_KEY>",
-)
-
-
-async def verify_api_key(
-    credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),
-) -> str:
-    """
-    Dependência FastAPI que valida a API Key do header Authorization.
-
-    Retorna a chave validada ou lança HTTP 401 se inválida.
-    Usa comparação timing-safe para evitar ataques de side-channel.
-    """
-    if not secrets.compare_digest(credentials.credentials, settings.api_key):
-        logger.warning("🔒 Tentativa de acesso com API Key inválida.")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"error": "unauthorized", "message": "API Key inválida ou ausente."},
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return credentials.credentials
 
 
 # =============================================================================
@@ -99,10 +77,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 
 # Importações dos novos serviços e CRUDs
-from app.crud.revendas import buscar_credenciais_revenda
+from app.crud.revendas import buscar_credenciais_revenda, verificar_revenda_ativa, resolver_home_id_por_grupo
 from app.crud.logs import registrar_log
 from app.crud.chat_history import salvar_mensagem_historico, obter_historico_recente
-from app.crud.tuya import get_scene_by_ambiente
 from app.services.tuya_service import tuya_service
 
 async def buscar_link_ifttt(credenciais: dict, acao: str, ambiente: Optional[str] = None) -> Optional[str]:
@@ -204,6 +181,9 @@ def create_app() -> FastAPI:
 
     # Integra o rate limiter ao app
     app_instance.state.limiter = limiter
+
+    # Painel administrativo dinâmico (/admin/*) — ver app/routers/admin.py
+    app_instance.include_router(admin_router)
 
     from fastapi.responses import JSONResponse
 
@@ -312,6 +292,19 @@ async def process_agent_command(
         # -----------------------------------------------------------------
         # PASSO 1: Identificar a ação e intenção (LLM com RAG ou Fallback)
         # -----------------------------------------------------------------
+        # Verifica se a revenda está ativa
+        is_ativa = await verificar_revenda_ativa(db, payload.id_grupo)
+        if not is_ativa:
+            logger.info(f"   Revenda {payload.id_grupo} está INATIVA. Ignorando processamento de IA/Tuya.")
+            return AgentResponse(
+                intencao="sem_acao",
+                ambiente=None,
+                dispositivo_id=None,
+                ifttt_action=None,
+                parametros={},
+                mensagem_wpp=None,
+            )
+
         # Pré-inicializa variáveis de ação e busca credenciais do grupo no banco
         credenciais = await buscar_credenciais_revenda(db, payload.id_grupo)
         acao = None
@@ -383,13 +376,34 @@ async def process_agent_command(
             tuya_success = None
             try:
                 # RESOLUÇÃO MULTI-TENANT SEGURA (U-07): Resolve home_id via id_grupo_wpp
-                from app.crud.revendas import resolver_home_id_por_grupo
                 home_id = await resolver_home_id_por_grupo(db, payload.id_grupo, payload.nome_revenda)
                 if home_id:
+                    # Se for pedido de pausa de automação, tenta extrair o horário de término da mensagem
+                    horario_fim_pausa = None
+                    if acao == "desativar_automacao" or intencao == "pausar_automacao":
+                        from app.domain.policy.time_parser import extrair_horario_termino
+                        from zoneinfo import ZoneInfo
+                        from datetime import datetime
 
-                    # VERIFICAÇÃO PRÉVIA: Checa se os dispositivos da revenda estão online
-                    device_status = await tuya_service.check_home_devices_online(home_id)
-                    if device_status.get("all_offline") is True:
+                        agora_recife = datetime.now(ZoneInfo("America/Recife"))
+                        horario_fim_pausa = extrair_horario_termino(payload.mensagem, agora=agora_recife)
+                        # Sem horário explícito na mensagem: disparar_acao_fisica aplica o fallback de +2h
+                        # (decisão explícita (a): não interromper o fluxo com perguntas ao usuário agora).
+
+                    # DISPARO FÍSICO: mesma função usada pelo disparo manual do painel admin
+                    # (app/routers/admin.py), garantindo paridade de comportamento entre os dois.
+                    resultado_disparo = await disparar_acao_fisica(
+                        db=db,
+                        id_grupo=payload.id_grupo,
+                        nome_revenda=payload.nome_revenda,
+                        home_id=home_id,
+                        acao=acao,
+                        intencao=intencao,
+                        ambiente=ambiente,
+                        horario_fim_pausa=horario_fim_pausa,
+                    )
+
+                    if resultado_disparo.get("device_offline"):
                         elapsed_ms = int((time.monotonic() - start_time) * 1000)
                         logger.warning(f"🔌 Dispositivos da revenda '{payload.nome_revenda}' (Home {home_id}) estão OFFLINE. Abortando comando.")
 
@@ -420,56 +434,8 @@ async def process_agent_command(
                             parametros={},
                             mensagem_wpp=msg_offline,
                         )
-                    
-                    if acao == "desativar_automacao" or intencao == "pausar_automacao":
-                        # Busca automações ativas na Tuya Cloud e desativa regras de desligamento/timer
-                        logger.info(f"   [Tuya] Buscando automações da residência {home_id} para pausar automações para reunião/fechamento...")
-                        automacoes = await tuya_service.get_automations_by_home(home_id)
-                        desativadas_ids = []
-                        if automacoes and isinstance(automacoes, list):
-                            for auto in automacoes:
-                                auto_id = auto.get("id") or auto.get("automation_id")
-                                is_enabled = auto.get("enabled", True)
-                                if auto_id and is_enabled:
-                                    logger.info(f"   [Tuya] Desativando automação temporariamente: '{auto.get('name')}' (ID: {auto_id})")
-                                    await tuya_service.set_automation_status(home_id, auto_id, enable=False)
-                                    desativadas_ids.append(auto_id)
-                        tuya_success = (len(desativadas_ids) > 0)
 
-                        # Agenda a REATIVAÇÃO AUTOMÁTICA em segundo plano no horário solicitado
-                        if desativadas_ids:
-                            from app.services.scheduler_service import scheduler_service
-                            from app.domain.policy.time_parser import extrair_horario_termino
-                            from zoneinfo import ZoneInfo
-                            from datetime import datetime, timedelta
-                            
-                            RECIFE_TZ = ZoneInfo("America/Recife")
-                            agora_recife = datetime.now(RECIFE_TZ)
-                            horario_fim = extrair_horario_termino(payload.mensagem, agora=agora_recife)
-                            
-                            if horario_fim is None:
-                                # Decisão explícita (a): manter fallback de +2h
-                                # Optamos por manter como fallback para não interromper o fluxo com perguntas ao usuário agora.
-                                horario_fim = agora_recife + timedelta(hours=2)
-                                
-                            await scheduler_service.agendar_reativacao_automacao(
-                                id_grupo=payload.id_grupo,
-                                nome_revenda=payload.nome_revenda,
-                                home_id=home_id,
-                                automacao_ids=desativadas_ids,
-                                horario_execucao=horario_fim
-                            )
-                    else:
-                        # O ambiente pode vir nulo. Se for nulo, procuramos por cenas sem ambiente ou ignoramos
-                        amb = ambiente if ambiente else ""
-                        scene_data = await get_scene_by_ambiente(db, home_id, amb, acao)
-                        if scene_data:
-                            scene_id = scene_data["scene_id"]
-                            logger.info(f"   [Tuya] Cenário encontrado: {scene_data['nome_cena']} (ID: {scene_id}). Disparando...")
-                            result_tuya = await tuya_service.execute_scene(home_id, scene_id)
-                            tuya_success = result_tuya
-                        else:
-                            logger.info(f"   [Tuya] Nenhuma cena encontrada para ambiente '{amb}' e ação '{acao}'.")
+                    tuya_success = resultado_disparo.get("tuya_success")
                 else:
                     logger.info(f"   [Tuya] Revenda '{payload.nome_revenda}' não encontrada na base Tuya.")
             except Exception as e_tuya:
@@ -646,3 +612,10 @@ async def checar_fechamento_proativo(
         "total_revendas": len(mensagens_geradas),
         "mensagens": mensagens_geradas
     }
+
+# =============================================================================
+# ADMIN
+# =============================================================================
+# Todas as rotas /admin/* (incluindo o painel dinâmico) vivem em
+# app/routers/admin.py e são registradas via app_instance.include_router()
+# em create_app(), acima.

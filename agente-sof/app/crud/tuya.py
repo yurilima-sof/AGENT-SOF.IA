@@ -199,7 +199,7 @@ async def save_tuya_home(db: AsyncSession, sigla_cliente: str, tuya_uid: str, ho
 async def save_tuya_scene(db: AsyncSession, sigla_cliente: str, home_id: str, ambiente: str, scene_id: str, nome_cena: str, acao: str):
     check_query = text("SELECT id FROM tuya_clientes_cenas WHERE scene_id = :scene_id")
     existing = await db.execute(check_query, {"scene_id": scene_id})
-    
+
     if not existing.fetchone():
         query = text("""
             INSERT INTO tuya_clientes_cenas (sigla_cliente, home_id, ambiente, scene_id, nome_cena, acao)
@@ -215,3 +215,91 @@ async def save_tuya_scene(db: AsyncSession, sigla_cliente: str, home_id: str, am
         })
         await db.commit()
         logger.info(f"✅ Cena {scene_id} ('{nome_cena}') salva no ambiente '{ambiente}' (Home: {home_id}) para o cliente '{sigla_cliente}'.")
+
+
+# =============================================================================
+# CRUD administrativo (painel admin): listagem/edição de homes e cenas
+# =============================================================================
+
+async def listar_homes(db: AsyncSession) -> list[dict]:
+    """Lista todas as Homes Tuya cadastradas, para popular seletores no painel admin."""
+    try:
+        result = await db.execute(
+            text("""
+                SELECT id, sigla_cliente, tuya_uid, home_id, nome_home
+                FROM tuya_clientes_homes
+                ORDER BY sigla_cliente, nome_home
+            """)
+        )
+        return [dict(row._mapping) for row in result.fetchall()]
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"⚠️ Erro ao listar homes Tuya: {e}", extra={"status": "erro"}, exc_info=True)
+        return []
+
+
+async def listar_cenas_por_home(db: AsyncSession, home_id: str) -> list[dict]:
+    """Lista todas as cenas cadastradas para uma Home específica, para edição no painel admin."""
+    try:
+        result = await db.execute(
+            text("""
+                SELECT id, sigla_cliente, home_id, ambiente, scene_id, nome_cena, acao
+                FROM tuya_clientes_cenas
+                WHERE home_id = :home_id
+                ORDER BY ambiente, nome_cena
+            """),
+            {"home_id": home_id}
+        )
+        return [dict(row._mapping) for row in result.fetchall()]
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"⚠️ Erro ao listar cenas da home '{home_id}': {e}", extra={"status": "erro"}, exc_info=True)
+        return []
+
+
+async def upsert_cena(db: AsyncSession, sigla_cliente: str, home_id: str, ambiente: str, scene_id: str, nome_cena: str, acao: str) -> dict:
+    """
+    Cria ou atualiza (por scene_id, que é UNIQUE) o mapeamento de uma cena Tuya.
+    Usada pelo formulário de gestão de cenas do painel admin.
+    """
+    result = await db.execute(
+        text("""
+            INSERT INTO tuya_clientes_cenas (sigla_cliente, home_id, ambiente, scene_id, nome_cena, acao)
+            VALUES (:sigla_cliente, :home_id, :ambiente, :scene_id, :nome_cena, :acao)
+            ON CONFLICT (scene_id) DO UPDATE SET
+                sigla_cliente = EXCLUDED.sigla_cliente,
+                home_id = EXCLUDED.home_id,
+                ambiente = EXCLUDED.ambiente,
+                nome_cena = EXCLUDED.nome_cena,
+                acao = EXCLUDED.acao
+            RETURNING id, sigla_cliente, home_id, ambiente, scene_id, nome_cena, acao
+        """),
+        {
+            "sigla_cliente": sigla_cliente,
+            "home_id": home_id,
+            "ambiente": ambiente,
+            "scene_id": scene_id,
+            "nome_cena": nome_cena,
+            "acao": acao,
+        }
+    )
+    row = result.fetchone()
+    await db.commit()
+    logger.info(f"✅ Cena {scene_id} ('{nome_cena}') gravada via painel admin (Home: {home_id}).")
+    return dict(row._mapping)
+
+
+async def deletar_cena(db: AsyncSession, scene_id: str) -> bool:
+    """Remove uma cena Tuya pelo scene_id. Retorna True se algo foi de fato removido."""
+    try:
+        result = await db.execute(
+            text("DELETE FROM tuya_clientes_cenas WHERE scene_id = :scene_id RETURNING id"),
+            {"scene_id": scene_id}
+        )
+        removido = result.fetchone() is not None
+        await db.commit()
+        return removido
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"❌ Erro ao deletar cena '{scene_id}': {e}", extra={"status": "erro"}, exc_info=True)
+        return False

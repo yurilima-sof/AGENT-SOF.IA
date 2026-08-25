@@ -6,7 +6,7 @@ from typing import Generator
 os.environ["APP_ENV"] = "testing"
 os.environ["API_KEY"] = "dev-api-key-insegura"
 os.environ["SECRET_KEY"] = "chave-insegura-apenas-para-desenvolvimento"
-os.environ["DATABASE_URL"] = "postgresql+asyncpg://agente_user:agente_pass@localhost:5432/agente_sof_db"
+os.environ["DATABASE_URL"] = "postgresql+asyncpg://agente_user:agente_senha_dev@localhost:5432/agente_sof_db"
 
 from app.config import get_settings
 get_settings.cache_clear()
@@ -26,3 +26,16 @@ def auth_headers(settings):
 def client() -> Generator[TestClient, None, None]:
     with TestClient(app) as c:
         yield c
+
+os.environ.setdefault("ADMIN_API_KEY", "dev-admin-key-insegura-para-teste")
+
+@pytest.fixture
+def admin_headers(settings):
+    return {"Authorization": f"Bearer {os.environ['ADMIN_API_KEY']}"}
+
+from app.database import async_session_maker
+
+@pytest.fixture
+async def db_session():
+    async with async_session_maker() as session:
+        yield session

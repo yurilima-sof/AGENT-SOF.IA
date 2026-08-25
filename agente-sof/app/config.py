@@ -15,7 +15,7 @@
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -69,6 +69,11 @@ class Settings(BaseSettings):
         ),
     )
 
+    admin_api_key: str = Field(
+        default="dev-admin-key-insegura-para-teste",
+        description="Chave de acesso ao painel de administração.",
+    )
+
     # --- LLM / IA ---
     # Deixamos o campo opcional para não quebrar a inicialização
     # enquanto não tivermos a chave configurada.
@@ -99,18 +104,18 @@ class Settings(BaseSettings):
         """Retorna True se a aplicação está rodando em modo desenvolvimento."""
         return self.app_env == "development"
 
-    from pydantic import model_validator
-
     @model_validator(mode="after")
     def _proibir_defaults_em_producao(self):
         if self.app_env != "production":
             return self
-        defaults_inseguros = {"dev-api-key-insegura", "chave-insegura-apenas-para-desenvolvimento"}
+        defaults_inseguros = {"dev-api-key-insegura", "chave-insegura-apenas-para-desenvolvimento", "dev-admin-key-insegura-para-teste", ""}
         problemas = []
         if self.api_key in defaults_inseguros or len(self.api_key) < 32:
             problemas.append("API_KEY (deve ser alterada e possuir >=32 caracteres)")
         if self.secret_key in defaults_inseguros or len(self.secret_key) < 32:
             problemas.append("SECRET_KEY (deve ser alterada e possuir >=32 caracteres)")
+        if self.admin_api_key in defaults_inseguros or len(self.admin_api_key) < 32:
+            problemas.append("ADMIN_API_KEY (deve ser alterada e possuir >=32 caracteres)")
         if not self.gemini_api_key:
             problemas.append("GEMINI_API_KEY (obrigatória em produção)")
         if problemas:

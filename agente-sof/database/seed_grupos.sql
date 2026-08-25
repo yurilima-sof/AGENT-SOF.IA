@@ -26,7 +26,7 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'Revenda 0019',
   'XX',
   '{
-    "tipo": "ifttt",
+    "tipo": "ifttt"
     
     
     
@@ -38,7 +38,7 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'Revenda 0047',
   'XX',
   '{
-    "tipo": "ifttt",
+    "tipo": "ifttt"
     
     
     
@@ -50,7 +50,7 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'Revenda 0016',
   'XX',
   '{
-    "tipo": "ifttt",
+    "tipo": "ifttt"
     
     
     
@@ -62,7 +62,7 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'Revenda 0020',
   'XX',
   '{
-    "tipo": "ifttt",
+    "tipo": "ifttt"
     
     
     
@@ -74,7 +74,7 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'Revenda 0002',
   'XX',
   '{
-    "tipo": "ifttt",
+    "tipo": "ifttt"
     
     
     
@@ -86,7 +86,7 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'Revenda 0021',
   'XX',
   '{
-    "tipo": "ifttt",
+    "tipo": "ifttt"
     
     
     
@@ -98,7 +98,7 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'Revenda 0009',
   'XX',
   '{
-    "tipo": "ifttt",
+    "tipo": "ifttt"
     
     
     
@@ -110,7 +110,7 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   'Revenda 0018',
   'XX',
   '{
-    "tipo": "ifttt",
+    "tipo": "ifttt"
     
     
     
@@ -124,7 +124,7 @@ INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, credenciais_tuya,
   '{
     "tipo": "ifttt",
     
-    "esquentar": null,
+    "esquentar": null
     
   }',
   true

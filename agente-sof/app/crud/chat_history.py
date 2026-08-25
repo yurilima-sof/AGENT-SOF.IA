@@ -104,6 +104,39 @@ async def obter_historico_recente(
         logger.warning(f"⚠️ Erro ao buscar histórico recente de chat: {e}")
         return ""
 
+async def obter_historico_completo(db: AsyncSession, id_grupo_wpp: str, limite: int = 50) -> list[dict]:
+    """
+    Retorna as últimas N mensagens de um grupo, sem o filtro de janela de 15
+    minutos usado em `obter_historico_recente` (que é para o prompt do Gemini).
+    Usada pelo painel admin para inspeção/depuração do histórico completo recente.
+    """
+    if not id_grupo_wpp:
+        return []
+
+    try:
+        query = text("""
+            SELECT autor, conteudo, criado_em
+            FROM chat_historico_recente
+            WHERE id_grupo_wpp = :id_grupo
+            ORDER BY criado_em DESC
+            LIMIT :limite
+        """)
+        result = await db.execute(query, {"id_grupo": id_grupo_wpp, "limite": int(limite)})
+        rows = result.fetchall()
+        return [
+            {
+                "autor": row.autor,
+                "conteudo": row.conteudo,
+                "criado_em": row.criado_em.isoformat() if row.criado_em else None,
+            }
+            for row in reversed(rows)
+        ]
+    except Exception as e:
+        await db.rollback()
+        logger.warning(f"⚠️ Erro ao buscar histórico completo de chat: {e}")
+        return []
+
+
 async def limpar_historico_antigo(db: AsyncSession, minutos: int = 60) -> None:
     """
     Remove mensagens de histórico com mais de N minutos para manter a tabela leve.

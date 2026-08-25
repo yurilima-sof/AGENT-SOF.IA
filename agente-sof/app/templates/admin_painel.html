@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Admin — Sofia</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --border: #e0e2e7;
+    --text: #1c1f26;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --accent-dark: #1d4ed8;
+    --ok: #16a34a;
+    --warn: #d97706;
+    --err: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  header h1 { font-size: 1.4rem; margin: 0; }
+  header .actions button { margin-left: 8px; }
+  section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+  section h2 { margin-top: 0; font-size: 1.05rem; }
+  section h3 { font-size: 0.95rem; margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.03em; }
+  tr:hover td { background: #fafbfc; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; color: var(--muted); }
+  button {
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    border-radius: 6px;
+    padding: 4px 9px;
+    font-size: 0.78rem;
+    margin: 1px;
+  }
+  button:hover { background: #f0f2f5; }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent-dark); }
+  button.primary:hover { background: var(--accent-dark); }
+  button.danger { color: var(--err); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  input[type=text], select {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-size: 0.8rem;
+  }
+  .home-id-input { width: 130px; }
+  .switch { position: relative; display: inline-block; width: 38px; height: 20px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch span {
+    position: absolute; cursor: pointer; inset: 0; background-color: #ccc;
+    transition: 0.15s; border-radius: 20px;
+  }
+  .switch span:before {
+    position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px;
+    background-color: white; transition: 0.15s; border-radius: 50%;
+  }
+  .switch input:checked + span { background-color: var(--ok); }
+  .switch input:checked + span:before { transform: translateX(18px); }
+  .status-badge { font-size: 0.78rem; margin-left: 6px; }
+  .status-sucesso { color: var(--ok); }
+  .status-erro, .status-dispositivo_offline { color: var(--err); }
+  .status-sem_acao, .status-sem_cena { color: var(--muted); }
+  .ts { color: var(--muted); font-size: 0.72rem; margin-left: 6px; }
+  #detalhe-section { display: none; }
+  .detalhe-cols { display: flex; gap: 24px; flex-wrap: wrap; }
+  .detalhe-cols > div { flex: 1 1 300px; min-width: 280px; }
+  .detalhe-cols ul { list-style: none; padding: 0; margin: 0; max-height: 320px; overflow-y: auto; }
+  .detalhe-cols li { padding: 5px 0; border-bottom: 1px dashed var(--border); font-size: 0.85rem; }
+  #nova-cena-form { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+  #nova-cena-form input, #nova-cena-form select { flex: 1 1 120px; }
+  .hint { color: var(--muted); font-size: 0.78rem; }
+  .table-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🤖 Painel Admin — Sofia</h1>
+  <div class="actions">
+    <button onclick="carregarRevendas()">🔄 Revendas</button>
+    <button onclick="trocarAdminKey()">🔑 Trocar Admin Key</button>
+  </div>
+</header>
+
+<section id="revendas-section">
+  <h2>Revendas</h2>
+  <p class="hint">Ativar/desativar, corrigir o Home ID da Tuya, disparar ações manualmente e checar status — tudo sem recarregar a página.</p>
+  <div class="table-wrap">
+    <table id="revendas-table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Grupo WhatsApp</th>
+          <th>UF</th>
+          <th>Tuya Home ID</th>
+          <th>Ativo</th>
+          <th>Status IR</th>
+          <th>Ações Manuais</th>
+        </tr>
+      </thead>
+      <tbody id="revendas-tbody">
+        <tr><td colspan="7">Carregando…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="detalhe-section">
+  <h2 id="detalhe-titulo">Detalhes</h2>
+  <button onclick="fecharDetalhe()">✖ Fechar</button>
+  <div class="detalhe-cols">
+    <div>
+      <h3>Histórico de chat recente</h3>
+      <ul id="historico-list"></ul>
+    </div>
+    <div>
+      <h3>Memória RAG (regras aprendidas)</h3>
+      <ul id="memoria-list"></ul>
+    </div>
+  </div>
+</section>
+
+<section id="logs-section">
+  <h2>Logs de Operações Recentes <span id="logs-updated" class="hint"></span></h2>
+  <div class="table-wrap">
+    <table id="logs-table">
+      <thead>
+        <tr><th>Hora</th><th>Revenda</th><th>Mensagem</th><th>Intenção</th><th>Status</th><th>Tempo (ms)</th></tr>
+      </thead>
+      <tbody id="logs-tbody">
+        <tr><td colspan="6">Carregando…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="cenas-section">
+  <h2>Gestão de Cenas Tuya</h2>
+  <p class="hint">Selecione uma Home para ver/editar/excluir as cenas cadastradas, ou cadastre uma nova.</p>
+  <label>Home: <select id="home-select"></select></label>
+  <div class="table-wrap">
+    <table id="cenas-table">
+      <thead>
+        <tr><th>Ambiente</th><th>Scene ID</th><th>Nome da Cena</th><th>Ação</th><th></th></tr>
+      </thead>
+      <tbody id="cenas-tbody">
+        <tr><td colspan="5">Selecione uma home…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Nova cena / atualizar existente</h3>
+  <form id="nova-cena-form">
+    <input type="text" id="nc-sigla" placeholder="sigla_cliente (ex: pe)" required>
+    <input type="text" id="nc-ambiente" placeholder="ambiente (ex: recepcao)" required>
+    <input type="text" id="nc-scene-id" placeholder="scene_id da Tuya" required>
+    <input type="text" id="nc-nome" placeholder="nome da cena" required>
+    <select id="nc-acao">
+      <option value="medio">medio</option>
+      <option value="freezer">freezer</option>
+      <option value="esquentar">esquentar</option>
+      <option value="off">off</option>
+      <option value="ligar">ligar</option>
+    </select>
+    <button type="submit" class="primary">💾 Salvar Cena</button>
+  </form>
+</section>
+
+<script>
+const ADMIN_KEY_STORAGE = 'sof_admin_key';
+let revendasCache = {};
+
+// =============================================================================
+// Autenticação local (Admin Key via prompt + localStorage)
+// =============================================================================
+
+function promptForKey() {
+  const key = window.prompt('Cole sua Admin API Key (variável ADMIN_API_KEY do .env do servidor):');
+  if (key) localStorage.setItem(ADMIN_KEY_STORAGE, key.trim());
+  return key ? key.trim() : null;
+}
+
+function getAdminKey() {
+  return localStorage.getItem(ADMIN_KEY_STORAGE) || promptForKey();
+}
+
+function trocarAdminKey() {
+  localStorage.removeItem(ADMIN_KEY_STORAGE);
+  if (promptForKey()) {
+    carregarRevendas();
+    carregarHomes();
+    atualizarLogs();
+  }
+}
+
+async function apiFetch(path, options = {}) {
+  const key = getAdminKey();
+  if (!key) throw new Error('Admin Key não informada.');
+  const headers = Object.assign(
+    { 'Content-Type': 'application/json' },
+    options.headers || {},
+    { 'Authorization': `Bearer ${key}` }
+  );
+  const resp = await fetch(path, { ...options, headers });
+  if (resp.status === 401 || resp.status === 403) {
+    localStorage.removeItem(ADMIN_KEY_STORAGE);
+    alert('Admin Key inválida ou expirada. Informe novamente.');
+    promptForKey();
+    throw new Error('Não autorizado');
+  }
+  return resp;
+}
+
+async function apiJson(path, options) {
+  const resp = await apiFetch(path, options);
+  if (!resp.ok) {
+    let detail = `Erro HTTP ${resp.status}`;
+    try {
+      const body = await resp.json();
+      detail = (body.detail && body.detail.message) || body.detail || detail;
+    } catch (_) { /* corpo não era JSON */ }
+    throw new Error(detail);
+  }
+  if (resp.status === 204) return null;
+  return resp.json();
+}
+
+// =============================================================================
+// Helpers de exibição
+// =============================================================================
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+function formatarData(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return isNaN(d) ? iso : d.toLocaleString('pt-BR');
+}
+
+// =============================================================================
+// Seção: Revendas
+// =============================================================================
+
+async function carregarRevendas() {
+  const tbody = document.getElementById('revendas-tbody');
+  tbody.innerHTML = '<tr><td colspan="7">Carregando…</td></tr>';
+  try {
+    const revendas = await apiJson('/admin/revendas');
+    tbody.innerHTML = '';
+    revendasCache = {};
+    for (const r of revendas) {
+      revendasCache[r.id_grupo_wpp] = r;
+      tbody.appendChild(criarLinhaRevenda(r));
+    }
+    if (!revendas.length) tbody.innerHTML = '<tr><td colspan="7">Nenhuma revenda cadastrada.</td></tr>';
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7">Erro ao carregar revendas: ${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+function criarLinhaRevenda(r) {
+  const tr = document.createElement('tr');
+  const grupo = r.id_grupo_wpp;
+
+  tr.innerHTML = `
+    <td>${escapeHtml(r.nome_revenda)}</td>
+    <td class="mono">${escapeHtml(grupo)}</td>
+    <td>${escapeHtml(r.estado || '')}</td>
+    <td>
+      <input type="text" class="home-id-input" value="${escapeHtml(r.tuya_home_id || '')}" placeholder="tuya_home_id">
+      <button class="salvar-home-id" title="Salvar Home ID">💾</button>
+    </td>
+    <td>
+      <label class="switch">
+        <input type="checkbox" class="ativo-toggle" ${r.ativo ? 'checked' : ''}>
+        <span></span>
+      </label>
+    </td>
+    <td>
+      <button class="verificar-status">Verificar</button>
+      <span class="status-badge">—</span>
+    </td>
+    <td class="acoes-cell">
+      <button data-acao="medio">medio</button>
+      <button data-acao="freezer">freezer</button>
+      <button data-acao="esquentar">esquentar</button>
+      <button data-acao="off">off</button>
+      <button data-acao="ligar">ligar</button>
+      <button data-acao="desativar_automacao">pausar automação</button>
+      <br>
+      <button class="ver-detalhe">📄 histórico/memória</button>
+    </td>
+  `;
+
+  tr.querySelector('.ativo-toggle').addEventListener('change', async (e) => {
+    const novoEstado = e.target.checked;
+    e.target.disabled = true;
+    try {
+      await apiJson(`/admin/revendas/${encodeURIComponent(grupo)}/toggle`, {
+        method: 'POST',
+        body: JSON.stringify({ ativo: novoEstado }),
+      });
+    } catch (err) {
+      e.target.checked = !novoEstado;
+      alert('Erro ao alterar estado: ' + err.message);
+    } finally {
+      e.target.disabled = false;
+    }
+  });
+
+  tr.querySelector('.salvar-home-id').addEventListener('click', async () => {
+    const input = tr.querySelector('.home-id-input');
+    const valor = input.value.trim();
+    if (!valor) { alert('Informe um tuya_home_id.'); return; }
+    try {
+      await apiJson(`/admin/revendas/${encodeURIComponent(grupo)}/mapeamento`, {
+        method: 'PATCH',
+        body: JSON.stringify({ tuya_home_id: valor }),
+      });
+      input.style.background = '#d4f7dc';
+      setTimeout(() => { input.style.background = ''; }, 900);
+      if (revendasCache[grupo]) revendasCache[grupo].tuya_home_id = valor;
+    } catch (err) {
+      alert('Erro ao salvar mapeamento: ' + err.message);
+    }
+  });
+
+  tr.querySelector('.verificar-status').addEventListener('click', async () => {
+    const badge = tr.querySelector('.status-badge');
+    badge.textContent = '...';
+    try {
+      const s = await apiJson(`/admin/revendas/${encodeURIComponent(grupo)}/status`);
+      if (s.checked === false) {
+        badge.textContent = s.reason === 'sem_tuya_home_id' ? '⚪ sem home_id' : '⚪ não verificado';
+      } else {
+        badge.textContent = s.all_offline ? `🔴 offline (${s.ir_online ?? 0}/${s.ir_total ?? 0} IR)` : `🟢 online (${s.online_count}/${s.total_count})`;
+      }
+    } catch (err) {
+      badge.textContent = '⚠️ erro';
+    }
+  });
+
+  tr.querySelectorAll('.acoes-cell button[data-acao]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const acao = btn.dataset.acao;
+      let ambiente = null;
+      if (acao !== 'desativar_automacao') {
+        ambiente = window.prompt('Ambiente (deixe em branco para loja de ambiente único):', '');
+        if (ambiente !== null) ambiente = ambiente.trim() || null;
+      }
+      btn.disabled = true;
+      const original = btn.textContent;
+      btn.textContent = '…';
+      try {
+        const resultado = await apiJson(`/admin/revendas/${encodeURIComponent(grupo)}/disparar`, {
+          method: 'POST',
+          body: JSON.stringify({ acao, ambiente }),
+        });
+        alert(`Ação '${acao}' disparada.\nSucesso: ${resultado.tuya_success}\nDetalhe: ${resultado.detail}`);
+      } catch (err) {
+        alert('Erro ao disparar ação: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    });
+  });
+
+  tr.querySelector('.ver-detalhe').addEventListener('click', () => abrirDetalhe(r));
+
+  return tr;
+}
+
+// =============================================================================
+// Seção: Detalhes (histórico + memória) de uma revenda
+// =============================================================================
+
+async function abrirDetalhe(r) {
+  document.getElementById('detalhe-section').style.display = 'block';
+  document.getElementById('detalhe-titulo').textContent = `Detalhes — ${r.nome_revenda}`;
+  document.getElementById('detalhe-section').scrollIntoView({ behavior: 'smooth' });
+
+  const historicoList = document.getElementById('historico-list');
+  const memoriaList = document.getElementById('memoria-list');
+  historicoList.innerHTML = '<li>Carregando…</li>';
+  memoriaList.innerHTML = '<li>Carregando…</li>';
+
+  try {
+    const historico = await apiJson(`/admin/revendas/${encodeURIComponent(r.id_grupo_wpp)}/historico`);
+    historicoList.innerHTML = historico.length
+      ? historico.map((h) => `<li><b>${escapeHtml(h.autor)}:</b> ${escapeHtml(h.conteudo)} <span class="ts">${formatarData(h.criado_em)}</span></li>`).join('')
+      : '<li>Sem histórico recente.</li>';
+  } catch (err) {
+    historicoList.innerHTML = `<li>Erro: ${escapeHtml(err.message)}</li>`;
+  }
+
+  try {
+    const memoria = await apiJson(`/admin/revendas/${encodeURIComponent(r.id_grupo_wpp)}/memoria`);
+    memoriaList.innerHTML = '';
+    if (!memoria.length) {
+      memoriaList.innerHTML = '<li>Sem memória RAG registrada para este grupo.</li>';
+    }
+    for (const m of memoria) {
+      const li = document.createElement('li');
+      li.innerHTML = `${escapeHtml(m.conteudo)} <span class="ts">${formatarData(m.criado_em)}</span> `;
+      const delBtn = document.createElement('button');
+      delBtn.className = 'danger';
+      delBtn.textContent = '🗑';
+      delBtn.title = 'Excluir esta entrada de memória';
+      delBtn.addEventListener('click', async () => {
+        if (!confirm('Excluir esta entrada de memória permanentemente?')) return;
+        try {
+          await apiJson(`/admin/memoria/${m.id}`, { method: 'DELETE' });
+          li.remove();
+        } catch (err) {
+          alert('Erro ao excluir: ' + err.message);
+        }
+      });
+      li.appendChild(delBtn);
+      memoriaList.appendChild(li);
+    }
+  } catch (err) {
+    memoriaList.innerHTML = `<li>Erro: ${escapeHtml(err.message)}</li>`;
+  }
+}
+
+function fecharDetalhe() {
+  document.getElementById('detalhe-section').style.display = 'none';
+}
+
+// =============================================================================
+// Seção: Logs recentes (auto-refresh via polling)
+// =============================================================================
+
+async function atualizarLogs() {
+  try {
+    const logs = await apiJson('/admin/logs?limite=50');
+    const tbody = document.getElementById('logs-tbody');
+    tbody.innerHTML = logs.length ? logs.map((l) => `
+      <tr>
+        <td>${formatarData(l.timestamp)}</td>
+        <td>${escapeHtml(l.nome_revenda)}</td>
+        <td>${escapeHtml((l.mensagem_original || '').slice(0, 60))}</td>
+        <td>${escapeHtml(l.intencao || '')}</td>
+        <td class="status-${escapeHtml(l.status)}">${escapeHtml(l.status)}</td>
+        <td>${l.tempo_resposta_ms ?? ''}</td>
+      </tr>
+    `).join('') : '<tr><td colspan="6">Sem logs registrados ainda.</td></tr>';
+    document.getElementById('logs-updated').textContent = `(atualizado às ${new Date().toLocaleTimeString('pt-BR')})`;
+  } catch (err) {
+    document.getElementById('logs-updated').textContent = `(erro ao atualizar: ${err.message})`;
+  }
+}
+
+// =============================================================================
+// Seção: Gestão de Cenas Tuya
+// =============================================================================
+
+async function carregarHomes() {
+  const select = document.getElementById('home-select');
+  try {
+    const homes = await apiJson('/admin/tuya/homes');
+    select.innerHTML = homes.map((h) =>
+      `<option value="${escapeHtml(h.home_id)}" data-sigla="${escapeHtml(h.sigla_cliente)}">${escapeHtml(h.nome_home)} (${escapeHtml(h.home_id)})</option>`
+    ).join('');
+    if (homes.length) {
+      await carregarCenas(homes[0].home_id);
+      document.getElementById('nc-sigla').value = homes[0].sigla_cliente;
+    }
+  } catch (err) {
+    select.innerHTML = `<option>Erro: ${escapeHtml(err.message)}</option>`;
+  }
+}
+
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.id === 'home-select') {
+    const opt = e.target.selectedOptions[0];
+    carregarCenas(e.target.value);
+    if (opt) document.getElementById('nc-sigla').value = opt.dataset.sigla || '';
+  }
+});
+
+async function carregarCenas(homeId) {
+  const tbody = document.getElementById('cenas-tbody');
+  tbody.innerHTML = '<tr><td colspan="5">Carregando…</td></tr>';
+  document.getElementById('nc-scene-id').dataset.homeId = homeId;
+  try {
+    const cenas = await apiJson(`/admin/tuya/cenas?home_id=${encodeURIComponent(homeId)}`);
+    tbody.innerHTML = '';
+    if (!cenas.length) tbody.innerHTML = '<tr><td colspan="5">Nenhuma cena cadastrada para esta home.</td></tr>';
+    for (const c of cenas) tbody.appendChild(criarLinhaCena(c));
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5">Erro: ${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+function criarLinhaCena(c) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${escapeHtml(c.ambiente)}</td>
+    <td class="mono">${escapeHtml(c.scene_id)}</td>
+    <td>${escapeHtml(c.nome_cena)}</td>
+    <td>${escapeHtml(c.acao)}</td>
+    <td><button class="danger excluir-cena">🗑 Excluir</button></td>
+  `;
+  tr.querySelector('.excluir-cena').addEventListener('click', async () => {
+    if (!confirm(`Excluir a cena '${c.nome_cena}'?`)) return;
+    try {
+      await apiJson(`/admin/tuya/cenas/${encodeURIComponent(c.scene_id)}`, { method: 'DELETE' });
+      tr.remove();
+    } catch (err) {
+      alert('Erro ao excluir cena: ' + err.message);
+    }
+  });
+  return tr;
+}
+
+document.getElementById('nova-cena-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const homeId = document.getElementById('home-select').value;
+  if (!homeId) { alert('Selecione uma Home primeiro.'); return; }
+
+  const payload = {
+    home_id: homeId,
+    sigla_cliente: document.getElementById('nc-sigla').value.trim(),
+    ambiente: document.getElementById('nc-ambiente').value.trim(),
+    scene_id: document.getElementById('nc-scene-id').value.trim(),
+    nome_cena: document.getElementById('nc-nome').value.trim(),
+    acao: document.getElementById('nc-acao').value,
+  };
+
+  try {
+    await apiJson('/admin/tuya/cenas', { method: 'POST', body: JSON.stringify(payload) });
+    document.getElementById('nc-ambiente').value = '';
+    document.getElementById('nc-scene-id').value = '';
+    document.getElementById('nc-nome').value = '';
+    await carregarCenas(homeId);
+  } catch (err) {
+    alert('Erro ao salvar cena: ' + err.message);
+  }
+});
+
+// =============================================================================
+// Inicialização
+// =============================================================================
+
+carregarRevendas();
+carregarHomes();
+atualizarLogs();
+setInterval(atualizarLogs, 15000);
+</script>
+</body>
+</html>
