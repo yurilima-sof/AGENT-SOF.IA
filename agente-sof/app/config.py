@@ -74,6 +74,14 @@ class Settings(BaseSettings):
         description="Chave de acesso ao painel de administração.",
     )
 
+    admin_allowed_ips: str = Field(
+        default="",
+        description=(
+            "Lista de IPs (separados por vírgula) autorizados a acessar qualquer rota /admin/*. "
+            "Vazio = sem restrição de IP (não recomendado em produção sem proxy/TLS na frente)."
+        ),
+    )
+
     # --- LLM / IA ---
     # Deixamos o campo opcional para não quebrar a inicialização
     # enquanto não tivermos a chave configurada.
@@ -103,6 +111,11 @@ class Settings(BaseSettings):
     def is_development(self) -> bool:
         """Retorna True se a aplicação está rodando em modo desenvolvimento."""
         return self.app_env == "development"
+
+    @property
+    def admin_allowed_ips_list(self) -> list[str]:
+        """Lista de IPs autorizados a acessar /admin/*, já parseada e sem espaços em branco."""
+        return [ip.strip() for ip in self.admin_allowed_ips.split(",") if ip.strip()]
 
     @model_validator(mode="after")
     def _proibir_defaults_em_producao(self):

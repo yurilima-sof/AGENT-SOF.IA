@@ -8,7 +8,7 @@
 import logging
 import secrets
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config import get_settings
@@ -54,3 +54,29 @@ async def verify_admin_api_key(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return credentials.credentials
+
+
+async def verify_admin_ip_allowlist(request: Request) -> None:
+    """
+    Restringe qualquer rota /admin/* a uma lista de IPs de confiança, configurada
+    via ADMIN_ALLOWED_IPS no .env (separados por vírgula). Mitigação temporária
+    enquanto não há um proxy reverso com TLS na frente da API (ver README, seção 9).
+
+    Lê `request.client.host` (endereço da conexão TCP real) — só é confiável em
+    exposição DIRETA (sem reverse proxy no meio), que é o cenário atual. Se um
+    proxy (Caddy, Nginx) for colocado na frente, esta função precisa passar a
+    validar X-Forwarded-For de forma segura (só confiando nele quando a conexão
+    de origem for do próprio proxy) — do contrário, qualquer cliente poderia
+    forjar esse header e burlar a lista.
+    """
+    allowed = settings.admin_allowed_ips_list
+    if not allowed:
+        return  # ADMIN_ALLOWED_IPS não configurado: sem restrição adicional de IP
+
+    client_ip = request.client.host if request.client else None
+    if client_ip not in allowed:
+        logger.warning(f"🔒 Acesso a rota admin bloqueado pela allowlist de IP: '{client_ip}' não está autorizado.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "message": "Acesso não permitido a partir deste endereço IP."},
+        )

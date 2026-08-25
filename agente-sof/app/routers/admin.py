@@ -22,7 +22,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import verify_admin_api_key
+from app.core.security import verify_admin_api_key, verify_admin_ip_allowlist
 from app.database import get_db
 from app.schemas.admin import (
     ToggleRequest,
@@ -48,7 +48,14 @@ from app.services.tuya_dispatch_service import disparar_acao_fisica
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/admin", tags=["Admin"])
+router = APIRouter(
+    prefix="/admin",
+    tags=["Admin"],
+    # Allowlist de IP aplicada a TODA rota /admin/* (inclusive o shell público
+    # /admin/painel) — mitigação enquanto não há proxy/TLS na frente. Sem
+    # ADMIN_ALLOWED_IPS configurado no .env, não restringe nada (ver security.py).
+    dependencies=[Depends(verify_admin_ip_allowlist)],
+)
 
 _TEMPLATE_PATH = Path(__file__).resolve().parent.parent / "templates" / "admin_painel.html"
 
