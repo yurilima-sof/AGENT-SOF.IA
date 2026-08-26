@@ -4,6 +4,7 @@
 
 import json
 import logging
+import re
 from typing import Optional, Dict, Any
 from datetime import datetime
 
@@ -13,6 +14,182 @@ from app.services.rag_service import rag_service
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
+
+def _remover_cerca_markdown(texto: str) -> str:
+    """Remove blocos de código markdown (```json ... ``` ou ``` ... ```) ao redor do JSON."""
+    texto = texto.strip()
+    if not texto.startswith("```"):
+        return texto
+    linhas = texto.splitlines()
+    if linhas and linhas[0].startswith("```"):
+        linhas = linhas[1:]
+    if linhas and linhas[-1].startswith("```"):
+        linhas = linhas[:-1]
+    return "\n".join(linhas).strip()
+
+
+def _escapar_aspas_soltas(texto: str) -> str:
+    """
+    Escapa aspas duplas que aparecem DENTRO de valores de string do JSON sem terem
+    sido escapadas pelo Gemini (ex: 'mensagem_wpp': 'ele disse "oi"'). Considera uma
+    aspa "estrutural" (abre/fecha string de verdade) só se o caractere imediatamente
+    antes for um dos delimitadores '{[:,' (ignorando espaços) ou o imediatamente
+    depois for um dos delimitadores ':,}]' (ignorando espaços); qualquer outra aspa
+    é tratada como solta dentro do valor e escapada.
+    """
+    resultado = []
+    n = len(texto)
+    for i, ch in enumerate(texto):
+        if ch == '"' and (i == 0 or texto[i - 1] != '\\'):
+            antes = texto[:i].rstrip()
+            depois = texto[i + 1:].lstrip()
+            eh_estrutural = (not antes or antes[-1] in '{[:,') or (not depois or depois[0] in ':,}]')
+            if not eh_estrutural:
+                resultado.append('\\"')
+                continue
+        resultado.append(ch)
+    return "".join(resultado)
+
+
+def _escapar_quebras_de_linha_em_strings(texto: str) -> str:
+    """
+    Troca quebras de linha literais (\\n / \\r reais) por suas versões escapadas
+    quando aparecem DENTRO de um valor de string JSON — o Gemini às vezes gera a
+    quebra de linha de verdade em vez do escape '\\\\n', o que quebra o parser.
+    """
+    resultado = []
+    dentro_de_string = False
+    escapando = False
+    for ch in texto:
+        if dentro_de_string:
+            if escapando:
+                resultado.append(ch)
+                escapando = False
+                continue
+            if ch == "\\":
+                resultado.append(ch)
+                escapando = True
+                continue
+            if ch == '"':
+                dentro_de_string = False
+                resultado.append(ch)
+                continue
+            if ch == "\n":
+                resultado.append("\\n")
+                continue
+            if ch == "\r":
+                resultado.append("\\r")
+                continue
+            resultado.append(ch)
+        else:
+            if ch == '"':
+                dentro_de_string = True
+            resultado.append(ch)
+    return "".join(resultado)
+
+
+def _reparar_json_truncado(texto: str) -> Optional[dict]:
+    """
+    Repara, de forma best-effort, um JSON cortado no meio (comum quando a resposta
+    do Gemini é truncada por max_output_tokens): fecha uma string não terminada e
+    fecha chaves/colchetes pendentes na ordem inversa de abertura. Retorna None se
+    mesmo após o reparo o texto continuar inválido.
+    """
+    reparado = texto.rstrip()
+    if not reparado:
+        return None
+
+    aspas_abertas = 0
+    escapando = False
+    for ch in reparado:
+        if escapando:
+            escapando = False
+            continue
+        if ch == "\\":
+            escapando = True
+            continue
+        if ch == '"':
+            aspas_abertas += 1
+    if aspas_abertas % 2 == 1:
+        reparado += '"'
+
+    # Corte logo após uma vírgula (ex: '..."ambiente": null,') ou logo após uma chave
+    # sem valor (ex: '..."ambiente": null, "mensagem_wpp"') deixa uma cauda inválida
+    # que fechar chaves sozinho não resolve — remove essa cauda pendurada.
+    reparado = re.sub(r',\s*"[^"]*"\s*:?\s*$', "", reparado)
+    reparado = re.sub(r'[,:]\s*$', "", reparado)
+
+    pilha = []
+    dentro_de_string = False
+    escapando = False
+    for ch in reparado:
+        if dentro_de_string:
+            if escapando:
+                escapando = False
+            elif ch == "\\":
+                escapando = True
+            elif ch == '"':
+                dentro_de_string = False
+            continue
+        if ch == '"':
+            dentro_de_string = True
+        elif ch in "{[":
+            pilha.append(ch)
+        elif ch in "}]":
+            if pilha:
+                pilha.pop()
+
+    fechamentos = {"{": "}", "[": "]"}
+    while pilha:
+        reparado += fechamentos[pilha.pop()]
+
+    try:
+        return json.loads(reparado)
+    except json.JSONDecodeError:
+        return None
+
+
+def _parse_and_repair_json(raw_text: str) -> dict:
+    """
+    Interpreta a resposta em texto do Gemini como JSON, aplicando reparos
+    progressivos para os padrões de malformação mais comuns observados em
+    produção: bloco de código markdown ao redor, caracteres de controle,
+    aspas não escapadas dentro de strings, quebras de linha literais dentro
+    de strings, e JSON truncado por limite de tokens.
+
+    Lança json.JSONDecodeError se nenhuma tentativa de reparo funcionar.
+    """
+    texto = _remover_cerca_markdown(raw_text)
+
+    try:
+        return json.loads(texto)
+    except json.JSONDecodeError:
+        pass
+
+    sem_controle = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]", "", texto)
+    try:
+        return json.loads(sem_controle)
+    except json.JSONDecodeError:
+        pass
+
+    aspas_corrigidas = _escapar_aspas_soltas(sem_controle)
+    try:
+        return json.loads(aspas_corrigidas)
+    except json.JSONDecodeError:
+        pass
+
+    quebras_corrigidas = _escapar_quebras_de_linha_em_strings(aspas_corrigidas)
+    try:
+        return json.loads(quebras_corrigidas)
+    except json.JSONDecodeError:
+        pass
+
+    reparado = _reparar_json_truncado(quebras_corrigidas)
+    if reparado is not None:
+        return reparado
+
+    raise json.JSONDecodeError("Não foi possível interpretar/reparar o JSON do Gemini", texto, 0)
 
 
 class LLMService:
@@ -189,7 +366,7 @@ class LLMService:
                     generation_config=genai.GenerationConfig(
                         response_mime_type="application/json",
                         temperature=0.0,
-                        max_output_tokens=1000
+                        max_output_tokens=2048
                     )
                 )
             except Exception as e_sys:
@@ -201,36 +378,30 @@ class LLMService:
                     generation_config=genai.GenerationConfig(
                         response_mime_type="application/json",
                         temperature=0.0,
-                        max_output_tokens=1000
+                        max_output_tokens=2048
                     )
                 )
-            
+
             if not response or not response.text:
                 raise ValueError("Resposta vazia da API do Gemini.")
-                
+
             logger.info(f"✅ Resposta do Gemini obtida com sucesso usando {m_name}.")
-            
-            # 5. Converte o JSON string para dict do Python com sanitização de segurança
-            raw_json = response.text.strip()
-            if raw_json.startswith("```"):
-                lines = raw_json.splitlines()
-                if lines[0].startswith("```"):
-                    lines = lines[1:]
-                if lines and lines[-1].startswith("```"):
-                    lines = lines[:-1]
-                raw_json = "\n".join(lines).strip()
-                
+
+            # 5. Converte o JSON string para dict do Python, com reparos em cascata
+            # para os padrões de malformação mais comuns (ver _parse_and_repair_json).
             try:
-                return json.loads(raw_json)
+                return _parse_and_repair_json(response.text)
             except json.JSONDecodeError:
-                # Tenta reparar aspas/quebras de linha internas se houver
-                import re
-                cleaned = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', raw_json)
-                return json.loads(cleaned)
-            
+                logger.error(
+                    f"⚠️ JSON do Gemini não pôde ser interpretado nem após reparo. "
+                    f"Resposta bruta (truncada): {response.text.strip()[:500]!r}",
+                    extra={"status": "erro"},
+                )
+                raise
+
         except Exception as e:
             logger.error(f"⚠️ Erro Crítico ao chamar o Gemini ({m_name}): {e}", extra={"status": "erro"}, exc_info=True)
-            
+
             # FALLBACK DE SEGURANÇA PARA PRODUÇÃO
             return {
                 "intencao": "sem_acao",
