@@ -21,8 +21,8 @@ class DispararAcaoRequest(BaseModel):
     """
     acao: str = Field(
         ...,
-        description="freezer | esquentar | medio | off | ligar | desativar_automacao",
-        examples=["freezer", "desativar_automacao"],
+        description="freezer | esquentar | medio | off | ligar | desativar_automacao | reativar_automacao",
+        examples=["freezer", "desativar_automacao", "reativar_automacao"],
     )
     ambiente: Optional[str] = Field(
         default=None,

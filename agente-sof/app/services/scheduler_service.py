@@ -138,4 +138,36 @@ class SchedulerService:
                     self._run_task(id_grupo_wpp, nome_revenda, home_id, automacao_ids, delay_segundos, task_key, agendamento_id)
                 )
 
+    async def cancelar_reativacao_pendente(self, id_grupo: str, home_id: str) -> bool:
+        """
+        Cancela manualmente a reativação agendada para um grupo/home (usado quando o
+        usuário avisa que a reunião acabou/foi cancelada antes do horário combinado):
+        cancela a asyncio.Task em memória, se existir, e marca o(s) agendamento(s)
+        pendente(s) correspondentes como executados no banco, para não serem
+        reprocessados num próximo boot da aplicação.
+
+        Retorna True se havia algo para cancelar (task em memória ou agendamento
+        pendente no banco), False se não havia nenhuma pausa agendada.
+        """
+        from app.database import async_session_maker
+        from app.crud.agendamentos import obter_agendamentos_pendentes, marcar_agendamento_executado
+
+        task_key = f"{id_grupo}_{home_id}"
+        cancelou_algo = False
+
+        if task_key in self._tasks and not self._tasks[task_key].done():
+            self._tasks[task_key].cancel()
+            cancelou_algo = True
+            logger.info(f"⏹️ [Scheduler] Reativação agendada cancelada manualmente para {task_key}.")
+
+        async with async_session_maker() as db:
+            pendentes = await obter_agendamentos_pendentes(db)
+            for row in pendentes:
+                agendamento_id, id_grupo_wpp, _nome_revenda, h_id = row[0], row[1], row[2], row[3]
+                if id_grupo_wpp == id_grupo and h_id == home_id:
+                    await marcar_agendamento_executado(db, str(agendamento_id))
+                    cancelou_algo = True
+
+        return cancelou_algo
+
 scheduler_service = SchedulerService()

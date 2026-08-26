@@ -316,6 +316,7 @@ function criarLinhaRevenda(r) {
       <button data-acao="off">off</button>
       <button data-acao="ligar">ligar</button>
       <button data-acao="desativar_automacao">pausar automação</button>
+      <button data-acao="reativar_automacao">reativar automação</button>
       <br>
       <button class="ver-detalhe">📄 histórico/memória</button>
     </td>
@@ -373,7 +374,7 @@ function criarLinhaRevenda(r) {
     btn.addEventListener('click', async () => {
       const acao = btn.dataset.acao;
       let ambiente = null;
-      if (acao !== 'desativar_automacao') {
+      if (acao !== 'desativar_automacao' && acao !== 'reativar_automacao') {
         ambiente = window.prompt('Ambiente (deixe em branco para loja de ambiente único):', '');
         if (ambiente !== null) ambiente = ambiente.trim() || null;
       }

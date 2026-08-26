@@ -2,6 +2,7 @@
 # app/services/llm_service.py - Classificação Semântica e IA (RAG) com Gemini
 # =============================================================================
 
+import asyncio
 import json
 import logging
 import re
@@ -14,6 +15,30 @@ from app.services.rag_service import rag_service
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
+GEMINI_TIMEOUT_SEGUNDOS = 20.0
+
+# Detecta que o usuário quer CANCELAR uma pausa de automação já em andamento
+# (reunião acabou/foi cancelada) e reativar tudo agora — distinto do bloco de
+# pausa abaixo, que só sabe PAUSAR. Baseado em regex (em vez de frases exatas)
+# pra tolerar palavras intercaladas, ex: "a reunião JÁ acabou". Ver
+# app/services/tuya_dispatch_service.py (acao == "reativar_automacao") para o
+# que acontece fisicamente na Tuya.
+_RE_MENCIONA_REUNIAO = re.compile(r"reuni[ãa]o|fechamento\s+de\s+m[êe]s")
+_RE_FIM_OU_CANCELAMENTO = re.compile(r"acabou|terminou|cancel\w*")
+_RE_PEDIDO_DIRETO_DE_REATIVACAO = re.compile(
+    r"tir\w*\s+a[s]?\s+pausa[s]?"
+    r"|remov\w*\s+a\s+pausa"
+    r"|reativ\w*\s+a[s]?\s+automa[çc]\w*"
+    r"|pode\s+reativar"
+    r"|(?:liga|religa)\w*\s+(?:de\s+novo\s+)?a[s]?\s+automa[çc]\w*"
+)
+
+
+def _mensagem_indica_cancelamento_pausa(mensagem_lower: str) -> bool:
+    if _RE_PEDIDO_DIRETO_DE_REATIVACAO.search(mensagem_lower):
+        return True
+    return bool(_RE_MENCIONA_REUNIAO.search(mensagem_lower) and _RE_FIM_OU_CANCELAMENTO.search(mensagem_lower))
 
 
 def _remover_cerca_markdown(texto: str) -> str:
@@ -214,8 +239,22 @@ class LLMService:
         Consulta o RAG por histórico contextual, analisa histórico de curto prazo, envia a pergunta + contexto ao gemini-2.5-flash
         e retorna a classificação estruturada no formato compatível com AgentResponse.
         """
-        # 0. Verificação Determinística de Pausa de Automação / Reunião / Fechamento de Mês
+        # 0a. Verificação Determinística de CANCELAMENTO de Pausa (reunião acabou/foi
+        # cancelada) — precisa vir ANTES da checagem de pausa abaixo, senão uma frase
+        # como "reunião cancelada" seria capturada por conter "reunião" e tentaria
+        # pausar de novo em vez de reativar.
         mensagem_lower = mensagem.lower()
+        if _mensagem_indica_cancelamento_pausa(mensagem_lower):
+            logger.info(f"   [LLM] Regra determinística de CANCELAMENTO de pausa ativada para mensagem: '{mensagem}'")
+            return {
+                "intencao": "reativar_automacao_agora",
+                "ifttt_action": "reativar_automacao",
+                "ambiente": None,
+                "mensagem_wpp": "Combinado! 😊 Já reativei as automações e cancelei o agendamento anterior.",
+                "salvar_memoria": False
+            }
+
+        # 0b. Verificação Determinística de Pausa de Automação / Reunião / Fechamento de Mês
         palavras_pausa = ["reunião", "reuniao", "fechamento de mês", "fechamento de mes", "não desliga", "nao desliga", "pausar automação", "pausar automacao"]
         if any(p in mensagem_lower for p in palavras_pausa):
             logger.info(f"   [LLM] Regra determinística de Pausa de Automação / Reunião ativada para mensagem: '{mensagem}'")
@@ -250,8 +289,8 @@ class LLMService:
 
             "Você deve responder EXCLUSIVAMENTE em formato JSON com a seguinte estrutura:\n"
             "{\n"
-            "  \"intencao\": \"ligar_resfriamento\" | \"ligar_aquecimento\" | \"ligar_temperatura_media\" | \"desligar_dispositivos\" | \"ligar_dispositivos\" | \"pausar_automacao\" | \"sem_acao\",\n"
-            "  \"ifttt_action\": \"freezer\" | \"esquentar\" | \"medio\" | \"off\" | \"ligar\" | \"desativar_automacao\" | null,\n"
+            "  \"intencao\": \"ligar_resfriamento\" | \"ligar_aquecimento\" | \"ligar_temperatura_media\" | \"desligar_dispositivos\" | \"ligar_dispositivos\" | \"pausar_automacao\" | \"reativar_automacao_agora\" | \"sem_acao\",\n"
+            "  \"ifttt_action\": \"freezer\" | \"esquentar\" | \"medio\" | \"off\" | \"ligar\" | \"desativar_automacao\" | \"reativar_automacao\" | null,\n"
             "  \"ambiente\": \"nome do ambiente (slug) ou null\",\n"
             "  \"mensagem_wpp\": \"Sua resposta amigável para o WhatsApp\",\n"
             "  \"salvar_memoria\": true | false\n"
@@ -287,6 +326,14 @@ class LLMService:
             "- O ifttt_action OBRIGATORIAMENTE DEVE SER: `desativar_automacao`\n"
             "- A flag salvar_memoria OBRIGATORIAMENTE DEVE SER: `true`\n"
             "- IGNORE qualquer comando antigo ou histórico do RAG que tenha associado essas palavras a 'freezer' ou 'ligar_resfriamento'.\n\n"
+
+            "REGRA DE CANCELAMENTO DE PAUSA (REATIVAR AUTOMAÇÃO AGORA):\n"
+            "Se a mensagem ATUAL do usuário indicar que uma reunião/fechamento acabou, foi cancelada, ou pedir explicitamente para "
+            "tirar/remover/cancelar a pausa das automações e reativar tudo AGORA (ex: 'reunião cancelada', 'a reunião já acabou', "
+            "'pode tirar a pausa', 'reativa as automações'):\n"
+            "- A intenção OBRIGATORIAMENTE DEVE SER: `reativar_automacao_agora`\n"
+            "- O ifttt_action OBRIGATORIAMENTE DEVE SER: `reativar_automacao`\n"
+            "- NUNCA classifique isso como `ligar_dispositivos`/`ligar` — reativar automação é diferente de ligar um equipamento.\n\n"
 
             "Regras de Decisão Semântica (Padrão e Prioridade):\n"
             "1. PRIORIDADE MÁXIMA - REUNIÃO PROLONGADA / FECHAMENTO DE MÊS / PAUSAR AUTOMAÇÃO:\n"
@@ -361,25 +408,31 @@ class LLMService:
                     system_instruction=system_prompt
                 )
                 
-                response = await model.generate_content_async(
-                    user_content,
-                    generation_config=genai.GenerationConfig(
-                        response_mime_type="application/json",
-                        temperature=0.0,
-                        max_output_tokens=2048
-                    )
+                response = await asyncio.wait_for(
+                    model.generate_content_async(
+                        user_content,
+                        generation_config=genai.GenerationConfig(
+                            response_mime_type="application/json",
+                            temperature=0.0,
+                            max_output_tokens=2048
+                        )
+                    ),
+                    timeout=GEMINI_TIMEOUT_SEGUNDOS,
                 )
             except Exception as e_sys:
                 logger.warning(f"⚠️ Chamada com system_instruction falhou ({e_sys}). Tentando modo de prompt unificado...")
                 model = genai.GenerativeModel(model_name=m_name)
                 full_prompt = f"{system_prompt}\n\n{user_content}"
-                response = await model.generate_content_async(
-                    full_prompt,
-                    generation_config=genai.GenerationConfig(
-                        response_mime_type="application/json",
-                        temperature=0.0,
-                        max_output_tokens=2048
-                    )
+                response = await asyncio.wait_for(
+                    model.generate_content_async(
+                        full_prompt,
+                        generation_config=genai.GenerationConfig(
+                            response_mime_type="application/json",
+                            temperature=0.0,
+                            max_output_tokens=2048
+                        )
+                    ),
+                    timeout=GEMINI_TIMEOUT_SEGUNDOS,
                 )
 
             if not response or not response.text:

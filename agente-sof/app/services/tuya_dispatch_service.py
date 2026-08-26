@@ -48,6 +48,29 @@ async def disparar_acao_fisica(
             "device_offline": bool,        # True = dispositivos IR offline, comando abortado
         }
     """
+    if acao == "reativar_automacao":
+        # Reativação manual (ex: "reunião cancelada"): cancela o agendamento pendente
+        # e reabilita as automações agora. Não depende do transmissor IR físico estar
+        # online — é uma operação puramente na nuvem da Tuya (regra de automação),
+        # por isso roda antes da checagem de dispositivo offline abaixo.
+        from app.services.scheduler_service import scheduler_service
+
+        await scheduler_service.cancelar_reativacao_pendente(id_grupo, home_id)
+
+        automacoes = await tuya_service.get_automations_by_home(home_id)
+        reativadas = 0
+        if automacoes and isinstance(automacoes, list):
+            for auto in automacoes:
+                auto_id = auto.get("id") or auto.get("automation_id")
+                is_enabled = auto.get("enabled", True)
+                if auto_id and not is_enabled:
+                    logger.info(f"   [Tuya] Reativando automação: '{auto.get('name')}' (ID: {auto_id})")
+                    await tuya_service.set_automation_status(home_id, auto_id, enable=True)
+                    reativadas += 1
+
+        detail = f"{reativadas} automação(ões) reativada(s), pausa cancelada"
+        return {"tuya_success": True, "detail": detail, "device_offline": False}
+
     # VERIFICAÇÃO PRÉVIA: Checa se os dispositivos IR da revenda estão online
     device_status = await tuya_service.check_home_devices_online(home_id)
     if device_status.get("all_offline") is True:
