@@ -64,7 +64,7 @@ slowapi==0.1.9
 # --- IA e RAG ---
 # Usamos Native RAG (SQLAlchemy + pgvector direto) ao invÃ©s do LangChain
 # para garantir o mÃ¡ximo de performance e mÃ­nimo de uso de RAM no Docker.
-google-generativeai==0.8.6
+google-genai==2.20.0
 # --- UtilitÃ¡rios ---
 # python-multipart: necessÃ¡rio para upload de arquivos (manuais PDF no futuro).
 python-multipart>=0.0.27

@@ -1,6 +1,8 @@
+import asyncio
 import logging
 from sqlalchemy import text
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from app.config import get_settings
 from app.database import async_session_maker
 
@@ -15,9 +17,9 @@ class RAGService:
     """
 
     def __init__(self):
-        # Configura o SDK Gemini de forma preguiçosa caso a chave esteja presente
-        if settings.gemini_api_key:
-            genai.configure(api_key=settings.gemini_api_key)
+        # Cliente do SDK novo (google-genai), criado de forma preguiçosa caso a
+        # chave esteja presente. Client é leve (não abre conexão no construtor).
+        self._client = genai.Client(api_key=settings.gemini_api_key) if settings.gemini_api_key else None
 
 
 
@@ -31,19 +33,20 @@ class RAGService:
 
         # 1. Gera o embedding da pergunta do usuário usando o Gemini (768 dimensões com gemini-embedding-001)
         try:
-            import asyncio
-            # Define timeout estrito de 3s para NUNCA travar a API se a Google oscilar em prod
+            # Define timeout estrito de 3s para NUNCA travar a API se a Google oscilar em prod.
+            # client.aio é async nativo — sem precisar de asyncio.to_thread (SDK antigo era síncrono).
             response = await asyncio.wait_for(
-                asyncio.to_thread(
-                    genai.embed_content,
-                    model="models/gemini-embedding-001",
-                    content=query,
-                    task_type="retrieval_query",
-                    output_dimensionality=768,
+                self._client.aio.models.embed_content(
+                    model="gemini-embedding-001",
+                    contents=query,
+                    config=types.EmbedContentConfig(
+                        task_type="RETRIEVAL_QUERY",
+                        output_dimensionality=768,
+                    ),
                 ),
                 timeout=3.0
             )
-            query_embedding = response["embedding"]
+            query_embedding = response.embeddings[0].values
         except Exception as e:
             # Fallback seguro: NUNCA quebra a API se a chamada de embedding falhar/expirar
             logger.error(f"⚠️ Erro/Timeout ao gerar embedding da consulta com Gemini ({e}). Prosseguindo sem RAG.", extra={"status": "erro"}, exc_info=True)
@@ -89,18 +92,18 @@ class RAGService:
         Gera embedding para a nova mensagem e insere no banco vetorial.
         """
         try:
-            import asyncio
             response = await asyncio.wait_for(
-                asyncio.to_thread(
-                    genai.embed_content,
-                    model="models/gemini-embedding-001",
-                    content=message,
-                    task_type="retrieval_document",
-                    output_dimensionality=768,
+                self._client.aio.models.embed_content(
+                    model="gemini-embedding-001",
+                    contents=message,
+                    config=types.EmbedContentConfig(
+                        task_type="RETRIEVAL_DOCUMENT",
+                        output_dimensionality=768,
+                    ),
                 ),
                 timeout=5.0
             )
-            embedding = response["embedding"]
+            embedding = response.embeddings[0].values
         except Exception as e:
             logger.error(f"Erro ao gerar embedding para ingestão: {e}", extra={"status": "erro"}, exc_info=True)
             raise

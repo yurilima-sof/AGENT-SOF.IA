@@ -1,9 +1,17 @@
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, AsyncMock, MagicMock
 
 import pytest
 from sqlalchemy import text
 
 import app.main as main_mod
+from app.services.llm_service import llm_service
+
+
+def _mock_client_falho(mensagem_erro: str) -> MagicMock:
+    """Cliente genai mockado cujo generate_content sempre levanta uma exceção."""
+    mock_client = MagicMock()
+    mock_client.aio.models.generate_content = AsyncMock(side_effect=RuntimeError(mensagem_erro))
+    return mock_client
 
 ID_GRUPO_TESTE = "TESTE-gemini-fallback-001"
 
@@ -36,9 +44,9 @@ def test_fallback_keyword_executa_quando_gemini_falha_totalmente(client, auth_he
     # efetivo no .env local (evita depender de qual das linhas duplicadas do
     # .env "vence" na leitura do pydantic-settings).
     monkeypatch.setattr(main_mod.settings, "gemini_api_key", "fake-key-para-teste")
+    monkeypatch.setattr(llm_service, "_client", _mock_client_falho("Gemini indisponível (simulado)"))
 
-    with patch("app.services.llm_service.genai.GenerativeModel", side_effect=RuntimeError("Gemini indisponível (simulado)")), \
-         patch("app.services.llm_service.rag_service.get_relevant_context", new_callable=AsyncMock, return_value=""), \
+    with patch("app.services.llm_service.rag_service.get_relevant_context", new_callable=AsyncMock, return_value=""), \
          patch("app.services.tuya_dispatch_service.tuya_service.check_home_devices_online", new_callable=AsyncMock) as mock_check, \
          patch("app.services.tuya_dispatch_service.get_scene_by_ambiente", new_callable=AsyncMock) as mock_scene, \
          patch("app.services.tuya_dispatch_service.tuya_service.execute_scene", new_callable=AsyncMock) as mock_exec:
@@ -69,9 +77,9 @@ def test_mensagem_generica_ainda_aparece_quando_gemini_e_fallback_falham(client,
     que algo deu errado.
     """
     monkeypatch.setattr(main_mod.settings, "gemini_api_key", "fake-key-para-teste")
+    monkeypatch.setattr(llm_service, "_client", _mock_client_falho("Gemini indisponível (simulado)"))
 
-    with patch("app.services.llm_service.genai.GenerativeModel", side_effect=RuntimeError("Gemini indisponível (simulado)")), \
-         patch("app.services.llm_service.rag_service.get_relevant_context", new_callable=AsyncMock, return_value=""):
+    with patch("app.services.llm_service.rag_service.get_relevant_context", new_callable=AsyncMock, return_value=""):
         payload = {
             "mensagem": "blablabla sem sentido nenhum aqui",
             "id_grupo": revenda_teste,

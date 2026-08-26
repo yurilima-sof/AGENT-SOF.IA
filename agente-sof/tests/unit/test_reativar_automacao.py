@@ -1,5 +1,5 @@
 import asyncio
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, AsyncMock, MagicMock
 
 import pytest
 
@@ -75,13 +75,15 @@ async def test_gemini_timeout_cai_no_fallback_rapido(monkeypatch):
     """Se o Gemini demorar mais que o timeout configurado, o fallback de segurança responde rápido."""
     monkeypatch.setattr(llm_mod, "GEMINI_TIMEOUT_SEGUNDOS", 0.05)
 
-    class ModeloLento:
-        async def generate_content_async(self, *args, **kwargs):
-            await asyncio.sleep(2)
-            raise AssertionError("não deveria chegar aqui — o timeout deveria ter cortado antes")
+    async def resposta_lenta(*args, **kwargs):
+        await asyncio.sleep(2)
+        raise AssertionError("não deveria chegar aqui — o timeout deveria ter cortado antes")
 
-    with patch("app.services.llm_service.rag_service.get_relevant_context", new_callable=AsyncMock, return_value=""), \
-         patch("app.services.llm_service.genai.GenerativeModel", side_effect=lambda *a, **kw: ModeloLento()):
+    mock_client = MagicMock()
+    mock_client.aio.models.generate_content = AsyncMock(side_effect=resposta_lenta)
+    monkeypatch.setattr(llm_service, "_client", mock_client)
+
+    with patch("app.services.llm_service.rag_service.get_relevant_context", new_callable=AsyncMock, return_value=""):
         resultado = await asyncio.wait_for(
             llm_service.processar_mensagem("tá muito quente aqui na loja", id_grupo="teste-grupo"),
             timeout=5.0,  # teto de segurança do próprio teste

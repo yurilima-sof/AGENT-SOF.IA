@@ -9,7 +9,8 @@ import re
 from typing import Optional, Dict, Any
 from datetime import datetime
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from app.config import get_settings
 from app.services.rag_service import rag_service
 
@@ -224,9 +225,9 @@ class LLMService:
     """
 
     def __init__(self):
-        # Configura o SDK Gemini de forma preguiçosa caso a chave esteja presente
-        if settings.gemini_api_key:
-            genai.configure(api_key=settings.gemini_api_key)
+        # Cliente do SDK novo (google-genai) criado de forma preguiçosa caso a
+        # chave esteja presente. Client é leve (não abre conexão no construtor).
+        self._client = genai.Client(api_key=settings.gemini_api_key) if settings.gemini_api_key else None
 
     async def processar_mensagem(
         self,
@@ -403,34 +404,31 @@ class LLMService:
 
         try:
             try:
-                model = genai.GenerativeModel(
-                    model_name=m_name,
-                    system_instruction=system_prompt
-                )
-                
                 response = await asyncio.wait_for(
-                    model.generate_content_async(
-                        user_content,
-                        generation_config=genai.GenerationConfig(
+                    self._client.aio.models.generate_content(
+                        model=m_name,
+                        contents=user_content,
+                        config=types.GenerateContentConfig(
+                            system_instruction=system_prompt,
                             response_mime_type="application/json",
                             temperature=0.0,
-                            max_output_tokens=2048
-                        )
+                            max_output_tokens=2048,
+                        ),
                     ),
                     timeout=GEMINI_TIMEOUT_SEGUNDOS,
                 )
             except Exception as e_sys:
                 logger.warning(f"⚠️ Chamada com system_instruction falhou ({e_sys}). Tentando modo de prompt unificado...")
-                model = genai.GenerativeModel(model_name=m_name)
                 full_prompt = f"{system_prompt}\n\n{user_content}"
                 response = await asyncio.wait_for(
-                    model.generate_content_async(
-                        full_prompt,
-                        generation_config=genai.GenerationConfig(
+                    self._client.aio.models.generate_content(
+                        model=m_name,
+                        contents=full_prompt,
+                        config=types.GenerateContentConfig(
                             response_mime_type="application/json",
                             temperature=0.0,
-                            max_output_tokens=2048
-                        )
+                            max_output_tokens=2048,
+                        ),
                     ),
                     timeout=GEMINI_TIMEOUT_SEGUNDOS,
                 )

@@ -9,7 +9,8 @@ import json
 import time
 from datetime import datetime
 from sqlalchemy import text
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 # Configura a saída do terminal para UTF-8 (corrige erro de encoding com emojis no Windows)
 sys.stdout.reconfigure(encoding='utf-8')
@@ -157,7 +158,7 @@ def main():
     # 2. Agrupamento em chunks (conversas)
     chunks = chunk_messages(messages)
 
-    genai.configure(api_key=settings.gemini_api_key)
+    client = genai.Client(api_key=settings.gemini_api_key)
     engine = get_sync_engine()
     inserted_count = 0
 
@@ -174,13 +175,15 @@ def main():
         embedding = None
         for attempt in range(3):
             try:
-                result = genai.embed_content(
-                    model="models/gemini-embedding-001",
-                    content=chunk_text,
-                    task_type="retrieval_document",
-                    output_dimensionality=768
+                result = client.models.embed_content(
+                    model="gemini-embedding-001",
+                    contents=chunk_text,
+                    config=types.EmbedContentConfig(
+                        task_type="RETRIEVAL_DOCUMENT",
+                        output_dimensionality=768,
+                    ),
                 )
-                embedding = result['embedding']
+                embedding = result.embeddings[0].values
                 break
             except Exception as e:
                 print(f"⚠️ Erro na tentativa {attempt + 1}: {e}. Tentando novamente em 2s...")
