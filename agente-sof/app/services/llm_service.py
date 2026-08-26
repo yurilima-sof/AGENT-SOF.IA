@@ -456,8 +456,12 @@ class LLMService:
             logger.error(f"⚠️ Erro Crítico ao chamar o Gemini ({m_name}): {e}", extra={"status": "erro"}, exc_info=True)
 
             # FALLBACK DE SEGURANÇA PARA PRODUÇÃO
+            # intencao=None (não "sem_acao") de propósito: permite que
+            # app/main.py::process_agent_command detecte a falha real do Gemini
+            # (via `if not intencao:`) e tente o fallback de palavras-chave antes
+            # de desistir e usar a mensagem_wpp de instabilidade abaixo.
             return {
-                "intencao": "sem_acao",
+                "intencao": None,
                 "ifttt_action": None,
                 "ambiente": None,
                 "mensagem_wpp": "Puxa, estou passando por uma instabilidade técnica rápida aqui no meu sistema. Pode tentar novamente em alguns minutos? 🛠️",

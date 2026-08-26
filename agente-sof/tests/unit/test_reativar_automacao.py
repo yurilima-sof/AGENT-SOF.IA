@@ -87,5 +87,8 @@ async def test_gemini_timeout_cai_no_fallback_rapido(monkeypatch):
             timeout=5.0,  # teto de segurança do próprio teste
         )
 
-    assert resultado["intencao"] == "sem_acao"
+    # intencao=None (não "sem_acao") de propósito: permite que o fallback de
+    # palavras-chave em app/main.py assuma quando o Gemini falha de verdade
+    # (ver tests/test_gemini_fallback.py para a cobertura desse comportamento).
+    assert resultado["intencao"] is None
     assert "instabilidade técnica" in resultado["mensagem_wpp"]
