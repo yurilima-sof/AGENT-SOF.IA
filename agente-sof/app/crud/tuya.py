@@ -128,12 +128,16 @@ async def get_scene_by_ambiente(db: AsyncSession, home_id: str, ambiente: str, a
         else:
             amb_patterns = [f"%{ambiente}%"]
 
-    patterns_acao = [f"%{s}%" for s in sinonimos_acao]
+    # Correspondência de AÇÃO com fronteira de palavra (\y = \b no Postgres), não
+    # substring puro: "%ligar%" batia dentro de "desligar" (achado real em produção
+    # — "medio" e "ligar" disparavam a mesma cena de desligamento por conterem
+    # "ligar" como substring). ~* já é case-insensitive, dispensa LOWER().
+    patterns_acao = [fr"\y{s}\y" for s in sinonimos_acao]
 
     # 1. Tenta buscar combinando ambiente (se fornecido) e ação
     if amb_patterns:
         query = text("""
-            SELECT * FROM tuya_clientes_cenas 
+            SELECT * FROM tuya_clientes_cenas
             WHERE home_id = :home_id
               AND (
                 LOWER(ambiente) LIKE ANY(:amb_patterns) OR
@@ -141,8 +145,8 @@ async def get_scene_by_ambiente(db: AsyncSession, home_id: str, ambiente: str, a
               )
               AND (
                 LOWER(acao) = ANY(:sinonimos_acao) OR
-                LOWER(nome_cena) LIKE ANY(:patterns_acao) OR
-                LOWER(ambiente) LIKE ANY(:patterns_acao)
+                nome_cena ~* ANY(:patterns_acao) OR
+                ambiente ~* ANY(:patterns_acao)
               )
             LIMIT 1
         """)
@@ -158,12 +162,12 @@ async def get_scene_by_ambiente(db: AsyncSession, home_id: str, ambiente: str, a
 
     # 2. Fallback sem filtro de ambiente (ou se ambiente não foi especificado)
     query_fallback = text("""
-        SELECT * FROM tuya_clientes_cenas 
+        SELECT * FROM tuya_clientes_cenas
         WHERE home_id = :home_id
           AND (
             LOWER(acao) = ANY(:sinonimos_acao) OR
-            LOWER(nome_cena) LIKE ANY(:patterns_acao) OR
-            LOWER(ambiente) LIKE ANY(:patterns_acao)
+            nome_cena ~* ANY(:patterns_acao) OR
+            ambiente ~* ANY(:patterns_acao)
           )
         LIMIT 1
     """)
