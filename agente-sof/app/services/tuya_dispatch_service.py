@@ -32,19 +32,23 @@ def _eh_automacao_de_desligamento(auto: dict) -> bool:
     """
     nome = (auto.get("name") or auto.get("title") or "").lower()
     if not nome:
-        return True
+        return False
 
     palavras_off = ["off", "desliga", "desligamento", "desativa", "desativar", "desativação", "apagar", "apaga", "parar", "para", "corte", "encerra", "encerrar", "t-off", "toff", "fechamento"]
-    palavras_on = ["ligar", "liga", "temperatura", "gelar", "esfriar", "esquentar", "t-on", "ton", "manhã", "manha"]
+    palavras_on = ["ligar", "liga", "temperatura", "gelar", "esfriar", "esquentar", "t-on", "ton", "manhã", "manha", "tarde", "noite", "dia", "econ", "high", "low", "med", "medium", "on"]
 
-    if any(kw in nome for kw in palavras_off):
-        return True
-
+    # Se contiver palavras explicitamente de Ligar/Manter Temperatura (e não tiver "off"), é de Ligar
     if any(kw in nome for kw in palavras_on) and not any(kw in nome for kw in palavras_off):
         logger.info(f"   [Tuya] Ignorando automação de LIGAR/Temperatura: '{auto.get('name')}' (ID: {auto.get('id') or auto.get('automation_id')})")
         return False
 
-    return True
+    # Se contiver palavras de OFF/Desligamento
+    if any(kw in nome for kw in palavras_off):
+        return True
+
+    # Por segurança, se não for explicitamente identificada como OFF, não desativa
+    logger.info(f"   [Tuya] Ignorando automação não identificada como OFF: '{auto.get('name')}' (ID: {auto.get('id') or auto.get('automation_id')})")
+    return False
 
 
 async def disparar_acao_fisica(
