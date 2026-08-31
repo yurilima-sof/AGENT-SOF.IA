@@ -94,13 +94,9 @@ async def disparar_acao_fisica(
         detail = f"{reativadas} automação(ões) reativada(s), pausa cancelada"
         return {"tuya_success": True, "detail": detail, "device_offline": False}
 
-    # VERIFICAÇÃO PRÉVIA: Checa se os dispositivos IR da revenda estão online
-    device_status = await tuya_service.check_home_devices_online(home_id)
-    if device_status.get("all_offline") is True:
-        logger.warning(f"🔌 Dispositivos da revenda '{nome_revenda}' (Home {home_id}) estão OFFLINE. Abortando comando.")
-        return {"tuya_success": False, "detail": "dispositivos_offline", "device_offline": True}
-
     if acao == "desativar_automacao" or intencao == "pausar_automacao":
+        # Pausar automações é uma operação puramente na nuvem da Tuya (regra de automação)
+        # Não depende do transmissor IR físico estar online.
         logger.info(f"   [Tuya] Buscando automações da residência {home_id} para pausar automações de OFF para reunião/fechamento...")
         automacoes = await tuya_service.get_automations_by_home(home_id)
         desativadas_ids = []
@@ -129,11 +125,17 @@ async def disparar_acao_fisica(
                 automacao_ids=desativadas_ids,
                 horario_execucao=horario_fim,
             )
-            detail = f"{len(desativadas_ids)} automação(ões) pausada(s) até {horario_fim.strftime('%H:%M')} ({horario_fim.tzinfo})"
+            detail = f"{len(desativadas_ids)} automação(ões) de OFF pausada(s) até {horario_fim.strftime('%H:%M')} ({horario_fim.tzinfo})"
         else:
-            detail = "nenhuma automação ativa encontrada para pausar"
+            detail = "nenhuma automação de OFF ativa encontrada para pausar"
 
         return {"tuya_success": tuya_success, "detail": detail, "device_offline": False}
+
+    # VERIFICAÇÃO PRÉVIA PARA DISPARO DE CENAS FÍSICAS: Checa se os dispositivos IR da revenda estão online
+    device_status = await tuya_service.check_home_devices_online(home_id)
+    if device_status.get("all_offline") is True:
+        logger.warning(f"🔌 Dispositivos da revenda '{nome_revenda}' (Home {home_id}) estão OFFLINE. Abortando comando de cena.")
+        return {"tuya_success": False, "detail": "dispositivos_offline", "device_offline": True}
 
     # Ação normal: resolve e dispara a cena correspondente ao ambiente/ação
     amb = ambiente if ambiente else ""
