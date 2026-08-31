@@ -35,19 +35,25 @@ def test_agent_unauthorized_invalid_token():
     response = client.post("/agent", json=payload, headers=headers)
     assert response.status_code == 401
 
-def test_agent_valid_keyword_fallback(client, auth_headers):
+def test_agent_valid_keyword_fallback(client, auth_headers, monkeypatch):
     """Testa se o endpoint /agent aceita o token correto e processa mensagens via Fallback de palavras-chave harmonizado"""
-    payload = {
-        "mensagem": "tá muito quente aqui",
-        "id_grupo": "120363422455765261-group",
-        "nome_revenda": "Grupo Thiago (Teste)",
-    }
-    response = client.post("/agent", json=payload, headers=auth_headers)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["intencao"] == "ligar_temperatura_media"
-    assert data["ifttt_action"] == "medio"
-    assert "mensagem_wpp" in data
+    from unittest.mock import patch, AsyncMock
+    from app.main import settings as main_settings
+    from app.services.llm_service import settings as llm_settings
+    monkeypatch.setattr(main_settings, "gemini_api_key", None)
+    monkeypatch.setattr(llm_settings, "gemini_api_key", None)
+    with patch("app.main.buscar_link_ifttt", new_callable=AsyncMock, return_value="https://maker.ifttt.com/trigger/medio/with/key/fake"):
+        payload = {
+            "mensagem": "tá muito quente aqui",
+            "id_grupo": "120363422455765261-group",
+            "nome_revenda": "Grupo Thiago (Teste)",
+        }
+        response = client.post("/agent", json=payload, headers=auth_headers)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["intencao"] == "ligar_temperatura_media"
+        assert data["ifttt_action"] == "medio"
+        assert "mensagem_wpp" in data
 
 def test_rag_aprender_unauthorized():
     """Testa segurança do endpoint RAG /rag/aprender sem token"""

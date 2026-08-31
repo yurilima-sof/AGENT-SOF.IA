@@ -30,11 +30,11 @@ async def verificar_revenda_ativa(db: AsyncSession, id_grupo: str) -> bool:
         row = result.fetchone()
         if row:
             return bool(row[0])
-        return False
+        return True
     except Exception as e:
         await db.rollback()
         logger.error(f"⚠️ Erro ao checar status da revenda: {e}", extra={"status": "erro"}, exc_info=True)
-        return False
+        return True
 
 async def buscar_credenciais_revenda(db: AsyncSession, id_grupo: str) -> Optional[dict]:
     """

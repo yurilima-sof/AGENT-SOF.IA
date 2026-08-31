@@ -24,6 +24,29 @@ logger = logging.getLogger(__name__)
 RECIFE_TZ = ZoneInfo("America/Recife")
 
 
+def _eh_automacao_de_desligamento(auto: dict) -> bool:
+    """
+    Verifica se a automação é de desligamento/OFF.
+    Examina o nome/título da automação por palavras-chave indicativas de OFF/desligamento.
+    Evita pausar automações de 'Ligar' ou 'Manter temperatura'.
+    """
+    nome = (auto.get("name") or auto.get("title") or "").lower()
+    if not nome:
+        return True
+
+    palavras_off = ["off", "desliga", "desligamento", "desativa", "desativar", "desativação", "apagar", "apaga", "parar", "para", "corte", "encerra", "encerrar", "t-off", "toff", "fechamento"]
+    palavras_on = ["ligar", "liga", "temperatura", "gelar", "esfriar", "esquentar", "t-on", "ton", "manhã", "manha"]
+
+    if any(kw in nome for kw in palavras_off):
+        return True
+
+    if any(kw in nome for kw in palavras_on) and not any(kw in nome for kw in palavras_off):
+        logger.info(f"   [Tuya] Ignorando automação de LIGAR/Temperatura: '{auto.get('name')}' (ID: {auto.get('id') or auto.get('automation_id')})")
+        return False
+
+    return True
+
+
 async def disparar_acao_fisica(
     db: AsyncSession,
     id_grupo: str,
@@ -78,15 +101,15 @@ async def disparar_acao_fisica(
         return {"tuya_success": False, "detail": "dispositivos_offline", "device_offline": True}
 
     if acao == "desativar_automacao" or intencao == "pausar_automacao":
-        logger.info(f"   [Tuya] Buscando automações da residência {home_id} para pausar automações para reunião/fechamento...")
+        logger.info(f"   [Tuya] Buscando automações da residência {home_id} para pausar automações de OFF para reunião/fechamento...")
         automacoes = await tuya_service.get_automations_by_home(home_id)
         desativadas_ids = []
         if automacoes and isinstance(automacoes, list):
             for auto in automacoes:
                 auto_id = auto.get("id") or auto.get("automation_id")
                 is_enabled = auto.get("enabled", True)
-                if auto_id and is_enabled:
-                    logger.info(f"   [Tuya] Desativando automação temporariamente: '{auto.get('name')}' (ID: {auto_id})")
+                if auto_id and is_enabled and _eh_automacao_de_desligamento(auto):
+                    logger.info(f"   [Tuya] Desativando automação de desligamento temporariamente: '{auto.get('name')}' (ID: {auto_id})")
                     await tuya_service.set_automation_status(home_id, auto_id, enable=False)
                     desativadas_ids.append(auto_id)
         tuya_success = len(desativadas_ids) > 0
