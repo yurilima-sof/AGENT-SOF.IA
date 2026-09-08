@@ -108,9 +108,12 @@ async def disparar_acao_fisica(
             for auto in automacoes:
                 auto_id = auto.get("id") or auto.get("automation_id")
                 is_enabled = auto.get("enabled", True)
-                if auto_id and is_enabled and _eh_automacao_de_desligamento(auto):
-                    logger.info(f"   [Tuya] Desativando automação de desligamento temporariamente: '{auto.get('name')}' (ID: {auto_id})")
-                    await tuya_service.set_automation_status(home_id, auto_id, enable=False)
+                if auto_id and _eh_automacao_de_desligamento(auto):
+                    if is_enabled:
+                        logger.info(f"   [Tuya] Desativando automação de desligamento temporariamente: '{auto.get('name')}' (ID: {auto_id})")
+                        await tuya_service.set_automation_status(home_id, auto_id, enable=False)
+                    else:
+                        logger.info(f"   [Tuya] Automação de desligamento já estava desativada: '{auto.get('name')}' (ID: {auto_id})")
                     desativadas_ids.append(auto_id)
         tuya_success = len(desativadas_ids) > 0
 

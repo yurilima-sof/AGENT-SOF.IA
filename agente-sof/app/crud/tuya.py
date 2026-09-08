@@ -235,7 +235,18 @@ async def listar_homes(db: AsyncSession) -> list[dict]:
                 ORDER BY sigla_cliente, nome_home
             """)
         )
-        return [dict(row._mapping) for row in result.fetchall()]
+        rows = [dict(row._mapping) for row in result.fetchall()]
+        if not rows:
+            result_mapa = await db.execute(
+                text("""
+                    SELECT DISTINCT tuya_home_id AS home_id, nome_revenda AS nome_home, LOWER(estado) AS sigla_cliente, 'az1758205559313AAFQn' AS tuya_uid
+                    FROM mapa_revendas
+                    WHERE tuya_home_id IS NOT NULL AND tuya_home_id != ''
+                    ORDER BY nome_home
+                """)
+            )
+            rows = [dict(row._mapping) for row in result_mapa.fetchall()]
+        return rows
     except Exception as e:
         await db.rollback()
         logger.error(f"⚠️ Erro ao listar homes Tuya: {e}", extra={"status": "erro"}, exc_info=True)

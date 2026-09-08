@@ -3,204 +3,690 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel Admin — Sofia</title>
+<title>Painel Admin — Sofia Multi-Tenant & Tuya Cloud</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f5f6f8;
-    --card: #ffffff;
-    --border: #e0e2e7;
-    --text: #1c1f26;
-    --muted: #6b7280;
-    --accent: #2563eb;
-    --accent-dark: #1d4ed8;
-    --ok: #16a34a;
-    --warn: #d97706;
-    --err: #dc2626;
+    --bg: #0b0f19;
+    --bg-card: #161f30;
+    --bg-card-hover: #1c273c;
+    --bg-input: #0f172a;
+    --border: #26334d;
+    --border-accent: #334155;
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --accent-indigo: #6366f1;
+    --ok: #10b981;
+    --ok-bg: rgba(16, 185, 129, 0.12);
+    --warn: #f59e0b;
+    --warn-bg: rgba(245, 158, 11, 0.12);
+    --err: #ef4444;
+    --err-bg: rgba(239, 68, 68, 0.12);
+    --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
+    --radius: 12px;
   }
+
   * { box-sizing: border-box; }
+  
   body {
     margin: 0;
-    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-    background: var(--bg);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: radial-gradient(circle at top right, #111827, #0b0f19);
     color: var(--text);
+    min-height: 100vh;
     padding: 24px;
+    line-height: 1.5;
   }
+
+  .container {
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+
+  /* Header Header & Branding */
   header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
-  }
-  header h1 { font-size: 1.4rem; margin: 0; }
-  header .actions button { margin-left: 8px; }
-  section {
-    background: var(--card);
+    background: rgba(22, 31, 48, 0.7);
+    backdrop-filter: blur(12px);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 20px;
+    border-radius: var(--radius);
+    padding: 16px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
   }
-  section h2 { margin-top: 0; font-size: 1.05rem; }
-  section h3 { font-size: 0.95rem; margin-bottom: 8px; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.03em; }
-  tr:hover td { background: #fafbfc; }
-  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; color: var(--muted); }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-indigo));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+
+  .brand-title h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+
+  .brand-title p {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 2px 0 0 0;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Stats Counter Cards */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow);
+  }
+
+  .stat-card .val {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .stat-card .lbl {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+  }
+
+  /* Navigation Tabs */
+  .nav-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+
+  .tab-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    padding: 8px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tab-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .tab-btn.active {
+    color: #fff;
+    background: var(--accent);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+
+  /* Section Styling */
+  section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .section-header h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Filter Controls */
+  .filter-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  input[type=text], select {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+
+  input[type=text]:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  }
+
+  /* Buttons */
   button {
     cursor: pointer;
     border: 1px solid var(--border);
-    background: #fff;
+    background: #1c273c;
     color: var(--text);
-    border-radius: 6px;
-    padding: 4px 9px;
-    font-size: 0.78rem;
-    margin: 1px;
-  }
-  button:hover { background: #f0f2f5; }
-  button.primary { background: var(--accent); color: #fff; border-color: var(--accent-dark); }
-  button.primary:hover { background: var(--accent-dark); }
-  button.danger { color: var(--err); }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-  input[type=text], select {
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 4px 6px;
+    border-radius: 8px;
+    padding: 6px 12px;
     font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
   }
-  .home-id-input { width: 130px; }
-  .switch { position: relative; display: inline-block; width: 38px; height: 20px; }
+
+  button:hover {
+    background: #273652;
+    border-color: var(--border-accent);
+    color: #fff;
+  }
+
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent-hover);
+    color: #fff;
+  }
+
+  button.primary:hover {
+    background: var(--accent-hover);
+  }
+
+  button.danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--err);
+  }
+
+  button.danger:hover {
+    background: var(--err);
+    color: #fff;
+  }
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Table styling */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    text-align: left;
+  }
+
+  th {
+    background: #0f172a;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover td {
+    background: var(--bg-card-hover);
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #cbd5e1;
+  }
+
+  /* Badges & Pills */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .badge-uf {
+    background: rgba(99, 102, 241, 0.15);
+    color: #a5b4fc;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+  }
+
+  .badge-ok {
+    background: var(--ok-bg);
+    color: var(--ok);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  .badge-warn {
+    background: var(--warn-bg);
+    color: var(--warn);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+
+  .badge-err {
+    background: var(--err-bg);
+    color: var(--err);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .badge-action {
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    text-transform: lowercase;
+  }
+
+  /* Toggle Switch */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+  }
+
   .switch input { opacity: 0; width: 0; height: 0; }
+
   .switch span {
-    position: absolute; cursor: pointer; inset: 0; background-color: #ccc;
-    transition: 0.15s; border-radius: 20px;
+    position: absolute; cursor: pointer; inset: 0; background-color: #334155;
+    transition: 0.2s; border-radius: 20px;
   }
+
   .switch span:before {
-    position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px;
-    background-color: white; transition: 0.15s; border-radius: 50%;
+    position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+    background-color: white; transition: 0.2s; border-radius: 50%;
   }
+
   .switch input:checked + span { background-color: var(--ok); }
   .switch input:checked + span:before { transform: translateX(18px); }
-  .status-badge { font-size: 0.78rem; margin-left: 6px; }
-  .status-sucesso { color: var(--ok); }
-  .status-erro, .status-dispositivo_offline { color: var(--err); }
-  .status-sem_acao, .status-sem_cena { color: var(--muted); }
-  .ts { color: var(--muted); font-size: 0.72rem; margin-left: 6px; }
-  #detalhe-section { display: none; }
-  .detalhe-cols { display: flex; gap: 24px; flex-wrap: wrap; }
-  .detalhe-cols > div { flex: 1 1 300px; min-width: 280px; }
-  .detalhe-cols ul { list-style: none; padding: 0; margin: 0; max-height: 320px; overflow-y: auto; }
-  .detalhe-cols li { padding: 5px 0; border-bottom: 1px dashed var(--border); font-size: 0.85rem; }
-  #nova-cena-form { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
-  #nova-cena-form input, #nova-cena-form select { flex: 1 1 120px; }
-  .hint { color: var(--muted); font-size: 0.78rem; }
-  .table-wrap { overflow-x: auto; }
+
+  .home-id-input {
+    width: 120px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+  }
+
+  /* Action Buttons Group */
+  .action-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .action-btns button {
+    padding: 3px 8px;
+    font-size: 0.74rem;
+  }
+
+  /* Drawer / Modal Detalhes */
+  #detalhe-section {
+    display: none;
+    border: 1px solid var(--accent);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+  }
+
+  .detalhe-cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    margin-top: 16px;
+  }
+
+  .detalhe-card {
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .detalhe-card h3 {
+    font-size: 0.92rem;
+    margin-top: 0;
+    margin-bottom: 12px;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .detalhe-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .detalhe-list li {
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 0.82rem;
+  }
+
+  .hint {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin: 0 0 12px 0;
+  }
+
+  #nova-cena-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+    align-items: center;
+    background: #0f172a;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  /* Toast Notification */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #1e293b;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--accent);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    display: none;
+    z-index: 9999;
+    font-size: 0.85rem;
+  }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>🤖 Painel Admin — Sofia</h1>
-  <div class="actions">
-    <button onclick="carregarRevendas()">🔄 Revendas</button>
-    <button onclick="trocarAdminKey()">🔑 Trocar Admin Key</button>
-  </div>
-</header>
+<div class="container">
 
-<section id="revendas-section">
-  <h2>Revendas</h2>
-  <p class="hint">Ativar/desativar, corrigir o Home ID da Tuya, disparar ações manualmente e checar status — tudo sem recarregar a página.</p>
-  <div class="table-wrap">
-    <table id="revendas-table">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Grupo WhatsApp</th>
-          <th>UF</th>
-          <th>Tuya Home ID</th>
-          <th>Ativo</th>
-          <th>Status IR</th>
-          <th>Ações Manuais</th>
-        </tr>
-      </thead>
-      <tbody id="revendas-tbody">
-        <tr><td colspan="7">Carregando…</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<section id="detalhe-section">
-  <h2 id="detalhe-titulo">Detalhes</h2>
-  <button onclick="fecharDetalhe()">✖ Fechar</button>
-  <div class="detalhe-cols">
-    <div>
-      <h3>Histórico de chat recente</h3>
-      <ul id="historico-list"></ul>
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🤖</div>
+      <div class="brand-title">
+        <h1>Painel Admin — Sofia</h1>
+        <p>Automação Tuya Cloud, Multi-Tenant & Diagnóstico de Cenas</p>
+      </div>
     </div>
-    <div>
-      <h3>Memória RAG (regras aprendidas)</h3>
-      <ul id="memoria-list"></ul>
+    <div class="header-actions">
+      <button onclick="carregarTudo()" class="primary">🔄 Recarregar Dados</button>
+      <button onclick="trocarAdminKey()">🔑 Admin Key</button>
+    </div>
+  </header>
+
+  <!-- Metrics Grid -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div>
+        <div class="lbl">Revendas Cadastradas</div>
+        <div class="val" id="stat-total-revendas">—</div>
+      </div>
+      <div class="stat-icon">🏢</div>
+    </div>
+    <div class="stat-card">
+      <div>
+        <div class="lbl">Revendas Ativas</div>
+        <div class="val" id="stat-ativas-revendas" style="color: var(--ok);">—</div>
+      </div>
+      <div class="stat-icon">✅</div>
+    </div>
+    <div class="stat-card">
+      <div>
+        <div class="lbl">Homes Tuya Carregadas</div>
+        <div class="val" id="stat-total-homes" style="color: var(--accent);">—</div>
+      </div>
+      <div class="stat-icon">🏠</div>
+    </div>
+    <div class="stat-card">
+      <div>
+        <div class="lbl">Cenas da Home Selecionada</div>
+        <div class="val" id="stat-cenas-home" style="color: var(--accent-indigo);">—</div>
+      </div>
+      <div class="stat-icon">🎬</div>
     </div>
   </div>
-</section>
 
-<section id="logs-section">
-  <h2>Logs de Operações Recentes <span id="logs-updated" class="hint"></span></h2>
-  <div class="table-wrap">
-    <table id="logs-table">
-      <thead>
-        <tr><th>Hora</th><th>Revenda</th><th>Mensagem</th><th>Intenção</th><th>Status</th><th>Tempo (ms)</th></tr>
-      </thead>
-      <tbody id="logs-tbody">
-        <tr><td colspan="6">Carregando…</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<section id="cenas-section">
-  <h2>Gestão de Cenas Tuya</h2>
-  <p class="hint">Selecione uma Home para ver/editar/excluir as cenas cadastradas, ou cadastre uma nova.</p>
-  <label>Home: <select id="home-select"></select></label>
-  <div class="table-wrap">
-    <table id="cenas-table">
-      <thead>
-        <tr><th>Ambiente</th><th>Scene ID</th><th>Nome da Cena</th><th>Ação</th><th></th></tr>
-      </thead>
-      <tbody id="cenas-tbody">
-        <tr><td colspan="5">Selecione uma home…</td></tr>
-      </tbody>
-    </table>
+  <!-- Navigation Tabs -->
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('revendas')">🏢 Revendas & Disparo</button>
+    <button class="tab-btn" onclick="switchTab('cenas')">🎬 Gestão de Cenas Real Tuya</button>
+    <button class="tab-btn" onclick="switchTab('logs')">📊 Logs de Operações</button>
   </div>
 
-  <h3>Nova cena / atualizar existente</h3>
-  <form id="nova-cena-form">
-    <input type="text" id="nc-sigla" placeholder="sigla_cliente (ex: pe)" required>
-    <input type="text" id="nc-ambiente" placeholder="ambiente (ex: recepcao)" required>
-    <input type="text" id="nc-scene-id" placeholder="scene_id da Tuya" required>
-    <input type="text" id="nc-nome" placeholder="nome da cena" required>
-    <select id="nc-acao">
-      <option value="medio">medio</option>
-      <option value="freezer">freezer</option>
-      <option value="esquentar">esquentar</option>
-      <option value="off">off</option>
-      <option value="ligar">ligar</option>
-    </select>
-    <button type="submit" class="primary">💾 Salvar Cena</button>
-  </form>
-</section>
+  <!-- Section 1: Revendas -->
+  <section id="sec-revendas">
+    <div class="section-header">
+      <h2>🏢 Mapa de Revendas & Automações</h2>
+      <div class="filter-bar">
+        <input type="text" id="revenda-search" placeholder="🔍 Filtrar revenda, grupo ou código..." oninput="filtrarTabelaRevendas()">
+        <select id="revenda-uf-filter" onchange="filtrarTabelaRevendas()">
+          <option value="">Todas as UFs</option>
+          <option value="AM">AM (Manaus)</option>
+          <option value="BA">BA (Feira/Retiro/L.Freitas)</option>
+          <option value="MA">MA (São Luís/Imperatriz)</option>
+          <option value="PB">PB (João Pessoa/Campina)</option>
+          <option value="PE">PE (Recife/Caruaru)</option>
+          <option value="RN">RN (Natal/Pitimbú)</option>
+          <option value="SE">SE (Aracaju)</option>
+        </select>
+      </div>
+    </div>
+    <p class="hint">Gerencie o isolamento multi-tenant, Home ID da Tuya Cloud e execute disparos manuais diretos.</p>
+    
+    <div class="table-wrap">
+      <table id="revendas-table">
+        <thead>
+          <tr>
+            <th>Revenda</th>
+            <th>Grupo WhatsApp</th>
+            <th>UF</th>
+            <th>Tuya Home ID</th>
+            <th>Ativo</th>
+            <th>Status IR</th>
+            <th>Ações Manuais</th>
+          </tr>
+        </thead>
+        <tbody id="revendas-tbody">
+          <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Carregando revendas…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Section 2: Detalhes da Revenda (Historico/Memoria) -->
+  <section id="detalhe-section">
+    <div class="section-header">
+      <h2 id="detalhe-titulo">📄 Detalhes da Revenda</h2>
+      <button onclick="fecharDetalhe()">✖ Fechar</button>
+    </div>
+    <div class="detalhe-cols">
+      <div class="detalhe-card">
+        <h3>💬 Histórico Recente (WhatsApp)</h3>
+        <ul id="historico-list" class="detalhe-list"></ul>
+      </div>
+      <div class="detalhe-card">
+        <h3>🧠 Memória RAG (Regras Aprendidas)</h3>
+        <ul id="memoria-list" class="detalhe-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Gestão de Cenas Tuya -->
+  <section id="sec-cenas" style="display: none;">
+    <div class="section-header">
+      <h2>🎬 Cenas Inteligentes da Tuya Cloud</h2>
+      <div class="filter-bar">
+        <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Home:</label>
+        <select id="home-select" style="min-width: 280px;"></select>
+        <input type="text" id="cena-search" placeholder="🔍 Filtrar cena ou ambiente..." oninput="filtrarTabelaCenas()">
+      </div>
+    </div>
+    <p class="hint">Visualização e edição das cenas físicas cadastradas na Tuya OpenAPI para a Home selecionada.</p>
+    
+    <div class="table-wrap">
+      <table id="cenas-table">
+        <thead>
+          <tr>
+            <th>Ambiente</th>
+            <th>Scene ID (Tuya)</th>
+            <th>Nome Original da Cena</th>
+            <th>Ação Mapeada</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="cenas-tbody">
+          <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Selecione uma Home…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size: 0.95rem; margin-top: 24px; margin-bottom: 8px;">➕ Cadastrar / Atualizar Cena Tuya</h3>
+    <form id="nova-cena-form">
+      <input type="text" id="nc-sigla" placeholder="sigla (ex: am, pe)" required>
+      <input type="text" id="nc-ambiente" placeholder="ambiente (ex: recepcao)" required>
+      <input type="text" id="nc-scene-id" placeholder="scene_id da Tuya" required>
+      <input type="text" id="nc-nome" placeholder="nome da cena" required>
+      <select id="nc-acao">
+        <option value="medio">⚡ medio</option>
+        <option value="freezer">❄️ freezer / esfriar</option>
+        <option value="esquentar">🔥 esquentar</option>
+        <option value="off">🔴 off / desligar</option>
+        <option value="ligar">🟢 ligar</option>
+      </select>
+      <button type="submit" class="primary">💾 Salvar Cena</button>
+    </form>
+  </section>
+
+  <!-- Section 4: Logs de Operações -->
+  <section id="sec-logs" style="display: none;">
+    <div class="section-header">
+      <h2>📊 Logs de Operações em Tempo Real</h2>
+      <span id="logs-updated" class="hint" style="margin: 0;"></span>
+    </div>
+    <div class="table-wrap">
+      <table id="logs-table">
+        <thead>
+          <tr>
+            <th>Horário</th>
+            <th>Revenda</th>
+            <th>Mensagem Recebida</th>
+            <th>Intenção Reconhecida</th>
+            <th>Status</th>
+            <th>Latência (ms)</th>
+          </tr>
+        </thead>
+        <tbody id="logs-tbody">
+          <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Carregando logs de auditoria…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<div id="toast"></div>
 
 <script>
 const ADMIN_KEY_STORAGE = 'sof_admin_key';
-let revendasCache = {};
+let revendasLista = [];
+let cenasLista = [];
 
-// =============================================================================
-// Autenticação local (Admin Key via prompt + localStorage)
-// =============================================================================
-
+// Autenticação local
 function promptForKey() {
-  const key = window.prompt('Cole sua Admin API Key (variável ADMIN_API_KEY do .env do servidor):');
+  const key = window.prompt('Cole sua Admin API Key (variável ADMIN_API_KEY do servidor):');
   if (key) localStorage.setItem(ADMIN_KEY_STORAGE, key.trim());
   return key ? key.trim() : null;
 }
@@ -211,11 +697,7 @@ function getAdminKey() {
 
 function trocarAdminKey() {
   localStorage.removeItem(ADMIN_KEY_STORAGE);
-  if (promptForKey()) {
-    carregarRevendas();
-    carregarHomes();
-    atualizarLogs();
-  }
+  if (promptForKey()) carregarTudo();
 }
 
 async function apiFetch(path, options = {}) {
@@ -229,7 +711,7 @@ async function apiFetch(path, options = {}) {
   const resp = await fetch(path, { ...options, headers });
   if (resp.status === 401 || resp.status === 403) {
     localStorage.removeItem(ADMIN_KEY_STORAGE);
-    alert('Admin Key inválida ou expirada. Informe novamente.');
+    alert('Admin Key inválida. Por favor informe novamente.');
     promptForKey();
     throw new Error('Não autorizado');
   }
@@ -243,16 +725,19 @@ async function apiJson(path, options) {
     try {
       const body = await resp.json();
       detail = (body.detail && body.detail.message) || body.detail || detail;
-    } catch (_) { /* corpo não era JSON */ }
+    } catch (_) {}
     throw new Error(detail);
   }
   if (resp.status === 204) return null;
   return resp.json();
 }
 
-// =============================================================================
-// Helpers de exibição
-// =============================================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3500);
+}
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -266,25 +751,69 @@ function formatarData(iso) {
   return isNaN(d) ? iso : d.toLocaleString('pt-BR');
 }
 
-// =============================================================================
-// Seção: Revendas
-// =============================================================================
+// Navegação por abas
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-revendas').style.display = 'none';
+  document.getElementById('sec-cenas').style.display = 'none';
+  document.getElementById('sec-logs').style.display = 'none';
 
+  if (tab === 'revendas') {
+    document.getElementById('sec-revendas').style.display = 'block';
+    event.target.classList.add('active');
+  } else if (tab === 'cenas') {
+    document.getElementById('sec-cenas').style.display = 'block';
+    event.target.classList.add('active');
+  } else if (tab === 'logs') {
+    document.getElementById('sec-logs').style.display = 'block';
+    event.target.classList.add('active');
+  }
+}
+
+async function carregarTudo() {
+  await carregarRevendas();
+  await carregarHomes();
+  await atualizarLogs();
+}
+
+// Revendas
 async function carregarRevendas() {
   const tbody = document.getElementById('revendas-tbody');
-  tbody.innerHTML = '<tr><td colspan="7">Carregando…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Carregando revendas…</td></tr>';
   try {
-    const revendas = await apiJson('/admin/revendas');
-    tbody.innerHTML = '';
-    revendasCache = {};
-    for (const r of revendas) {
-      revendasCache[r.id_grupo_wpp] = r;
-      tbody.appendChild(criarLinhaRevenda(r));
-    }
-    if (!revendas.length) tbody.innerHTML = '<tr><td colspan="7">Nenhuma revenda cadastrada.</td></tr>';
+    revendasLista = await apiJson('/admin/revendas');
+    renderTabelaRevendas(revendasLista);
+
+    // Atualiza contadores
+    document.getElementById('stat-total-revendas').textContent = revendasLista.length;
+    document.getElementById('stat-ativas-revendas').textContent = revendasLista.filter(r => r.ativo).length;
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="7">Erro ao carregar revendas: ${escapeHtml(err.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--err); text-align:center;">Erro ao carregar: ${escapeHtml(err.message)}</td></tr>`;
   }
+}
+
+function renderTabelaRevendas(lista) {
+  const tbody = document.getElementById('revendas-tbody');
+  tbody.innerHTML = '';
+  if (!lista.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Nenhuma revenda encontrada.</td></tr>';
+    return;
+  }
+  for (const r of lista) {
+    tbody.appendChild(criarLinhaRevenda(r));
+  }
+}
+
+function filtrarTabelaRevendas() {
+  const q = document.getElementById('revenda-search').value.toLowerCase().strip ? document.getElementById('revenda-search').value.toLowerCase().strip() : document.getElementById('revenda-search').value.toLowerCase();
+  const uf = document.getElementById('revenda-uf-filter').value;
+  
+  const filtradas = revendasLista.filter(r => {
+    const matchQ = !q || (r.nome_revenda || '').toLowerCase().includes(q) || (r.id_grupo_wpp || '').toLowerCase().includes(q) || (r.tuya_home_id || '').includes(q);
+    const matchUF = !uf || (r.estado || '').toUpperCase() === uf.toUpperCase();
+    return matchQ && matchUF;
+  });
+  renderTabelaRevendas(filtradas);
 }
 
 function criarLinhaRevenda(r) {
@@ -292,11 +821,11 @@ function criarLinhaRevenda(r) {
   const grupo = r.id_grupo_wpp;
 
   tr.innerHTML = `
-    <td>${escapeHtml(r.nome_revenda)}</td>
+    <td><strong>${escapeHtml(r.nome_revenda)}</strong></td>
     <td class="mono">${escapeHtml(grupo)}</td>
-    <td>${escapeHtml(r.estado || '')}</td>
+    <td><span class="badge badge-uf">${escapeHtml(r.estado || 'BR')}</span></td>
     <td>
-      <input type="text" class="home-id-input" value="${escapeHtml(r.tuya_home_id || '')}" placeholder="tuya_home_id">
+      <input type="text" class="home-id-input" value="${escapeHtml(r.tuya_home_id || '')}" placeholder="home_id">
       <button class="salvar-home-id" title="Salvar Home ID">💾</button>
     </td>
     <td>
@@ -306,33 +835,35 @@ function criarLinhaRevenda(r) {
       </label>
     </td>
     <td>
-      <button class="verificar-status">Verificar</button>
-      <span class="status-badge">—</span>
+      <button class="verificar-status">⚡ Checar IR</button>
+      <span class="status-badge" style="margin-left: 6px; font-size: 0.76rem; color: var(--text-muted);">—</span>
     </td>
-    <td class="acoes-cell">
-      <button data-acao="medio">medio</button>
-      <button data-acao="freezer">freezer</button>
-      <button data-acao="esquentar">esquentar</button>
-      <button data-acao="off">off</button>
-      <button data-acao="ligar">ligar</button>
-      <button data-acao="desativar_automacao">pausar automação</button>
-      <button data-acao="reativar_automacao">reativar automação</button>
-      <br>
-      <button class="ver-detalhe">📄 histórico/memória</button>
+    <td>
+      <div class="action-btns">
+        <button data-acao="medio">⚡ médio</button>
+        <button data-acao="freezer">❄️ esfriar</button>
+        <button data-acao="esquentar">🔥 esquentar</button>
+        <button data-acao="off">🔴 off</button>
+        <button data-acao="ligar">🟢 ligar</button>
+        <button data-acao="desativar_automacao" style="color: var(--warn);">⏸️ pausar</button>
+        <button data-acao="reativar_automacao" style="color: var(--ok);">▶️ reativar</button>
+        <button class="ver-detalhe">📄 detalhes</button>
+      </div>
     </td>
   `;
 
   tr.querySelector('.ativo-toggle').addEventListener('change', async (e) => {
-    const novoEstado = e.target.checked;
+    const novo = e.target.checked;
     e.target.disabled = true;
     try {
       await apiJson(`/admin/revendas/${encodeURIComponent(grupo)}/toggle`, {
         method: 'POST',
-        body: JSON.stringify({ ativo: novoEstado }),
+        body: JSON.stringify({ ativo: novo }),
       });
+      showToast(`Status da revenda alterado para ${novo ? 'ATIVO' : 'INATIVO'}.`);
     } catch (err) {
-      e.target.checked = !novoEstado;
-      alert('Erro ao alterar estado: ' + err.message);
+      e.target.checked = !novo;
+      alert('Erro: ' + err.message);
     } finally {
       e.target.disabled = false;
     }
@@ -340,55 +871,60 @@ function criarLinhaRevenda(r) {
 
   tr.querySelector('.salvar-home-id').addEventListener('click', async () => {
     const input = tr.querySelector('.home-id-input');
-    const valor = input.value.trim();
-    if (!valor) { alert('Informe um tuya_home_id.'); return; }
+    const val = input.value.trim();
+    if (!val) { alert('Informe um tuya_home_id.'); return; }
     try {
       await apiJson(`/admin/revendas/${encodeURIComponent(grupo)}/mapeamento`, {
         method: 'PATCH',
-        body: JSON.stringify({ tuya_home_id: valor }),
+        body: JSON.stringify({ tuya_home_id: val }),
       });
-      input.style.background = '#d4f7dc';
-      setTimeout(() => { input.style.background = ''; }, 900);
-      if (revendasCache[grupo]) revendasCache[grupo].tuya_home_id = valor;
+      showToast(`Home ID salvo com sucesso!`);
+      input.style.border = '1px solid var(--ok)';
+      setTimeout(() => { input.style.border = ''; }, 1500);
     } catch (err) {
-      alert('Erro ao salvar mapeamento: ' + err.message);
+      alert('Erro ao salvar Home ID: ' + err.message);
     }
   });
 
   tr.querySelector('.verificar-status').addEventListener('click', async () => {
     const badge = tr.querySelector('.status-badge');
-    badge.textContent = '...';
+    badge.textContent = 'checando...';
     try {
       const s = await apiJson(`/admin/revendas/${encodeURIComponent(grupo)}/status`);
       if (s.checked === false) {
-        badge.textContent = s.reason === 'sem_tuya_home_id' ? '⚪ sem home_id' : '⚪ não verificado';
+        badge.textContent = s.reason === 'sem_tuya_home_id' ? '⚪ Sem Home ID' : '⚪ Não verificado';
       } else {
-        badge.textContent = s.all_offline ? `🔴 offline (${s.ir_online ?? 0}/${s.ir_total ?? 0} IR)` : `🟢 online (${s.online_count}/${s.total_count})`;
+        if (s.all_offline) {
+          badge.innerHTML = `<span class="badge badge-err">🔴 Offline (${s.ir_online ?? 0}/${s.ir_total ?? 0} IR)</span>`;
+        } else {
+          badge.innerHTML = `<span class="badge badge-ok">🟢 Online (${s.online_count}/${s.total_count})</span>`;
+        }
       }
     } catch (err) {
-      badge.textContent = '⚠️ erro';
+      badge.innerHTML = `<span class="badge badge-err">⚠️ Erro</span>`;
     }
   });
 
-  tr.querySelectorAll('.acoes-cell button[data-acao]').forEach((btn) => {
+  tr.querySelectorAll('button[data-acao]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const acao = btn.dataset.acao;
       let ambiente = null;
       if (acao !== 'desativar_automacao' && acao !== 'reativar_automacao') {
-        ambiente = window.prompt('Ambiente (deixe em branco para loja de ambiente único):', '');
+        ambiente = window.prompt('Ambiente (deixe em branco para loja única):', '');
         if (ambiente !== null) ambiente = ambiente.trim() || null;
       }
       btn.disabled = true;
       const original = btn.textContent;
       btn.textContent = '…';
       try {
-        const resultado = await apiJson(`/admin/revendas/${encodeURIComponent(grupo)}/disparar`, {
+        const res = await apiJson(`/admin/revendas/${encodeURIComponent(grupo)}/disparar`, {
           method: 'POST',
           body: JSON.stringify({ acao, ambiente }),
         });
-        alert(`Ação '${acao}' disparada.\nSucesso: ${resultado.tuya_success}\nDetalhe: ${resultado.detail}`);
+        showToast(`Disparo '${acao}': ${res.tuya_success ? 'SUCESSO ✅' : 'FALHA ❌'}`);
+        alert(`Ação '${acao}' enviada!\nSucesso: ${res.tuya_success}\nDetalhe: ${res.detail}`);
       } catch (err) {
-        alert('Erro ao disparar ação: ' + err.message);
+        alert('Erro ao disparar: ' + err.message);
       } finally {
         btn.disabled = false;
         btn.textContent = original;
@@ -397,60 +933,55 @@ function criarLinhaRevenda(r) {
   });
 
   tr.querySelector('.ver-detalhe').addEventListener('click', () => abrirDetalhe(r));
-
   return tr;
 }
 
-// =============================================================================
-// Seção: Detalhes (histórico + memória) de uma revenda
-// =============================================================================
-
+// Detalhes da Revenda
 async function abrirDetalhe(r) {
   document.getElementById('detalhe-section').style.display = 'block';
-  document.getElementById('detalhe-titulo').textContent = `Detalhes — ${r.nome_revenda}`;
+  document.getElementById('detalhe-titulo').textContent = `📄 Detalhes — ${r.nome_revenda}`;
   document.getElementById('detalhe-section').scrollIntoView({ behavior: 'smooth' });
 
-  const historicoList = document.getElementById('historico-list');
-  const memoriaList = document.getElementById('memoria-list');
-  historicoList.innerHTML = '<li>Carregando…</li>';
-  memoriaList.innerHTML = '<li>Carregando…</li>';
+  const hList = document.getElementById('historico-list');
+  const mList = document.getElementById('memoria-list');
+  hList.innerHTML = '<li>Carregando…</li>';
+  mList.innerHTML = '<li>Carregando…</li>';
 
   try {
-    const historico = await apiJson(`/admin/revendas/${encodeURIComponent(r.id_grupo_wpp)}/historico`);
-    historicoList.innerHTML = historico.length
-      ? historico.map((h) => `<li><b>${escapeHtml(h.autor)}:</b> ${escapeHtml(h.conteudo)} <span class="ts">${formatarData(h.criado_em)}</span></li>`).join('')
-      : '<li>Sem histórico recente.</li>';
+    const hist = await apiJson(`/admin/revendas/${encodeURIComponent(r.id_grupo_wpp)}/historico`);
+    hList.innerHTML = hist.length
+      ? hist.map(h => `<li><b>${escapeHtml(h.autor)}:</b> ${escapeHtml(h.conteudo)} <span class="hint">(${formatarData(h.criado_em)})</span></li>`).join('')
+      : '<li>Nenhum histórico recente.</li>';
   } catch (err) {
-    historicoList.innerHTML = `<li>Erro: ${escapeHtml(err.message)}</li>`;
+    hList.innerHTML = `<li>Erro: ${escapeHtml(err.message)}</li>`;
   }
 
   try {
-    const memoria = await apiJson(`/admin/revendas/${encodeURIComponent(r.id_grupo_wpp)}/memoria`);
-    memoriaList.innerHTML = '';
-    if (!memoria.length) {
-      memoriaList.innerHTML = '<li>Sem memória RAG registrada para este grupo.</li>';
+    const mem = await apiJson(`/admin/revendas/${encodeURIComponent(r.id_grupo_wpp)}/memoria`);
+    mList.innerHTML = '';
+    if (!mem.length) {
+      mList.innerHTML = '<li>Sem memória RAG salva.</li>';
     }
-    for (const m of memoria) {
+    for (const m of mem) {
       const li = document.createElement('li');
-      li.innerHTML = `${escapeHtml(m.conteudo)} <span class="ts">${formatarData(m.criado_em)}</span> `;
-      const delBtn = document.createElement('button');
-      delBtn.className = 'danger';
-      delBtn.textContent = '🗑';
-      delBtn.title = 'Excluir esta entrada de memória';
-      delBtn.addEventListener('click', async () => {
-        if (!confirm('Excluir esta entrada de memória permanentemente?')) return;
+      li.innerHTML = `${escapeHtml(m.conteudo)} <span class="hint">(${formatarData(m.criado_em)})</span> `;
+      const del = document.createElement('button');
+      del.className = 'danger';
+      del.textContent = '🗑';
+      del.title = 'Excluir memória';
+      del.addEventListener('click', async () => {
+        if (!confirm('Excluir entrada de memória?')) return;
         try {
           await apiJson(`/admin/memoria/${m.id}`, { method: 'DELETE' });
           li.remove();
-        } catch (err) {
-          alert('Erro ao excluir: ' + err.message);
-        }
+          showToast('Memória removida.');
+        } catch (err) { alert('Erro: ' + err.message); }
       });
-      li.appendChild(delBtn);
-      memoriaList.appendChild(li);
+      li.appendChild(del);
+      mList.appendChild(li);
     }
   } catch (err) {
-    memoriaList.innerHTML = `<li>Erro: ${escapeHtml(err.message)}</li>`;
+    mList.innerHTML = `<li>Erro: ${escapeHtml(err.message)}</li>`;
   }
 }
 
@@ -458,91 +989,84 @@ function fecharDetalhe() {
   document.getElementById('detalhe-section').style.display = 'none';
 }
 
-// =============================================================================
-// Seção: Logs recentes (auto-refresh via polling)
-// =============================================================================
-
-async function atualizarLogs() {
-  try {
-    const logs = await apiJson('/admin/logs?limite=50');
-    const tbody = document.getElementById('logs-tbody');
-    tbody.innerHTML = logs.length ? logs.map((l) => `
-      <tr>
-        <td>${formatarData(l.timestamp)}</td>
-        <td>${escapeHtml(l.nome_revenda)}</td>
-        <td>${escapeHtml((l.mensagem_original || '').slice(0, 60))}</td>
-        <td>${escapeHtml(l.intencao || '')}</td>
-        <td class="status-${escapeHtml(l.status)}">${escapeHtml(l.status)}</td>
-        <td>${l.tempo_resposta_ms ?? ''}</td>
-      </tr>
-    `).join('') : '<tr><td colspan="6">Sem logs registrados ainda.</td></tr>';
-    document.getElementById('logs-updated').textContent = `(atualizado às ${new Date().toLocaleTimeString('pt-BR')})`;
-  } catch (err) {
-    document.getElementById('logs-updated').textContent = `(erro ao atualizar: ${err.message})`;
-  }
-}
-
-// =============================================================================
-// Seção: Gestão de Cenas Tuya
-// =============================================================================
-
+// Cenas Tuya
 async function carregarHomes() {
   const select = document.getElementById('home-select');
   try {
     const homes = await apiJson('/admin/tuya/homes');
-    select.innerHTML = homes.map((h) =>
-      `<option value="${escapeHtml(h.home_id)}" data-sigla="${escapeHtml(h.sigla_cliente)}">${escapeHtml(h.nome_home)} (${escapeHtml(h.home_id)})</option>`
+    document.getElementById('stat-total-homes').textContent = homes.length;
+    select.innerHTML = homes.map(h =>
+      `<option value="${escapeHtml(h.home_id)}" data-sigla="${escapeHtml(h.sigla_cliente)}">[${escapeHtml((h.sigla_cliente || '').toUpperCase())}] ${escapeHtml(h.nome_home)} (${escapeHtml(h.home_id)})</option>`
     ).join('');
+
     if (homes.length) {
       await carregarCenas(homes[0].home_id);
-      document.getElementById('nc-sigla').value = homes[0].sigla_cliente;
+      document.getElementById('nc-sigla').value = homes[0].sigla_cliente || '';
+    } else {
+      select.innerHTML = '<option>Nenhuma Home Tuya encontrada</option>';
     }
   } catch (err) {
     select.innerHTML = `<option>Erro: ${escapeHtml(err.message)}</option>`;
   }
 }
 
-document.addEventListener('change', (e) => {
-  if (e.target && e.target.id === 'home-select') {
-    const opt = e.target.selectedOptions[0];
+document.getElementById('home-select').addEventListener('change', (e) => {
+  const opt = e.target.selectedOptions[0];
+  if (opt) {
     carregarCenas(e.target.value);
-    if (opt) document.getElementById('nc-sigla').value = opt.dataset.sigla || '';
+    document.getElementById('nc-sigla').value = opt.dataset.sigla || '';
   }
 });
 
 async function carregarCenas(homeId) {
   const tbody = document.getElementById('cenas-tbody');
-  tbody.innerHTML = '<tr><td colspan="5">Carregando…</td></tr>';
-  document.getElementById('nc-scene-id').dataset.homeId = homeId;
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Carregando cenas da home…</td></tr>';
   try {
-    const cenas = await apiJson(`/admin/tuya/cenas?home_id=${encodeURIComponent(homeId)}`);
-    tbody.innerHTML = '';
-    if (!cenas.length) tbody.innerHTML = '<tr><td colspan="5">Nenhuma cena cadastrada para esta home.</td></tr>';
-    for (const c of cenas) tbody.appendChild(criarLinhaCena(c));
+    cenasLista = await apiJson(`/admin/tuya/cenas?home_id=${encodeURIComponent(homeId)}`);
+    document.getElementById('stat-cenas-home').textContent = cenasLista.length;
+    renderTabelaCenas(cenasLista);
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="5">Erro: ${escapeHtml(err.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--err); text-align:center;">Erro: ${escapeHtml(err.message)}</td></tr>`;
   }
 }
 
-function criarLinhaCena(c) {
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>${escapeHtml(c.ambiente)}</td>
-    <td class="mono">${escapeHtml(c.scene_id)}</td>
-    <td>${escapeHtml(c.nome_cena)}</td>
-    <td>${escapeHtml(c.acao)}</td>
-    <td><button class="danger excluir-cena">🗑 Excluir</button></td>
-  `;
-  tr.querySelector('.excluir-cena').addEventListener('click', async () => {
-    if (!confirm(`Excluir a cena '${c.nome_cena}'?`)) return;
-    try {
-      await apiJson(`/admin/tuya/cenas/${encodeURIComponent(c.scene_id)}`, { method: 'DELETE' });
-      tr.remove();
-    } catch (err) {
-      alert('Erro ao excluir cena: ' + err.message);
-    }
-  });
-  return tr;
+function renderTabelaCenas(lista) {
+  const tbody = document.getElementById('cenas-tbody');
+  tbody.innerHTML = '';
+  if (!lista.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Nenhuma cena cadastrada para esta Home.</td></tr>';
+    return;
+  }
+  for (const c of lista) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="badge badge-uf">${escapeHtml(c.ambiente)}</span></td>
+      <td class="mono">${escapeHtml(c.scene_id)}</td>
+      <td><strong>${escapeHtml(c.nome_cena)}</strong></td>
+      <td><span class="badge badge-action">${escapeHtml(c.acao)}</span></td>
+      <td><button class="danger excluir-cena">🗑 Excluir</button></td>
+    `;
+    tr.querySelector('.excluir-cena').addEventListener('click', async () => {
+      if (!confirm(`Excluir cena '${c.nome_cena}'?`)) return;
+      try {
+        await apiJson(`/admin/tuya/cenas/${encodeURIComponent(c.scene_id)}`, { method: 'DELETE' });
+        tr.remove();
+        showToast('Cena excluída com sucesso.');
+      } catch (err) { alert('Erro ao excluir: ' + err.message); }
+    });
+    tbody.appendChild(tr);
+  }
+}
+
+function filtrarTabelaCenas() {
+  const q = document.getElementById('cena-search').value.toLowerCase().trim();
+  const filtradas = cenasLista.filter(c =>
+    !q || (c.nome_cena || '').toLowerCase().includes(q) ||
+    (c.ambiente || '').toLowerCase().includes(q) ||
+    (c.scene_id || '').toLowerCase().includes(q) ||
+    (c.acao || '').toLowerCase().includes(q)
+  );
+  renderTabelaCenas(filtradas);
 }
 
 document.getElementById('nova-cena-form').addEventListener('submit', async (e) => {
@@ -564,19 +1088,40 @@ document.getElementById('nova-cena-form').addEventListener('submit', async (e) =
     document.getElementById('nc-ambiente').value = '';
     document.getElementById('nc-scene-id').value = '';
     document.getElementById('nc-nome').value = '';
+    showToast('Cena gravada com sucesso!');
     await carregarCenas(homeId);
   } catch (err) {
     alert('Erro ao salvar cena: ' + err.message);
   }
 });
 
-// =============================================================================
-// Inicialização
-// =============================================================================
+// Logs
+async function atualizarLogs() {
+  try {
+    const logs = await apiJson('/admin/logs?limite=50');
+    const tbody = document.getElementById('logs-tbody');
+    tbody.innerHTML = logs.length ? logs.map(l => `
+      <tr>
+        <td>${formatarData(l.timestamp)}</td>
+        <td><strong>${escapeHtml(l.nome_revenda)}</strong></td>
+        <td>${escapeHtml((l.mensagem_original || '').slice(0, 70))}</td>
+        <td><span class="badge badge-action">${escapeHtml(l.intencao || 'indefinida')}</span></td>
+        <td>
+          <span class="badge ${l.status === 'sucesso' ? 'badge-ok' : l.status.includes('erro') ? 'badge-err' : 'badge-warn'}">
+            ${escapeHtml(l.status)}
+          </span>
+        </td>
+        <td class="mono">${l.tempo_resposta_ms ?? ''} ms</td>
+      </tr>
+    `).join('') : '<tr><td colspan="6" style="text-align:center;">Sem logs recentes.</td></tr>';
+    document.getElementById('logs-updated').textContent = `Atualizado às ${new Date().toLocaleTimeString('pt-BR')}`;
+  } catch (err) {
+    document.getElementById('logs-updated').textContent = `Erro ao atualizar logs: ${err.message}`;
+  }
+}
 
-carregarRevendas();
-carregarHomes();
-atualizarLogs();
+// Inicialização
+carregarTudo();
 setInterval(atualizarLogs, 15000);
 </script>
 </body>

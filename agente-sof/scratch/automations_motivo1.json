@@ -1,0 +1,1611 @@
+[
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0e4d58e02b0bb144qnto",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb5e78197731a8c11ajkb8",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0c38d5bc91b9cb629jny",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eba7e9a2fc1d6ef755zibd",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb852625ff8732a810mznx",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "AW2TOeb2gcFwoqbE",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0010000",
+          "time": "18:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M.1 FIM [18h00] ter",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb381c88f91907afa4w67h",
+        "executor_property": {
+          "key": "M0_T21_S3",
+          "keyId": "M0_T21_S3"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb1d4bdd8fc1536b5cegad",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebe5a956bc9c41dc61g0pf",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb71d0fd10d47197832ewz",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7d4f7bf7a78fdd2egp0i",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebad86ab6c3a833a20fim6",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebb75746f8ee7694e9tlma",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb31e87693b5bc1c42nvwy",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "Jtj6G7n7rmK9tDrJ",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260801",
+          "loops": "0111110",
+          "time": "12:50",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M.1 FIM [12:50] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebf21dab72121872d9mwwz",
+        "executor_property": {
+          "key": "M0_T22_S3",
+          "keyId": "M0_T22_S3"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eba2dec623a75b541eoq6k",
+        "executor_property": {
+          "key": "M0_T22_S3",
+          "keyId": "M0_T22_S3"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb3cec546a908d3639rgfl",
+        "executor_property": {
+          "key": "M0_T22_S3",
+          "keyId": "M0_T22_S3"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb6e90c51b016d81cbvxva",
+        "executor_property": {
+          "key": "M0_T21_S3",
+          "keyId": "M0_T21_S3"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb4a05a56f8a1fc968u02w",
+        "executor_property": {
+          "key": "M0_T21_S3",
+          "keyId": "M0_T21_S3"
+        }
+      }
+    ],
+    "automation_id": "WWQbMdz9ewUnj4v4",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260801",
+          "loops": "0111110",
+          "time": "06:50",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M.1 INÍCIO[06:50]",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebf21dab72121872d9mwwz",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eba2dec623a75b541eoq6k",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb3cec546a908d3639rgfl",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb6e90c51b016d81cbvxva",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb4a05a56f8a1fc968u02w",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "thDY5jxHu6IR9Af6",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260801",
+          "loops": "0111110",
+          "time": "12:50",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M.1 FIM [12:50] Seg a Sex ",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb381c88f91907afa4w67h",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "6twsqsYsUjIXgM3q",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260416",
+          "loops": "1111111",
+          "time": "12:45",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M.1 SL 04 Desligar [12h45]",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb381c88f91907afa4w67h",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb1d4bdd8fc1536b5cegad",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebe5a956bc9c41dc61g0pf",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb71d0fd10d47197832ewz",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7d4f7bf7a78fdd2egp0i",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebad86ab6c3a833a20fim6",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebb75746f8ee7694e9tlma",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb31e87693b5bc1c42nvwy",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "sRCuJyGPZ5sOHvr3",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260321",
+          "loops": "0111110",
+          "time": "12:50",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M.1 FIM [12:50]",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb5e78197731a8c11ajkb8",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0e4d58e02b0bb144qnto",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebd31abbf7b7886865o0uj",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebda2398bd71d16295skfd",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0c38d5bc91b9cb629jny",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eba7e9a2fc1d6ef755zibd",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb852625ff8732a810mznx",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7f35b2d4b252bbb610ry",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc2baba5e254b4df5x8ri",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "ZMG5FG7ybtHSnbdJ",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "0000100",
+          "time": "13:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M FIM [13:00] Qui",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "Pwh6SgsKWo5gTCAY"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "LR2QNbqlMdn7xjwz"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "UW45yPNlMtwNCmHO"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "afaWdJvypXvh1znX"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "6kpH5US089iwcxeQ"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "mFKJp6EQEYD1ei17"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "YOfE2ERcwcMQI39Y"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "eaZAWpzrho8Utwlw"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "ysf1fJAIJ3H5Js06"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "NogU1aume66gXOfY"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "LwBlsWol1ergS73H"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "iXgFTW1KF1TALrJR"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "4T0uhkrEl4RjHfBH"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "MBq3e6zRhzAWQYuQ"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "gVgplRXmlXbcEgoD"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "L4FqLGOrmm9sXPWA"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "1B9y5G8feTkiqCEX"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "4swej20FXi8sUAX0"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "3u4Om7ZNGkuXT0s2"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "FAa9PWlwA5xS789L"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "y97s0ZsZKrFmCGoA"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "3ti3wzR8NcpsjqYG"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "2dyQeMB56BBhqwAV"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "UDEDKV9lRk3duP9y"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "AraRLKCq98xO1Cbw"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "WXjnCyilnBHA5qqD"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "sBHfp5XIbXVVMuo8"
+      },
+      {
+        "action_executor": "ruleTrigger",
+        "entity_id": "755BexagngjtRexc"
+      }
+    ],
+    "automation_id": "44awmHqQBVvim2ho",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "1111111",
+          "time": "20:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      },
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "1111111",
+          "time": "21:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 2
+      },
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "1111111",
+          "time": "22:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 3
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "SOF - OFF",
+    "preconditions": [
+      {
+        "cond_type": "timeCheck",
+        "display": {
+          "cityId": "884563140149575681",
+          "cityName": "Recife",
+          "end": "23:59",
+          "loops": "0000010",
+          "repeatType": "custom",
+          "start": "00:00",
+          "timeInterval": "allDay",
+          "timeZoneId": "America/Recife",
+          "time_interval": "allDay",
+          "timezone_id": "America/Recife"
+        },
+        "id": "gvdqffgScYHIA78iqidm"
+      }
+    ]
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0e4d58e02b0bb144qnto",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb5e78197731a8c11ajkb8",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb852625ff8732a810mznx",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebd31abbf7b7886865o0uj",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb852625ff8732a810mznx",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7f35b2d4b252bbb610ry",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "2ACskoei6AUO7SIC",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "1000011",
+          "time": "13:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M Fim [13h00] Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebd31abbf7b7886865o0uj",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebda2398bd71d16295skfd",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0c38d5bc91b9cb629jny",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb852625ff8732a810mznx",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7f35b2d4b252bbb610ry",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "AiNCDCqWvbVooAQW",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "0001000",
+          "time": "13:50",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M FIM [13:50] Qua",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebda2398bd71d16295skfd",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0c38d5bc91b9cb629jny",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eba7e9a2fc1d6ef755zibd",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc2baba5e254b4df5x8ri",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "BGpJSAtOtubIINDu",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "0000010",
+          "time": "13:50",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M Fim [13h50] Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0e4d58e02b0bb144qnto",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eba7e9a2fc1d6ef755zibd",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc2baba5e254b4df5x8ri",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "kxUe7yBvGgAqVkig",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "0001000",
+          "time": "13:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M FIM [13:00] QUA",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb5e78197731a8c11ajkb8",
+        "executor_property": {
+          "key": "M0_T23_S1_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0e4d58e02b0bb144qnto",
+        "executor_property": {
+          "key": "M0_T23_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebd31abbf7b7886865o0uj",
+        "executor_property": {
+          "key": "M0_T22_S1_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebda2398bd71d16295skfd",
+        "executor_property": {
+          "key": "M0_T23_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0c38d5bc91b9cb629jny",
+        "executor_property": {
+          "key": "M0_T23_S0_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eba7e9a2fc1d6ef755zibd",
+        "executor_property": {
+          "key": "M0_T23_S0_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb852625ff8732a810mznx",
+        "executor_property": {
+          "key": "M0_T23_S0_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7f35b2d4b252bbb610ry",
+        "executor_property": {
+          "key": "M0_T22_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc2baba5e254b4df5x8ri",
+        "executor_property": {
+          "key": "M0_T23_S0_0",
+          "keyId": "ir_ac_self_def"
+        }
+      }
+    ],
+    "automation_id": "0Pc7IvV6eZD43IAL",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "0010000",
+          "time": "14:10",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M Início [14h10] Ter",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0e4d58e02b0bb144qnto",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb5e78197731a8c11ajkb8",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebd31abbf7b7886865o0uj",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebda2398bd71d16295skfd",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0c38d5bc91b9cb629jny",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eba7e9a2fc1d6ef755zibd",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb852625ff8732a810mznx",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7f35b2d4b252bbb610ry",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc2baba5e254b4df5x8ri",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "lAH1Bvy4YrmKq7ZO",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "0010000",
+          "time": "13:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M FIM [13:00] Ter",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7f35b2d4b252bbb610ry",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc2baba5e254b4df5x8ri",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "eLAWPVZAV72SAT6w",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "0010000",
+          "time": "15:50",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M Fim [15h50] Ter",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebd31abbf7b7886865o0uj",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebda2398bd71d16295skfd",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "AWChcuSkYM5Fdck0",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "0010000",
+          "time": "17:10",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M Fim [17h10] Ter",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb5e78197731a8c11ajkb8",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebd31abbf7b7886865o0uj",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eba7e9a2fc1d6ef755zibd",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb852625ff8732a810mznx",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "4V921XS9HwPnCU6s",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "0100000",
+          "time": "13:50",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M FIM [13:50] Seg",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebda2398bd71d16295skfd",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0c38d5bc91b9cb629jny",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7f35b2d4b252bbb610ry",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc2baba5e254b4df5x8ri",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "AlzJozB1RP1hOwLs",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "0100000",
+          "time": "13:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M FIM [13:00] Seg",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebf21dab72121872d9mwwz",
+        "executor_property": {
+          "key": "M0_T23_S3",
+          "keyId": "M0_T23_S3"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb381c88f91907afa4w67h",
+        "executor_property": {
+          "key": "M0_T22_S3",
+          "keyId": "M0_T22_S3"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb1d4bdd8fc1536b5cegad",
+        "executor_property": {
+          "key": "M0_T23_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eba2dec623a75b541eoq6k",
+        "executor_property": {
+          "key": "M0_T23_S3",
+          "keyId": "M0_T23_S3"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb3cec546a908d3639rgfl",
+        "executor_property": {
+          "key": "M0_T22_S3",
+          "keyId": "M0_T22_S3"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb6e90c51b016d81cbvxva",
+        "executor_property": {
+          "key": "M0_T22_S3",
+          "keyId": "M0_T22_S3"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb4a05a56f8a1fc968u02w",
+        "executor_property": {
+          "key": "M0_T22_S3",
+          "keyId": "M0_T22_S3"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebe5a956bc9c41dc61g0pf",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb71d0fd10d47197832ewz",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7d4f7bf7a78fdd2egp0i",
+        "executor_property": {
+          "key": "M0_T22_S3",
+          "keyId": "M0_T22_S3"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebad86ab6c3a833a20fim6",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb31e87693b5bc1c42nvwy",
+        "executor_property": {
+          "key": "M0_T22_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eba7e9a2fc1d6ef755zibd",
+        "executor_property": {
+          "key": "M0_T23_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0e4d58e02b0bb144qnto",
+        "executor_property": {
+          "key": "M0_T23_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebd31abbf7b7886865o0uj",
+        "executor_property": {
+          "key": "M0_T20_S1_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebda2398bd71d16295skfd",
+        "executor_property": {
+          "key": "M0_T23_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0c38d5bc91b9cb629jny",
+        "executor_property": {
+          "key": "M0_T23_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eba7e9a2fc1d6ef755zibd",
+        "executor_property": {
+          "key": "M0_T23_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb852625ff8732a810mznx",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7f35b2d4b252bbb610ry",
+        "executor_property": {
+          "key": "M0_T18_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc2baba5e254b4df5x8ri",
+        "executor_property": {
+          "key": "M0_T20_S0_0",
+          "keyId": "ir_ac_self_def"
+        }
+      }
+    ],
+    "automation_id": "no2uAAHHTDGktjwu",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260321",
+          "loops": "0111110",
+          "time": "06:50",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M.1 INÍCIO [06:50] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb5e78197731a8c11ajkb8",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0e4d58e02b0bb144qnto",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb0c38d5bc91b9cb629jny",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eba7e9a2fc1d6ef755zibd",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb852625ff8732a810mznx",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "jpAkkQydURBuEhU9",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "0010000",
+          "time": "18:30",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M FIM [18h00] Quin",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc2baba5e254b4df5x8ri",
+        "executor_property": {
+          "key": "M0_T21_S0_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7f35b2d4b252bbb610ry",
+        "executor_property": {
+          "key": "M0_T22_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      }
+    ],
+    "automation_id": "LdQwwGvcEdAzexeh",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "0000100",
+          "time": "14:10",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M Início [14h10] Qui",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7f35b2d4b252bbb610ry",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc2baba5e254b4df5x8ri",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "Xkd2mxh7djPFHF5y",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260320",
+          "loops": "0000100",
+          "time": "18:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.M Fim [18h00] Qui",
+    "preconditions": []
+  }
+]

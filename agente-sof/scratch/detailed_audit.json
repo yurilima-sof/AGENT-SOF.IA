@@ -1,0 +1,393 @@
+[
+  {
+    "num": 1,
+    "id": "AW2TOeb2gcFwoqbE",
+    "name": "P.M.1 FIM [18h00] ter",
+    "enabled": true,
+    "conditions": [
+      "18:00 (Ter)"
+    ],
+    "actions": [
+      "IR Dev: Sala 23 AC Direito -> Command: power_off",
+      "IR Dev: Sala 23 AC Esquerdo -> Command: power_off",
+      "IR Dev: Sala 29 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 30 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 31 (2 ACs) -> Command: power_off"
+    ]
+  },
+  {
+    "num": 2,
+    "id": "Jtj6G7n7rmK9tDrJ",
+    "name": "P.M.1 FIM [12:50] Seg a Sex",
+    "enabled": true,
+    "conditions": [
+      "12:50 (Seg a Sex)"
+    ],
+    "actions": [
+      "IR Dev: Air Conditioning 37 -> Command: M0_T21_S3",
+      "IR Dev: Sala 11 | Auditório -> Command: M0_T22_S2_0",
+      "IR Dev: Sala 18 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 19 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 20 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 21 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 22 AC Direita -> Command: power_off",
+      "IR Dev: Sala 22 AC Esquerda -> Command: power_off"
+    ]
+  },
+  {
+    "num": 3,
+    "id": "WWQbMdz9ewUnj4v4",
+    "name": "P.M.1 INÍCIO[06:50]",
+    "enabled": true,
+    "conditions": [
+      "06:50 (Seg a Sex)"
+    ],
+    "actions": [
+      "IR Dev: Sala 02 -> Command: M0_T22_S3",
+      "IR Dev: Sala 12 -> Command: M0_T22_S3",
+      "IR Dev: Sala 13 -> Command: M0_T22_S3",
+      "IR Dev: Sala 14 -> Command: M0_T21_S3",
+      "IR Dev: Sala 15 -> Command: M0_T21_S3"
+    ]
+  },
+  {
+    "num": 4,
+    "id": "thDY5jxHu6IR9Af6",
+    "name": "P.M.1 FIM [12:50] Seg a Sex ",
+    "enabled": true,
+    "conditions": [
+      "12:50 (Seg a Sex)"
+    ],
+    "actions": [
+      "IR Dev: Sala 02 -> Command: power_off",
+      "IR Dev: Sala 12 -> Command: power_off",
+      "IR Dev: Sala 13 -> Command: power_off",
+      "IR Dev: Sala 14 -> Command: power_off",
+      "IR Dev: Sala 15 -> Command: power_off"
+    ]
+  },
+  {
+    "num": 5,
+    "id": "6twsqsYsUjIXgM3q",
+    "name": "P.M.1 SL 04 Desligar [12h45]",
+    "enabled": true,
+    "conditions": [
+      "12:45 (Todos os dias)"
+    ],
+    "actions": [
+      "IR Dev: Air Conditioning 37 -> Command: power_off"
+    ]
+  },
+  {
+    "num": 6,
+    "id": "sRCuJyGPZ5sOHvr3",
+    "name": "P.M.1 FIM [12:50]",
+    "enabled": true,
+    "conditions": [
+      "12:50 (Seg a Sex)"
+    ],
+    "actions": [
+      "IR Dev: Air Conditioning 37 -> Command: power_off",
+      "IR Dev: Sala 11 | Auditório -> Command: power_off",
+      "IR Dev: Sala 18 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 19 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 20 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 21 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 22 AC Direita -> Command: power_off",
+      "IR Dev: Sala 22 AC Esquerda -> Command: power_off"
+    ]
+  },
+  {
+    "num": 7,
+    "id": "ZMG5FG7ybtHSnbdJ",
+    "name": "P.M FIM [13:00] Qui",
+    "enabled": true,
+    "conditions": [
+      "13:00 (Qui)"
+    ],
+    "actions": [
+      "IR Dev: Sala 23 AC Esquerdo -> Command: power_off",
+      "IR Dev: Sala 23 AC Direito -> Command: power_off",
+      "IR Dev: Sala 24 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 25 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 29 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 30 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 31 (2 ACs) -> Command: power_off",
+      "IR Dev:  Sala 34 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 35 (2 ACs) -> Command: power_off"
+    ]
+  },
+  {
+    "num": 8,
+    "id": "44awmHqQBVvim2ho",
+    "name": "SOF - OFF",
+    "enabled": true,
+    "conditions": [
+      "20:00 (Todos os dias)",
+      "21:00 (Todos os dias)",
+      "22:00 (Todos os dias)"
+    ],
+    "actions": [
+      "Cena: P.Med Sala 20 - Desligar",
+      "Cena: P.inf SL26 Desligar",
+      "Cena: PInf SL15 Desligar",
+      "Cena: P.inf SL07 | Desligar",
+      "Cena: P.med SL26 | OFF",
+      "Cena: P.med SL34 | Desligar",
+      "Cena: P.med SL35 | Desligar",
+      "Cena: P.Inf SL 22 | Off",
+      "Cena: P.inf SL 28 | Off",
+      "Cena: P.Inf SL 21 | Off",
+      "Cena: P.Inf SL 29 | Off",
+      "Cena: P.Inf SL 20 | Off",
+      "Cena: P.Inf SL 19 | Off",
+      "Cena: P.inf SL 32 | Off",
+      "Cena: P.Inf SL 18 | Off",
+      "Cena: P.inf SL 31 | Off",
+      "Cena: P.Inf SL 17 | Off",
+      "Cena: P.Med Sala 22 - Desligar ",
+      "Cena: P.med Sala 21 - Desligar",
+      "Cena: P.med Sala 18 - Desligar",
+      "Cena: P.Med Sala 17 - Desligar",
+      "Cena: P.Med Sala 23 - Desligar",
+      "Cena: P. inf sala 12 - Desligar",
+      "Cena: P. Inf sala 08 - Desligar",
+      "Cena: P. Inf sala 05 - Desligar",
+      "Cena: P. Inf sala 03 - Desligar",
+      "Cena: P. Inf sala 02 - Desligar",
+      "Cena: P. Inf sala 01 - Desligar"
+    ]
+  },
+  {
+    "num": 9,
+    "id": "2ACskoei6AUO7SIC",
+    "name": "P.M Fim [13h00] Sex",
+    "enabled": true,
+    "conditions": [
+      "13:00 (Dom, Sex, Sáb)"
+    ],
+    "actions": [
+      "IR Dev: Sala 23 AC Direito -> Command: power_off",
+      "IR Dev: Sala 23 AC Esquerdo -> Command: power_off",
+      "IR Dev: Sala 31 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 24 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 31 (2 ACs) -> Command: power_off",
+      "IR Dev:  Sala 34 (2 ACs) -> Command: power_off"
+    ]
+  },
+  {
+    "num": 10,
+    "id": "AiNCDCqWvbVooAQW",
+    "name": "P.M FIM [13:50] Qua",
+    "enabled": true,
+    "conditions": [
+      "13:50 (Qua)"
+    ],
+    "actions": [
+      "IR Dev: Sala 24 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 25 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 29 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 31 (2 ACs) -> Command: power_off",
+      "IR Dev:  Sala 34 (2 ACs) -> Command: power_off"
+    ]
+  },
+  {
+    "num": 11,
+    "id": "BGpJSAtOtubIINDu",
+    "name": "P.M Fim [13h50] Sex",
+    "enabled": true,
+    "conditions": [
+      "13:50 (Sex)"
+    ],
+    "actions": [
+      "IR Dev: Sala 25 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 29 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 30 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 35 (2 ACs) -> Command: power_off"
+    ]
+  },
+  {
+    "num": 12,
+    "id": "kxUe7yBvGgAqVkig",
+    "name": "P.M FIM [13:00] QUA",
+    "enabled": true,
+    "conditions": [
+      "13:00 (Qua)"
+    ],
+    "actions": [
+      "IR Dev: Sala 23 AC Direito -> Command: power_off",
+      "IR Dev: Sala 30 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 35 (2 ACs) -> Command: power_off"
+    ]
+  },
+  {
+    "num": 13,
+    "id": "0Pc7IvV6eZD43IAL",
+    "name": "P.M Início [14h10] Ter",
+    "enabled": true,
+    "conditions": [
+      "14:10 (Ter)"
+    ],
+    "actions": [
+      "IR Dev: Sala 23 AC Esquerdo -> Command: M0_T23_S1_0",
+      "IR Dev: Sala 23 AC Direito -> Command: M0_T23_S3_0",
+      "IR Dev: Sala 24 (2 ACs) -> Command: M0_T22_S1_0",
+      "IR Dev: Sala 25 (2 ACs) -> Command: M0_T23_S3_0",
+      "IR Dev: Sala 29 (2 ACs) -> Command: M0_T23_S0_0",
+      "IR Dev: Sala 30 (2 ACs) -> Command: M0_T23_S0_0",
+      "IR Dev: Sala 31 (2 ACs) -> Command: M0_T23_S0_0",
+      "IR Dev:  Sala 34 (2 ACs) -> Command: M0_T22_S3_0",
+      "IR Dev: Sala 35 (2 ACs) -> Command: M0_T23_S0_0"
+    ]
+  },
+  {
+    "num": 14,
+    "id": "lAH1Bvy4YrmKq7ZO",
+    "name": "P.M FIM [13:00] Ter",
+    "enabled": true,
+    "conditions": [
+      "13:00 (Ter)"
+    ],
+    "actions": [
+      "IR Dev: Sala 23 AC Direito -> Command: power_off",
+      "IR Dev: Sala 23 AC Esquerdo -> Command: power_off",
+      "IR Dev: Sala 24 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 25 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 29 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 30 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 31 (2 ACs) -> Command: power_off",
+      "IR Dev:  Sala 34 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 35 (2 ACs) -> Command: power_off"
+    ]
+  },
+  {
+    "num": 15,
+    "id": "eLAWPVZAV72SAT6w",
+    "name": "P.M Fim [15h50] Ter",
+    "enabled": true,
+    "conditions": [
+      "15:50 (Ter)"
+    ],
+    "actions": [
+      "IR Dev:  Sala 34 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 35 (2 ACs) -> Command: power_off"
+    ]
+  },
+  {
+    "num": 16,
+    "id": "AWChcuSkYM5Fdck0",
+    "name": "P.M Fim [17h10] Ter",
+    "enabled": true,
+    "conditions": [
+      "17:10 (Ter)"
+    ],
+    "actions": [
+      "IR Dev: Sala 24 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 25 (2 ACs) -> Command: power_off"
+    ]
+  },
+  {
+    "num": 17,
+    "id": "4V921XS9HwPnCU6s",
+    "name": "P.M FIM [13:50] Seg",
+    "enabled": true,
+    "conditions": [
+      "13:50 (Seg)"
+    ],
+    "actions": [
+      "IR Dev: Sala 23 AC Esquerdo -> Command: power_off",
+      "IR Dev: Sala 24 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 30 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 31 (2 ACs) -> Command: power_off"
+    ]
+  },
+  {
+    "num": 18,
+    "id": "AlzJozB1RP1hOwLs",
+    "name": "P.M FIM [13:00] Seg",
+    "enabled": true,
+    "conditions": [
+      "13:00 (Seg)"
+    ],
+    "actions": [
+      "IR Dev: Sala 25 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 29 (2 ACs) -> Command: power_off",
+      "IR Dev:  Sala 34 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 35 (2 ACs) -> Command: power_off"
+    ]
+  },
+  {
+    "num": 19,
+    "id": "no2uAAHHTDGktjwu",
+    "name": "P.M.1 INÍCIO [06:50] Seg a Sex",
+    "enabled": true,
+    "conditions": [
+      "06:50 (Seg a Sex)"
+    ],
+    "actions": [
+      "IR Dev: Sala 02 -> Command: M0_T23_S3",
+      "IR Dev: Air Conditioning 37 -> Command: M0_T22_S3",
+      "IR Dev: Sala 11 | Auditório -> Command: M0_T23_S2_0",
+      "IR Dev: Sala 12 -> Command: M0_T23_S3",
+      "IR Dev: Sala 13 -> Command: M0_T22_S3",
+      "IR Dev: Sala 14 -> Command: M0_T22_S3",
+      "IR Dev: Sala 15 -> Command: M0_T22_S3",
+      "IR Dev: Sala 18 (2 ACs) -> Command: M0_T22_S2_0",
+      "IR Dev: Sala 19 (2 ACs) -> Command: M0_T22_S2_0",
+      "IR Dev: Sala 20 (2 ACs) -> Command: M0_T22_S3",
+      "IR Dev: Sala 21 (2 ACs) -> Command: M0_T22_S2_0",
+      "IR Dev: Sala 22 AC Esquerda -> Command: M0_T22_S3_0",
+      "IR Dev: Sala 30 (2 ACs) -> Command: M0_T23_S2_0",
+      "IR Dev: Sala 23 AC Direito -> Command: M0_T23_S3_0",
+      "IR Dev: Sala 24 (2 ACs) -> Command: M0_T20_S1_0",
+      "IR Dev: Sala 25 (2 ACs) -> Command: M0_T23_S2_0",
+      "IR Dev: Sala 29 (2 ACs) -> Command: M0_T23_S2_0",
+      "IR Dev: Sala 30 (2 ACs) -> Command: M0_T23_S2_0",
+      "IR Dev: Sala 31 (2 ACs) -> Command: M0_T22_S2_0",
+      "IR Dev:  Sala 34 (2 ACs) -> Command: M0_T18_S3_0",
+      "IR Dev: Sala 35 (2 ACs) -> Command: M0_T20_S0_0"
+    ]
+  },
+  {
+    "num": 20,
+    "id": "jpAkkQydURBuEhU9",
+    "name": "P.M FIM [18h00] Quin",
+    "enabled": true,
+    "conditions": [
+      "18:30 (Ter)"
+    ],
+    "actions": [
+      "IR Dev: Sala 23 AC Esquerdo -> Command: power_off",
+      "IR Dev: Sala 23 AC Direito -> Command: power_off",
+      "IR Dev: Sala 29 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 30 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 31 (2 ACs) -> Command: power_off"
+    ]
+  },
+  {
+    "num": 21,
+    "id": "LdQwwGvcEdAzexeh",
+    "name": "P.M Início [14h10] Qui",
+    "enabled": true,
+    "conditions": [
+      "14:10 (Qui)"
+    ],
+    "actions": [
+      "IR Dev: Sala 35 (2 ACs) -> Command: M0_T21_S0_0",
+      "IR Dev:  Sala 34 (2 ACs) -> Command: M0_T22_S3_0"
+    ]
+  },
+  {
+    "num": 22,
+    "id": "Xkd2mxh7djPFHF5y",
+    "name": "P.M Fim [18h00] Qui",
+    "enabled": true,
+    "conditions": [
+      "18:00 (Qui)"
+    ],
+    "actions": [
+      "IR Dev:  Sala 34 (2 ACs) -> Command: power_off",
+      "IR Dev: Sala 35 (2 ACs) -> Command: power_off"
+    ]
+  }
+]

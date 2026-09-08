@@ -1,0 +1,491 @@
+[
+  {
+    "index": 1,
+    "name": "P.I.1 FIM [17h00] Sex",
+    "enabled": true,
+    "time": "17:00",
+    "days": "Sex",
+    "rooms": [
+      "Sala 23"
+    ],
+    "actions_cnt": 1,
+    "actions_detail": [
+      "Sala 23 -> {'key': 'power_off', 'keyId': 'power_off'}"
+    ]
+  },
+  {
+    "index": 2,
+    "name": "P.I.1 INÍCIO [13h00]  Sex",
+    "enabled": true,
+    "time": "13:00",
+    "days": "Sex",
+    "rooms": [
+      "Sala 23"
+    ],
+    "actions_cnt": 1,
+    "actions_detail": [
+      "Sala 23 -> {'key': 'M0_T22_S3_0', 'keyId': 'ir_ac_self_def'}"
+    ]
+  },
+  {
+    "index": 3,
+    "name": "P.I.1 FIM [13h50] Seg a Sex",
+    "enabled": true,
+    "time": "13:50",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 27"
+    ],
+    "actions_cnt": 1,
+    "actions_detail": [
+      "Sala 27 -> {'key': 'power_off', 'keyId': 'power_off'}"
+    ]
+  },
+  {
+    "index": 4,
+    "name": "P.I.1 FIM [12h30] Seg a Sex",
+    "enabled": true,
+    "time": "12:30",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 23"
+    ],
+    "actions_cnt": 1,
+    "actions_detail": [
+      "Sala 23 -> {'key': 'power_off', 'keyId': 'power_off'}"
+    ]
+  },
+  {
+    "index": 5,
+    "name": "P.I.1 INÍCIO [06h40] Seg a Sex",
+    "enabled": true,
+    "time": "06:40",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 23",
+      "Sala 27"
+    ],
+    "actions_cnt": 2,
+    "actions_detail": [
+      "Sala 23 -> {'key': 'M0_T22_S3_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 27 -> {'key': 'M0_T22_S3_0', 'keyId': 'ir_ac_self_def'}"
+    ]
+  },
+  {
+    "index": 6,
+    "name": "P.I.1 FIM [18h00] Seg a Sex",
+    "enabled": true,
+    "time": "18:00",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 17",
+      "Sala 19",
+      "Sala 20",
+      "0005 - P.inf SL22",
+      "Sala 28",
+      "Sala 30"
+    ],
+    "actions_cnt": 6,
+    "actions_detail": [
+      "Sala 17 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 19 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 20 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "0005 - P.inf SL22 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 28 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 30 -> {'key': 'power_off', 'keyId': 'power_off'}"
+    ]
+  },
+  {
+    "index": 7,
+    "name": "P.I.1 FIM [17h00] SEX",
+    "enabled": true,
+    "time": "17:00",
+    "days": "Sex",
+    "rooms": [
+      "Sala 29"
+    ],
+    "actions_cnt": 1,
+    "actions_detail": [
+      "Sala 29 -> {'key': 'power_off', 'keyId': 'power_off'}"
+    ]
+  },
+  {
+    "index": 8,
+    "name": "P.I.1 FIM [17h00] QUA",
+    "enabled": true,
+    "time": "17:00",
+    "days": "Qua",
+    "rooms": [
+      "Sala 18",
+      "Sala 21"
+    ],
+    "actions_cnt": 2,
+    "actions_detail": [
+      "Sala 18 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 21 -> {'key': 'power_off', 'keyId': 'power_off'}"
+    ]
+  },
+  {
+    "index": 9,
+    "name": "P.I.1 INÍCIO [13h00] Sex",
+    "enabled": true,
+    "time": "13:00",
+    "days": "Sex",
+    "rooms": [
+      "Sala 29"
+    ],
+    "actions_cnt": 1,
+    "actions_detail": [
+      "Sala 29 -> {'key': 'M0_T22_S1_0', 'keyId': 'ir_ac_self_def'}"
+    ]
+  },
+  {
+    "index": 10,
+    "name": "P.I.1 INÍCIO [13h00] Qua",
+    "enabled": true,
+    "time": "13:00",
+    "days": "Qua",
+    "rooms": [
+      "Sala 18",
+      "Sala 21"
+    ],
+    "actions_cnt": 2,
+    "actions_detail": [
+      "Sala 18 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 21 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}"
+    ]
+  },
+  {
+    "index": 11,
+    "name": "P.I.1 INÍCIO [12h40] Seg a Sex",
+    "enabled": true,
+    "time": "12:40",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 17",
+      "Sala 19",
+      "Sala 20",
+      "0005 - P.inf SL22",
+      "Sala 30"
+    ],
+    "actions_cnt": 5,
+    "actions_detail": [
+      "Sala 17 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 19 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 20 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "0005 - P.inf SL22 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 30 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}"
+    ]
+  },
+  {
+    "index": 12,
+    "name": "P.I.1 FIM [13h30] Seg a Sex",
+    "enabled": true,
+    "time": "13:30",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 31"
+    ],
+    "actions_cnt": 1,
+    "actions_detail": [
+      "Sala 31 -> {'key': 'power_off', 'keyId': 'power_off'}"
+    ]
+  },
+  {
+    "index": 13,
+    "name": "P.I.1 FIM [12h30] Seg a Sex",
+    "enabled": true,
+    "time": "12:30",
+    "days": "",
+    "rooms": [
+      "Sala 18",
+      "Sala 21",
+      "Sala 29"
+    ],
+    "actions_cnt": 3,
+    "actions_detail": [
+      "Sala 18 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 21 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 29 -> {'key': 'power_off', 'keyId': 'power_off'}"
+    ]
+  },
+  {
+    "index": 14,
+    "name": "P.I.1 FIM [12h00] Seg a Sex",
+    "enabled": true,
+    "time": "12:00",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 17",
+      "Sala 19",
+      "Sala 20",
+      "0005 - P.inf SL22",
+      "Sala 30"
+    ],
+    "actions_cnt": 5,
+    "actions_detail": [
+      "Sala 17 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 19 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 20 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "0005 - P.inf SL22 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 30 -> {'key': 'power_off', 'keyId': 'power_off'}"
+    ]
+  },
+  {
+    "index": 15,
+    "name": "P.I.1 INÍCIO [06h40] Seg a Sex",
+    "enabled": true,
+    "time": "06:40",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 17",
+      "Sala 18",
+      "Sala 19",
+      "Sala 20",
+      "Sala 21",
+      "0005 - P.inf SL22",
+      "Sala 28",
+      "Sala 29",
+      "Sala 30",
+      "Sala 31"
+    ],
+    "actions_cnt": 10,
+    "actions_detail": [
+      "Sala 17 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 18 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 19 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 20 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 21 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "0005 - P.inf SL22 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 28 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 29 -> {'key': 'M0_T22_S1_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 30 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 31 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}"
+    ]
+  },
+  {
+    "index": 16,
+    "name": "P.I.T FIM [18h00] Seg a Sex ",
+    "enabled": true,
+    "time": "18:00",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 09",
+      "Sala 10",
+      "Sala 13",
+      "Sala 14 | Refeitório"
+    ],
+    "actions_cnt": 4,
+    "actions_detail": [
+      "Sala 09 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 10 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 13 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 14 | Refeitório -> {'key': 'power_off', 'keyId': 'power_off'}"
+    ]
+  },
+  {
+    "index": 17,
+    "name": "P.I.T INÍCIO [12h40] Seg a Sex",
+    "enabled": true,
+    "time": "12:40",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 09",
+      "Sala 10",
+      "Sala 13",
+      "Sala 14 | Refeitório"
+    ],
+    "actions_cnt": 4,
+    "actions_detail": [
+      "Sala 09 -> {'key': 'M0_T22_S3_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 10 -> {'key': 'M0_T22_S1_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 13 -> {'key': 'M0_T22_S3_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 14 | Refeitório -> {'key': 'M0_T22_S0_0', 'keyId': 'ir_ac_self_def'}"
+    ]
+  },
+  {
+    "index": 18,
+    "name": "P.I.T FIM [12h00] Seg a Sex",
+    "enabled": true,
+    "time": "12:00",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 09",
+      "Sala 10",
+      "Sala 13",
+      "Sala 14 | Refeitório"
+    ],
+    "actions_cnt": 4,
+    "actions_detail": [
+      "Sala 09 -> {'key': 'M0_T22_S3_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 10 -> {'key': 'M0_T22_S3_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 13 -> {'key': 'M0_T22_S3_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 14 | Refeitório -> {'key': 'M0_T22_S0_0', 'keyId': 'ir_ac_self_def'}"
+    ]
+  },
+  {
+    "index": 19,
+    "name": "P.I.T INÍCIO [06h40] Seg a Sex",
+    "enabled": true,
+    "time": "06:40",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 09",
+      "Sala 10",
+      "Sala 13",
+      "Sala 14 | Refeitório"
+    ],
+    "actions_cnt": 4,
+    "actions_detail": [
+      "Sala 09 -> {'key': 'M0_T22_S3_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 10 -> {'key': 'M0_T22_S1_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 13 -> {'key': 'M0_T22_S3_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 14 | Refeitório -> {'key': 'M0_T22_S0_0', 'keyId': 'ir_ac_self_def'}"
+    ]
+  },
+  {
+    "index": 20,
+    "name": "P.I.T FIM [18h00] Seg a Sex",
+    "enabled": true,
+    "time": "18:30",
+    "days": "Todos os dias",
+    "rooms": [
+      "Sala 01",
+      "Sala 02",
+      "Sala 03",
+      "Sala 05",
+      "Sala 07",
+      "Sala 08",
+      "Sala 12",
+      "Sala 15",
+      "Sala 31",
+      "Sala 30",
+      "Sala 29",
+      "Sala 28",
+      "Sala 27",
+      "Sala 26",
+      "Sala 25 | Sala dos Professores",
+      "Sala 23",
+      "0005 - P.inf SL22",
+      "Sala 20",
+      "Sala 21",
+      "Sala 19",
+      "Sala 18",
+      "Sala 17",
+      "Sala 06 | Dormitório",
+      "Sala 14 | Refeitório"
+    ],
+    "actions_cnt": 25,
+    "actions_detail": [
+      "Sala 01 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 02 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 03 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 05 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 07 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 08 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 12 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 15 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 31 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 30 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 29 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 28 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 27 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 26 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 25 | Sala dos Professores -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 23 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "0005 - P.inf SL22 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 20 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 21 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 19 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 19 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 18 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 17 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 06 | Dormitório -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 14 | Refeitório -> {'key': 'power_off', 'keyId': 'power_off'}"
+    ]
+  },
+  {
+    "index": 21,
+    "name": "P.I.T INÍCIO [12h00] Seg a Sex",
+    "enabled": true,
+    "time": "12:40",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 01",
+      "Sala 02",
+      "Sala 03",
+      "Sala 05",
+      "Sala 07",
+      "Sala 08",
+      "Sala 12",
+      "Sala 15"
+    ],
+    "actions_cnt": 8,
+    "actions_detail": [
+      "Sala 01 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 02 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 03 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 05 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 07 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 08 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 12 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 15 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}"
+    ]
+  },
+  {
+    "index": 22,
+    "name": "P.I.T FIM [12h00] Seg a Sex",
+    "enabled": true,
+    "time": "12:00",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 01",
+      "Sala 02",
+      "Sala 03",
+      "Sala 05",
+      "Sala 07",
+      "Sala 08",
+      "Sala 12",
+      "Sala 15"
+    ],
+    "actions_cnt": 8,
+    "actions_detail": [
+      "Sala 01 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 02 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 03 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 05 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 07 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 08 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 12 -> {'key': 'power_off', 'keyId': 'power_off'}",
+      "Sala 15 -> {'key': 'power_off', 'keyId': 'power_off'}"
+    ]
+  },
+  {
+    "index": 23,
+    "name": "P.I.T INÍCIO [06h40] Seg a SEX",
+    "enabled": true,
+    "time": "06:40",
+    "days": "Segunda a Sexta",
+    "rooms": [
+      "Sala 01",
+      "Sala 02",
+      "Sala 03",
+      "Sala 05",
+      "Sala 07",
+      "Sala 08",
+      "Sala 12",
+      "Sala 15"
+    ],
+    "actions_cnt": 8,
+    "actions_detail": [
+      "Sala 01 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 02 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 03 -> {'key': 'M0_T23_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 05 -> {'key': 'M0_T23_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 07 -> {'key': 'M0_T23_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 08 -> {'key': 'M0_T23_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 12 -> {'key': 'M0_T22_S2_0', 'keyId': 'ir_ac_self_def'}",
+      "Sala 15 -> {'key': 'power_off', 'keyId': 'power_off'}"
+    ]
+  }
+]

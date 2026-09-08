@@ -1,0 +1,1420 @@
+[
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb14b2b5fd0b4cd0e142vr",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "V2dcyXzvtALLFSDC",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0000010",
+          "time": "17:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 FIM [17h00] Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb14b2b5fd0b4cd0e142vr",
+        "executor_property": {
+          "key": "M0_T22_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      }
+    ],
+    "automation_id": "inLDvwHLHydLADUg",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0000010",
+          "time": "13:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 INÍCIO [13h00]  Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb3d0e2c927f7ad685ustu",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "FbOwEI5ivFqNWpfp",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0111110",
+          "time": "13:50",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 FIM [13h50] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb14b2b5fd0b4cd0e142vr",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "FqQgm7voDIrbjIlL",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0111110",
+          "time": "12:30",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 FIM [12h30] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb14b2b5fd0b4cd0e142vr",
+        "executor_property": {
+          "key": "M0_T22_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb3d0e2c927f7ad685ustu",
+        "executor_property": {
+          "key": "M0_T22_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      }
+    ],
+    "automation_id": "95nAipw0j0D1mg8K",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260801",
+          "loops": "0111110",
+          "time": "06:40",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 INÍCIO [06h40] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebb34889bf71ea251azgfm",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc8f9985a38e48f1fbvsa",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb1c85b555590da308tnnj",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb1bf734a9027f4851pr9p",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb9f139042de3c4e81ttzb",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb36edb2089377df89ojgy",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "14UkQnTy2uzBKM7h",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0111110",
+          "time": "18:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 FIM [18h00] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb01478a0830295261zfl9",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "7jViICWGn6t58w6g",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0000010",
+          "time": "17:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 FIM [17h00] SEX",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebd8925785fe9a6b715qol",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb5a9bafbb34264ceeaaty",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "6V45AFfcOxK92P9A",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0001000",
+          "time": "17:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 FIM [17h00] QUA",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb01478a0830295261zfl9",
+        "executor_property": {
+          "key": "M0_T22_S1_0",
+          "keyId": "ir_ac_self_def"
+        }
+      }
+    ],
+    "automation_id": "GUg7tZtGadeytTut",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0000010",
+          "time": "13:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 INÍCIO [13h00] Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebd8925785fe9a6b715qol",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb5a9bafbb34264ceeaaty",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      }
+    ],
+    "automation_id": "RWe8S56pALqeyPCV",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0001000",
+          "time": "13:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 INÍCIO [13h00] Qua",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebb34889bf71ea251azgfm",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc8f9985a38e48f1fbvsa",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb1c85b555590da308tnnj",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb1bf734a9027f4851pr9p",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb36edb2089377df89ojgy",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      }
+    ],
+    "automation_id": "yFVVqT2fc1JnOe8t",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0111110",
+          "time": "12:40",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 INÍCIO [12h40] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb8747568d08e665dbb120",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "aFZj2myMWTVh605B",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0111110",
+          "time": "13:30",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 FIM [13h30] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebd8925785fe9a6b715qol",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb5a9bafbb34264ceeaaty",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb01478a0830295261zfl9",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "QAqBjF4bvQCiqQrx",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0000000",
+          "time": "12:30",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 FIM [12h30] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebb34889bf71ea251azgfm",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc8f9985a38e48f1fbvsa",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb1c85b555590da308tnnj",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb1bf734a9027f4851pr9p",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb36edb2089377df89ojgy",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "mi7ikHlVwcF6A09j",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0111110",
+          "time": "12:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 FIM [12h00] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebb34889bf71ea251azgfm",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebd8925785fe9a6b715qol",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc8f9985a38e48f1fbvsa",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb1c85b555590da308tnnj",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb5a9bafbb34264ceeaaty",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb1bf734a9027f4851pr9p",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb9f139042de3c4e81ttzb",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb01478a0830295261zfl9",
+        "executor_property": {
+          "key": "M0_T22_S1_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb36edb2089377df89ojgy",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb8747568d08e665dbb120",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      }
+    ],
+    "automation_id": "QnAut1qj8kYDDPAa",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260801",
+          "loops": "0111110",
+          "time": "06:40",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.1 INÍCIO [06h40] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebefe1ed145f3a70c8rj9e",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb96e8a6dbc9ad23b2oena",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb762d3a33b327cae5hu7a",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebec80018106f34cc7affc",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "AbG9L8UkQEe8hDpI",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0111110",
+          "time": "18:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.T FIM [18h00] Seg a Sex ",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebefe1ed145f3a70c8rj9e",
+        "executor_property": {
+          "key": "M0_T22_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb96e8a6dbc9ad23b2oena",
+        "executor_property": {
+          "key": "M0_T22_S1_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb762d3a33b327cae5hu7a",
+        "executor_property": {
+          "key": "M0_T22_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebec80018106f34cc7affc",
+        "executor_property": {
+          "key": "M0_T22_S0_0",
+          "keyId": "ir_ac_self_def"
+        }
+      }
+    ],
+    "automation_id": "HHvjnZFcAORJz9yV",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0111110",
+          "time": "12:40",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.T INÍCIO [12h40] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebefe1ed145f3a70c8rj9e",
+        "executor_property": {
+          "key": "M0_T22_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb96e8a6dbc9ad23b2oena",
+        "executor_property": {
+          "key": "M0_T22_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb762d3a33b327cae5hu7a",
+        "executor_property": {
+          "key": "M0_T22_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebec80018106f34cc7affc",
+        "executor_property": {
+          "key": "M0_T22_S0_0",
+          "keyId": "ir_ac_self_def"
+        }
+      }
+    ],
+    "automation_id": "acy8zAxj8PIeC9dK",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0111110",
+          "time": "12:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.T FIM [12h00] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebefe1ed145f3a70c8rj9e",
+        "executor_property": {
+          "key": "M0_T22_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb96e8a6dbc9ad23b2oena",
+        "executor_property": {
+          "key": "M0_T22_S1_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb762d3a33b327cae5hu7a",
+        "executor_property": {
+          "key": "M0_T22_S3_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebec80018106f34cc7affc",
+        "executor_property": {
+          "key": "M0_T22_S0_0",
+          "keyId": "ir_ac_self_def"
+        }
+      }
+    ],
+    "automation_id": "9R8dNpA7xgAlV0QV",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260801",
+          "loops": "0111110",
+          "time": "06:40",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.T INÍCIO [06h40] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebefd5f2389b20c3dbdedc",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb70b21c7b959d8e00j97x",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb98168f8712d91846saga",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb348951b91786e78bkfpe",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb9167a7539f79ab2bikwb",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb71a1e88400aa847aaef9",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebbb979893e14ff6a5mrw8",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7fa2a8fc0f0df540rd6f",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb8747568d08e665dbb120",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb36edb2089377df89ojgy",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb01478a0830295261zfl9",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb9f139042de3c4e81ttzb",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb3d0e2c927f7ad685ustu",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb78d43ecdda3a30f3jhtx",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb68738f30d115fd890yho",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb14b2b5fd0b4cd0e142vr",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb1bf734a9027f4851pr9p",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb1c85b555590da308tnnj",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb5a9bafbb34264ceeaaty",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc8f9985a38e48f1fbvsa",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebc8f9985a38e48f1fbvsa",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebd8925785fe9a6b715qol",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebb34889bf71ea251azgfm",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb649ddedd3ed0cf27xraa",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebec80018106f34cc7affc",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "A8aEx9eAzXNE7Otj",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0111110",
+          "time": "18:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      },
+      {
+        "display": {
+          "date": "20260902",
+          "loops": "1111111",
+          "time": "17:50",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 2
+      },
+      {
+        "display": {
+          "date": "20260902",
+          "loops": "1111111",
+          "time": "18:10",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 3
+      },
+      {
+        "display": {
+          "date": "20260902",
+          "loops": "1111111",
+          "time": "18:30",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 4
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.T FIM [18h00] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebefd5f2389b20c3dbdedc",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb70b21c7b959d8e00j97x",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb98168f8712d91846saga",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb348951b91786e78bkfpe",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb9167a7539f79ab2bikwb",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb71a1e88400aa847aaef9",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebbb979893e14ff6a5mrw8",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7fa2a8fc0f0df540rd6f",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      }
+    ],
+    "automation_id": "nAc09zkGaLDnFfES",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0111110",
+          "time": "12:40",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.T INÍCIO [12h00] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebefd5f2389b20c3dbdedc",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb70b21c7b959d8e00j97x",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb98168f8712d91846saga",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb348951b91786e78bkfpe",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb9167a7539f79ab2bikwb",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb71a1e88400aa847aaef9",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebbb979893e14ff6a5mrw8",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7fa2a8fc0f0df540rd6f",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "iElV0pCJrpoqKVxb",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260731",
+          "loops": "0111110",
+          "time": "12:00",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.T FIM [12h00] Seg a Sex",
+    "preconditions": []
+  },
+  {
+    "actions": [
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebefd5f2389b20c3dbdedc",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb70b21c7b959d8e00j97x",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb98168f8712d91846saga",
+        "executor_property": {
+          "key": "M0_T23_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb348951b91786e78bkfpe",
+        "executor_property": {
+          "key": "M0_T23_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb9167a7539f79ab2bikwb",
+        "executor_property": {
+          "key": "M0_T23_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb71a1e88400aa847aaef9",
+        "executor_property": {
+          "key": "M0_T23_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "ebbb979893e14ff6a5mrw8",
+        "executor_property": {
+          "key": "M0_T22_S2_0",
+          "keyId": "ir_ac_self_def"
+        }
+      },
+      {
+        "action_executor": "irIssueVii",
+        "entity_id": "eb7fa2a8fc0f0df540rd6f",
+        "executor_property": {
+          "key": "power_off",
+          "keyId": "power_off"
+        }
+      }
+    ],
+    "automation_id": "AJnkTX5tST57B7Cl",
+    "background": "",
+    "conditions": [
+      {
+        "display": {
+          "date": "20260801",
+          "loops": "0111110",
+          "time": "06:40",
+          "timezone_id": "America/Recife"
+        },
+        "entity_id": "timer",
+        "entity_type": 6,
+        "order_num": 1
+      }
+    ],
+    "enabled": true,
+    "match_type": 1,
+    "name": "P.I.T INÍCIO [06h40] Seg a SEX",
+    "preconditions": []
+  }
+]
