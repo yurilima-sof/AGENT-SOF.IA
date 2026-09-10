@@ -305,6 +305,9 @@ async def process_agent_command(
                 mensagem_wpp=None,
             )
 
+        # RESOLUÇÃO MULTI-TENANT SEGURA (U-07): Resolve home_id via id_grupo_wpp antes da LLM
+        home_id = await resolver_home_id_por_grupo(db, payload.id_grupo, payload.nome_revenda)
+
         # Pré-inicializa variáveis de ação e busca credenciais do grupo no banco
         credenciais = await buscar_credenciais_revenda(db, payload.id_grupo)
         acao = None
@@ -314,11 +317,15 @@ async def process_agent_command(
 
         if settings.gemini_api_key:
             try:
-                logger.info("   [Banco] Buscando ambientes cadastrados para a revenda...")
+                logger.info("   [Banco] Buscando ambientes cadastrados para a revenda via home_id...")
                 
-                # NOVO FLUXO: Busca ambientes cadastrados diretamente das Cenas Tuya
-                from app.crud.tuya import get_ambientes_by_cliente
-                ambientes_disponiveis = await get_ambientes_by_cliente(db, payload.nome_revenda)
+                # FLUXO ISOLADO POR TENANT: Busca ambientes cadastrados para o home_id específico
+                from app.crud.tuya import get_ambientes_by_home_id, get_ambientes_by_cliente
+                ambientes_disponiveis = []
+                if home_id:
+                    ambientes_disponiveis = await get_ambientes_by_home_id(db, home_id)
+                elif payload.nome_revenda:
+                    ambientes_disponiveis = await get_ambientes_by_cliente(db, payload.nome_revenda)
                 
                 # Fallback: se não tiver ambientes na Tuya, tenta extrair das credenciais antigas
                 if not ambientes_disponiveis and credenciais:
@@ -375,8 +382,6 @@ async def process_agent_command(
             # 1. TENTA EXECUTAR NATIVAMENTE NA TUYA
             tuya_success = None
             try:
-                # RESOLUÇÃO MULTI-TENANT SEGURA (U-07): Resolve home_id via id_grupo_wpp
-                home_id = await resolver_home_id_por_grupo(db, payload.id_grupo, payload.nome_revenda)
                 if home_id:
                     # Se for pedido de pausa de automação, tenta extrair o horário de término da mensagem
                     horario_fim_pausa = None

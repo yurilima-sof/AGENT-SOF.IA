@@ -336,6 +336,9 @@ class LLMService:
             "- O ifttt_action OBRIGATORIAMENTE DEVE SER: `reativar_automacao`\n"
             "- NUNCA classifique isso como `ligar_dispositivos`/`ligar` — reativar automação é diferente de ligar um equipamento.\n\n"
 
+            "ATENÇÃO OBRIGATÓRIA - FRASES PASSIVAS DE RECLAMAÇÃO E PARTICÍPIO:\n"
+            "Frases no particípio indicando que equipamentos estão desligados (ex: 'máquinas desligadas', 'ar desligado', 'tudo desligado', 'máquinas continuam desligadas', 'ar condicionados da loja desligados') ou queixas de calor (ex: 'loja quente', 'tá quente') NUNCA são informativos neutros ou comandos de desligar — DEVEM ser tratadas obrigatoriamente como solicitação de LIGAR climatização / resfriamento (acionando 'medio' ou 'ligar'). NUNCA retorne 'sem_acao' e NUNCA retorne 'off'.\n\n"
+
             "Regras de Decisão Semântica (Padrão e Prioridade):\n"
             "1. PRIORIDADE MÁXIMA - REUNIÃO PROLONGADA / FECHAMENTO DE MÊS / PAUSAR AUTOMAÇÃO:\n"
             "   Se o usuário informar que haverá REUNIÃO, FECHAMENTO DE MÊS ou pedir para pausar/desativar os desligamentos automáticos programados:\n"

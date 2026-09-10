@@ -147,11 +147,19 @@ async def disparar_acao_fisica(
     # Ação normal: resolve e dispara a cena correspondente ao ambiente/ação
     amb = ambiente if ambiente else ""
     scene_data = await get_scene_by_ambiente(db, home_id, amb, acao)
+
+    # Fallback automático: se um ambiente foi especificado mas nenhuma cena foi encontrada, tenta cena geral da loja (amb = "")
+    if not scene_data and amb:
+        logger.info(f"   [Tuya] Nenhuma cena encontrada para o ambiente específico '{amb}'. Executando fallback automático para climatização geral da loja (ambiente='')...")
+        scene_data = await get_scene_by_ambiente(db, home_id, "", acao)
+        if scene_data:
+            logger.info(f"   [Tuya] Fallback para climatização geral executado com sucesso! Cena geral encontrada: '{scene_data['nome_cena']}' (ID: {scene_data['scene_id']}).")
+
     if scene_data:
         scene_id = scene_data["scene_id"]
         logger.info(f"   [Tuya] Cenário encontrado: {scene_data['nome_cena']} (ID: {scene_id}). Disparando...")
         tuya_success = await tuya_service.execute_scene(home_id, scene_id)
         return {"tuya_success": tuya_success, "detail": scene_data["nome_cena"], "device_offline": False}
 
-    logger.info(f"   [Tuya] Nenhuma cena encontrada para ambiente '{amb}' e ação '{acao}'.")
+    logger.info(f"   [Tuya] Nenhuma cena encontrada para ambiente '{amb}' (nem via fallback geral) e ação '{acao}'.")
     return {"tuya_success": None, "detail": "nenhuma cena encontrada", "device_offline": False}

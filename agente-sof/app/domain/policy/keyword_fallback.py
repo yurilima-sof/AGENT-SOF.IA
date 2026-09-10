@@ -50,6 +50,12 @@ for familia, lista_kw in _KEYWORDS.items():
         _KEYWORDS_ORDENADAS.append((familia, kw))
 _KEYWORDS_ORDENADAS.sort(key=lambda item: len(item[1]), reverse=True)
 
+import re
+
+# Regexes para distinguir imperativo de particípio/reclamação passiva
+_RE_PARTICIPIO_DESLIGADO = re.compile(r"\b(desligado|desligada|desligados|desligadas)\b", re.IGNORECASE)
+_RE_IMPERATIVO_DESLIGAR = re.compile(r"\b(desligar|desliga|desligue|desliguem|apagar|apaga|parar|para)\b", re.IGNORECASE)
+
 def classificar_familia(mensagem: str) -> Optional[FamiliaIntencao]:
     """
     Identifica a família da intenção por correspondência de palavras-chave.
@@ -59,6 +65,13 @@ def classificar_familia(mensagem: str) -> Optional[FamiliaIntencao]:
         return None
 
     texto = mensagem.lower().strip()
+
+    # Prioridade para frases no particípio passivo ("máquinas desligadas", "ar desligado")
+    # que indicam reclamação e necessidade de LIGAR (quando não houver comando imperativo explícito de desligar)
+    if _RE_PARTICIPIO_DESLIGADO.search(texto) and not _RE_IMPERATIVO_DESLIGAR.search(texto):
+        logger.info(f"   Particípio passivo/reclamação detectado ('{texto}') → Família: 'ligar'")
+        return FamiliaIntencao.LIGAR
+
     for familia, kw in _KEYWORDS_ORDENADAS:
         if kw in texto:
             logger.info(f"   Keyword detectada: '{kw}' → Família: '{familia.value}'")

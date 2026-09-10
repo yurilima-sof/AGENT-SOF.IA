@@ -88,13 +88,29 @@ async def get_ambientes_by_cliente(db: AsyncSession, nome_revenda: str) -> list[
     result = await db.execute(query, {"nome_revenda": nome_revenda, "contains": f"%{nome_revenda}%"})
     return [row[0] for row in result.fetchall()]
 
+async def get_ambientes_by_home_id(db: AsyncSession, home_id: str) -> list[str]:
+    """
+    Busca os ambientes distintos cadastrados para uma home_id específica na tabela de cenas.
+    Garante o isolamento estrito de ambientes por tenant (loja).
+    """
+    if not home_id:
+        return []
+    query = text("""
+        SELECT DISTINCT ambiente 
+        FROM tuya_clientes_cenas
+        WHERE home_id = :home_id
+          AND ambiente != '' AND ambiente IS NOT NULL
+    """)
+    result = await db.execute(query, {"home_id": home_id})
+    return [row[0] for row in result.fetchall()]
+
 # Mapeamento de sinônimos de ação
 ACTION_SYNONYMS: dict[str, list[str]] = {
     "freezer": ["freezer", "esfriar", "t-low", "tlow", "low", "freeze"],
     "esquentar": ["esquentar", "aquecer", "t-high", "thigh", "high", "warm"],
     "medio": ["medio", "médio", "medium", "t-medium", "tmedium", "ligar"],
     "off": ["off", "desligar", "t-off", "toff", "cancelar"],
-    "ligar": ["ligar", "on", "t-on", "ton"],
+    "ligar": ["ligar", "on", "t-on", "ton", "medio", "médio", "medium", "t-medium", "tmedium"],
 }
 
 # Mapeamento estendido de sinônimos de ambiente (ex: "primeiro_andar" -> 1º andar / [1])
@@ -159,8 +175,12 @@ async def get_scene_by_ambiente(db: AsyncSession, home_id: str, ambiente: str, a
         row = result.fetchone()
         if row:
             return _to_dict(row)
+        # Se um ambiente foi especificado mas nenhuma cena foi encontrada para ele,
+        # retorna None para permitir que o chamador (tuya_dispatch_service) execute
+        # o fallback para amb = "" e registre o log da climatização geral da loja.
+        return None
 
-    # 2. Fallback sem filtro de ambiente (ou se ambiente não foi especificado)
+    # 2. Fallback sem filtro de ambiente (quando ambiente não foi especificado, isto é, amb = "")
     query_fallback = text("""
         SELECT * FROM tuya_clientes_cenas
         WHERE home_id = :home_id
