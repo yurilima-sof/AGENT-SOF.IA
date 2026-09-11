@@ -12,6 +12,7 @@
 import logging
 import time
 import json
+import re
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
 
@@ -113,6 +114,46 @@ async def buscar_link_ifttt(credenciais: dict, acao: str, ambiente: Optional[str
 
     logger.info(f"   Nenhum link IFTTT encontrado para '{acao}'")
     return None
+
+
+def sanitizar_mensagem_wpp(texto: Optional[str]) -> Optional[str]:
+    """
+    Sanitiza a mensagem enviada ao WhatsApp/n8n para evitar vazamento de códigos internos,
+    unidades/ambientes numerados e termos técnicos do sistema (ex: temperatura média, T-Medium).
+    """
+    if not texto or not isinstance(texto, str):
+        return texto
+
+    # 1. Substitui "temperatura média", "temperatura media", "modo médio", "modo medio" -> "climatização"
+    texto = re.sub(r'(?i)\btemperatura\s+m[ée]dia\b', 'climatização', texto)
+    texto = re.sub(r'(?i)\bmodo\s+m[ée]dio\b', 'climatização', texto)
+    texto = re.sub(r'(?i)\bmodo\s+t-medium\b', 'climatização', texto)
+
+    # 2. Remove menções a "unidade XXXX" ou "ambiente XXXX" seguidas de código (ex: unidade 0081, ambiente 0045)
+    texto = re.sub(r'(?i)\b(unidade|ambiente)\s+0{1,2}\d{2,3}\b', '', texto)
+    texto = re.sub(r'(?i)\b(unidade|ambiente)\s+\d{3,4}\b', '', texto)
+
+    # 3. Remove padrões de códigos internos numéricos remanescentes (ex: 0081, 0045, 0018)
+    texto = re.sub(r'\b0{1,2}\d{2,3}\b', '', texto)
+
+    # 4. Remove termos técnicos remanescentes (T-Medium, T-Low, T-Freezer, T-High, T-Off, freezer, medio, etc.)
+    texto = re.sub(r'(?i)\bT-(Medium|Low|Freezer|High|Off)\b', '', texto)
+    texto = re.sub(r'(?i)\b(freezer|t-medium|t-low|t-freezer|t-high|t-off)\b', '', texto)
+    texto = re.sub(r'(?i)\b(m[ée]dio)\b', '', texto)
+
+    # 5. Limpa preposições órfãs ("da para", "do para", "no para", "na para") resultantes das remoções
+    texto = re.sub(r'\bda\s+para\b', 'para', texto, flags=re.IGNORECASE)
+    texto = re.sub(r'\bdo\s+para\b', 'para', texto, flags=re.IGNORECASE)
+    texto = re.sub(r'\bno\s+para\b', 'para', texto, flags=re.IGNORECASE)
+    texto = re.sub(r'\bna\s+para\b', 'para', texto, flags=re.IGNORECASE)
+
+    # 6. Limpa espaços duplos e pontuação órfã
+    texto = re.sub(r' +', ' ', texto)
+    texto = re.sub(r'\s+([.,!?:;])', r'\1', texto)
+    texto = re.sub(r'([.,!?:;])\1+', r'\1', texto)
+
+    return texto.strip()
+
 
 
 
@@ -453,9 +494,8 @@ async def process_agent_command(
             if tuya_success in (None, False) and not link_ifttt:
                 logger.warning(f"⚠️ Ação '{acao}' solicitada no ambiente '{ambiente or 'geral'}', mas NENHUMA cena Tuya ou link IFTTT foi encontrado. Avisando usuário.")
                 mensagem_wpp = (
-                    f"Desculpe, eu entendi que você quer executar a ação '{acao}' no ambiente '{ambiente or 'geral'}', "
-                    "mas ainda não tenho essa configuração cadastrada para esta revenda. "
-                    "Por favor, solicite o cadastro dessa cena/ação à equipe técnica."
+                    "Desculpe, entendi o que você precisa, mas essa configuração ainda não está "
+                    "disponível para esta unidade. Já estou notificando a equipe técnica! 🛠️"
                 )
                 acao = None # Cancela a intenção de disparar algo que não existe
 
@@ -479,7 +519,7 @@ async def process_agent_command(
                 ambiente=ambiente
             )
 
-            resp_wpp_final = mensagem_wpp
+            resp_wpp_final = sanitizar_mensagem_wpp(mensagem_wpp)
             if resp_wpp_final:
                 await salvar_mensagem_historico(db, payload.id_grupo, "sofia", resp_wpp_final)
 
@@ -514,7 +554,7 @@ async def process_agent_command(
                 ambiente=None
             )
 
-            resp_wpp_final = mensagem_wpp or "Olá! Como posso te ajudar com a temperatura do ambiente hoje?"
+            resp_wpp_final = sanitizar_mensagem_wpp(mensagem_wpp or "Olá! Como posso te ajudar com a temperatura do ambiente hoje?")
             await salvar_mensagem_historico(db, payload.id_grupo, "sofia", resp_wpp_final)
 
             return AgentResponse(

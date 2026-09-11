@@ -158,3 +158,38 @@ def test_frase_imperativa_desligar_continua_desligando():
     acao, intencao, _ = determinar_acao_e_intencao(familia)
     assert acao == "off"
     assert intencao == "desligar_dispositivos"
+
+
+# =============================================================================
+# TASK 5: Sanitização de Mensagens (sanitizar_mensagem_wpp) e Mensagem de Fallback
+# =============================================================================
+
+from app.main import sanitizar_mensagem_wpp
+
+def test_sanitizar_mensagem_wpp_remove_codigo_unidade():
+    """Remoção de 'unidade 0081' e códigos numéricos."""
+    inp = "Pronto! Já enviei o comando para ligar a máquina da unidade 0081 para você."
+    out = sanitizar_mensagem_wpp(inp)
+    assert "0081" not in out
+    assert "unidade" not in out.lower()
+
+def test_sanitizar_mensagem_wpp_substitui_temperatura_media():
+    """Substituição de 'temperatura média' por 'climatização'."""
+    inp = "Configurei a temperatura média na loja"
+    out = sanitizar_mensagem_wpp(inp)
+    assert "temperatura média" not in out.lower()
+    assert "climatização" in out.lower()
+
+def test_sanitizar_mensagem_wpp_remove_t_medium_e_ambiente_codigo():
+    """Remoção de 'T-Medium' e 'ambiente 0045'."""
+    inp = "Ativei o T-Medium no ambiente 0045"
+    out = sanitizar_mensagem_wpp(inp)
+    assert "T-Medium" not in out
+    assert "0045" not in out
+
+def test_sanitizar_mensagem_wpp_preserva_mensagem_normal():
+    """Garante que mensagens normais sem códigos ou termos proibidos fiquem inalteradas."""
+    inp = "Já liguei o ar para você! 🌬️"
+    out = sanitizar_mensagem_wpp(inp)
+    assert out == inp
+
