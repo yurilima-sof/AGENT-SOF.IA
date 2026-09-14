@@ -9,6 +9,7 @@ services:
     container_name: agente_sof_db
     restart: unless-stopped
     environment:
+      TZ: America/Recife
       POSTGRES_USER: ${POSTGRES_USER:-agente_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agente_senha_dev}
       POSTGRES_DB: ${POSTGRES_DB:-agente_sof_db}
@@ -17,6 +18,7 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
+      - /etc/localtime:/etc/localtime:ro
       - postgres_data:/var/lib/postgresql/data
       - ./database:/docker-entrypoint-initdb.d
     healthcheck:
@@ -32,14 +34,15 @@ services:
     build: .
     container_name: agente_sof_api
     restart: unless-stopped
-    # Acesso direto via IP público na porta 8000 (sem proxy reverso/TLS por enquanto).
-    # TODO: colocar atrás de um proxy com HTTPS (Caddy, Nginx, Cloudflare Tunnel) assim que possível.
     ports:
       - "8000:8000"
     env_file:
       - .env
     environment:
+      - TZ=America/Recife
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-agente_user}:${POSTGRES_PASSWORD:-agente_senha_dev}@db:5432/${POSTGRES_DB:-agente_sof_db}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     depends_on:
       db:
         condition: service_healthy
