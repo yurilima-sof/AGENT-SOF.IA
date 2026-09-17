@@ -2,8 +2,7 @@ import asyncio
 import logging
 import json
 from datetime import datetime, timedelta
-import re
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict
 from zoneinfo import ZoneInfo
 
 from app.services.tuya_service import tuya_service
@@ -13,49 +12,52 @@ logger = logging.getLogger(__name__)
 RECIFE_TZ = ZoneInfo("America/Recife")
 
 class SchedulerService:
-    """
-    Serviço para agendamento de tarefas em segundo plano (Background Tasks).
-    Gerencia a reativação automática de automações da Tuya e desligamentos programados
-    após reuniões prolongadas ou fechamento de mês, no fuso horário de Recife (America/Recife).
-    """
-
     def __init__(self):
         self._tasks: Dict[str, asyncio.Task] = {}
 
-    async def _run_task(self, id_grupo: str, nome_revenda: str, home_id: str, automacao_ids: List[str], delay_segundos: float, task_key: str, agendamento_id: Optional[str] = None):
+    async def _run_task(self, id_grupo: str, nome_revenda: str, home_id: str, automacao_ids: List[str], delay_segundos: float, task_key: str, agendamento_id: Optional[str] = None, fase: str = "resume"):
         try:
             await asyncio.sleep(delay_segundos)
-            logger.info(f"⏰ [Scheduler] Horário de encerramento da reunião atingido para {nome_revenda}!")
             
-            # 1. Reativa as automações na Tuya Cloud para que a rotina normal volte a funcionar
-            for auto_id in automacao_ids:
+            if fase == "pause":
+                logger.info(f"⏰ [Scheduler] Horário de INÍCIO da pausa atingido para {nome_revenda}!")
+                for auto_id in automacao_ids:
+                    try:
+                        await tuya_service.set_automation_status(home_id, auto_id, enable=False)
+                        logger.info(f"⏸️ Automação {auto_id} desativada para {nome_revenda}.")
+                    except Exception as e_auto:
+                        logger.error(f"❌ Erro ao desativar {auto_id}: {e_auto}")
+                
+            elif fase == "resume":
+                logger.info(f"⏰ [Scheduler] Horário de encerramento da reunião atingido para {nome_revenda}!")
+                for auto_id in automacao_ids:
+                    try:
+                        await tuya_service.set_automation_status(home_id, auto_id, enable=True)
+                        logger.info(f"✅ Automação {auto_id} reativada para {nome_revenda}.")
+                    except Exception as e_auto:
+                        logger.error(f"❌ Erro ao reativar automação {auto_id}: {e_auto}")
+
                 try:
-                    await tuya_service.set_automation_status(home_id, auto_id, enable=True)
-                    logger.info(f"✅ Automação {auto_id} reativada com sucesso para {nome_revenda}.")
-                except Exception as e_auto:
-                    logger.error(f"❌ Erro ao reativar automação {auto_id}: {e_auto}", extra={"status": "erro"}, exc_info=True)
-
-            # 2. Executa a cena de desligamento final (T-OFF) para desligar os aparelhos da reunião
-            try:
-                from app.database import async_session_maker
-                from app.crud.tuya import get_scene_by_ambiente
-                async with async_session_maker() as db:
-                    scene_off = await get_scene_by_ambiente(db, home_id, "", "off")
-                    if scene_off and "scene_id" in scene_off:
-                        logger.info(f"🌙 [Scheduler] Executando desligamento final (T-OFF) pós-reunião para {nome_revenda}...")
-                        await tuya_service.execute_scene(home_id, scene_off["scene_id"])
+                    from app.database import async_session_maker
+                    from app.crud.tuya import get_scene_by_ambiente
+                    async with async_session_maker() as db:
+                        scene_off = await get_scene_by_ambiente(db, home_id, "", "off")
+                        if scene_off and "scene_id" in scene_off:
+                            logger.info(f"🌙 [Scheduler] Executando desligamento final (T-OFF) pós-reunião para {nome_revenda}...")
+                            await tuya_service.execute_scene(home_id, scene_off["scene_id"])
+                except Exception as e_off:
+                    logger.error(f"⚠️ Erro ao disparar desligamento: {e_off}")
                     
-                    if agendamento_id:
-                        from app.crud.agendamentos import marcar_agendamento_executado
-                        await marcar_agendamento_executado(db, agendamento_id)
-            except Exception as e_off:
-                logger.error(f"⚠️ Erro ao disparar desligamento final ou marcar executado: {e_off}", extra={"status": "erro"}, exc_info=True)
+            if agendamento_id:
+                from app.database import async_session_maker
+                from app.crud.agendamentos import marcar_agendamento_executado
+                async with async_session_maker() as db:
+                    await marcar_agendamento_executado(db, agendamento_id)
 
-            logger.info(f"🎉 [Scheduler] Ciclo de reunião concluído e equipamentos desligados para {nome_revenda}.")
         except asyncio.CancelledError:
             logger.info(f"ℹ️ Agendamento cancelado para {nome_revenda}.")
         except Exception as e:
-            logger.error(f"❌ Erro na tarefa agendada: {e}", extra={"status": "erro"}, exc_info=True)
+            logger.error(f"❌ Erro na tarefa agendada: {e}")
         finally:
             if task_key in self._tasks:
                 del self._tasks[task_key]
@@ -68,44 +70,28 @@ class SchedulerService:
         automacao_ids: List[str],
         horario_execucao: datetime
     ):
-        """
-        Agenda em segundo plano a reativação das automações e o desligamento final dos aparelhos no fuso de Recife.
-        """
         agora = datetime.now(RECIFE_TZ)
         delay_segundos = (horario_execucao - agora).total_seconds()
-        
-        # Adiciona uma margem de segurança de 2 minutos após o término da reunião
         delay_segundos += 120
         if delay_segundos < 0:
             delay_segundos = 10
 
-        task_key = f"{id_grupo}_{home_id}"
-        
-        # Se já houver uma agendada para o mesmo grupo, cancela a anterior e reagenda
+        task_key = f"{id_grupo}_{home_id}_resume_imediata"
         if task_key in self._tasks and not self._tasks[task_key].done():
-            logger.info(f"⏳ Reagendando tarefa de reativação para o grupo {id_grupo}...")
             self._tasks[task_key].cancel()
-
-        logger.info(
-            f"📅 [Scheduler] Agendada reativação/desligamento para '{nome_revenda}' | "
-            f"Horário Recife: {horario_execucao.strftime('%H:%M:%S')} (execução em {int(delay_segundos/60)} minutos)"
-        )
 
         from app.crud.agendamentos import salvar_agendamento
         from app.database import async_session_maker
         async with async_session_maker() as db:
             agendamento_id = await salvar_agendamento(db, id_grupo, nome_revenda, home_id, automacao_ids, horario_execucao)
 
-        # Inicia a task em background no evento do loop asyncio
-        self._tasks[task_key] = asyncio.create_task(self._run_task(id_grupo, nome_revenda, home_id, automacao_ids, delay_segundos, task_key, agendamento_id))
+        self._tasks[task_key] = asyncio.create_task(
+            self._run_task(id_grupo, nome_revenda, home_id, automacao_ids, delay_segundos, task_key, agendamento_id, "resume")
+        )
 
     async def carregar_agendamentos_pendentes(self):
-        """
-        Carrega agendamentos não executados do banco de dados no boot da aplicação.
-        """
         from app.database import async_session_maker
-        from app.crud.agendamentos import obter_agendamentos_pendentes, marcar_agendamento_executado
-        import json
+        from app.crud.agendamentos import obter_agendamentos_pendentes
         
         agora = datetime.now(RECIFE_TZ)
         logger.info("♻️ [Scheduler] Buscando agendamentos pendentes...")
@@ -119,46 +105,39 @@ class SchedulerService:
                 home_id = row[3]
                 automacao_ids = row[4]
                 horario_execucao = row[5]
+                # row[6] is fase, if it exists
+                fase = row[6] if len(row) > 6 and row[6] else "resume"
                 
-                # Certifica que o fuso horário está correto
                 if horario_execucao.tzinfo is None:
                     horario_execucao = horario_execucao.replace(tzinfo=RECIFE_TZ)
                 
                 delay_segundos = (horario_execucao - agora).total_seconds()
-                delay_segundos += 120 # Margem original
                 
-                if delay_segundos < -300: # Se já passou de 5 minutos do horário, executa agora com um pequeno delay
+                if delay_segundos < -300: 
                     delay_segundos = 5
                 elif delay_segundos < 0:
                     delay_segundos = 10
                     
-                task_key = f"{id_grupo_wpp}_{home_id}"
-                logger.info(f"♻️ [Scheduler] Reagendando {task_key} para execução em {int(delay_segundos)}s")
+                task_key = f"{id_grupo_wpp}_{home_id}_{agendamento_id}"
+                # Guard de idempotência (Bug 3): não empilhar tasks se já existe uma viva
+                if task_key in self._tasks and not self._tasks[task_key].done():
+                    logger.info(f"♻️ [Scheduler] Task já viva para {task_key}, pulando.")
+                    continue
                 self._tasks[task_key] = asyncio.create_task(
-                    self._run_task(id_grupo_wpp, nome_revenda, home_id, automacao_ids, delay_segundos, task_key, agendamento_id)
+                    self._run_task(id_grupo_wpp, nome_revenda, home_id, automacao_ids, delay_segundos, task_key, agendamento_id, fase)
                 )
 
     async def cancelar_reativacao_pendente(self, id_grupo: str, home_id: str) -> bool:
-        """
-        Cancela manualmente a reativação agendada para um grupo/home (usado quando o
-        usuário avisa que a reunião acabou/foi cancelada antes do horário combinado):
-        cancela a asyncio.Task em memória, se existir, e marca o(s) agendamento(s)
-        pendente(s) correspondentes como executados no banco, para não serem
-        reprocessados num próximo boot da aplicação.
-
-        Retorna True se havia algo para cancelar (task em memória ou agendamento
-        pendente no banco), False se não havia nenhuma pausa agendada.
-        """
         from app.database import async_session_maker
         from app.crud.agendamentos import obter_agendamentos_pendentes, marcar_agendamento_executado
 
-        task_key = f"{id_grupo}_{home_id}"
         cancelou_algo = False
-
-        if task_key in self._tasks and not self._tasks[task_key].done():
-            self._tasks[task_key].cancel()
-            cancelou_algo = True
-            logger.info(f"⏹️ [Scheduler] Reativação agendada cancelada manualmente para {task_key}.")
+        
+        to_cancel = [k for k in self._tasks.keys() if k.startswith(f"{id_grupo}_{home_id}")]
+        for task_key in to_cancel:
+            if not self._tasks[task_key].done():
+                self._tasks[task_key].cancel()
+                cancelou_algo = True
 
         async with async_session_maker() as db:
             pendentes = await obter_agendamentos_pendentes(db)
@@ -169,5 +148,9 @@ class SchedulerService:
                     cancelou_algo = True
 
         return cancelou_algo
+
+    async def _tick_manual_para_testes(self):
+        """Alias para carregar_agendamentos_pendentes (usado nos testes de T5)."""
+        await self.carregar_agendamentos_pendentes()
 
 scheduler_service = SchedulerService()

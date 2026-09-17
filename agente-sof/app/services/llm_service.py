@@ -13,6 +13,8 @@ from google import genai
 from google.genai import types
 from app.config import get_settings
 from app.services.rag_service import rag_service
+from app.domain.policy.datetime_parser import extrair_janela_evento, EscopoTemporal
+
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -225,25 +227,71 @@ class LLMService:
     """
 
     def __init__(self):
-        # Cliente do SDK novo (google-genai) criado de forma preguiçosa caso a
-        # chave esteja presente. Client é leve (não abre conexão no construtor).
         self._client = genai.Client(api_key=settings.gemini_api_key) if settings.gemini_api_key else None
+
+    async def _chamar_gemini(self, system_prompt: str, user_content: str) -> dict:
+        m_name = getattr(settings, 'gemini_model', 'gemini-3.6-flash')
+        logger.info(f"   [Gemini] Iniciando requisição direta ao modelo {m_name}...")
+        try:
+            try:
+                response = await asyncio.wait_for(
+                    self._client.aio.models.generate_content(
+                        model=m_name,
+                        contents=user_content,
+                        config=types.GenerateContentConfig(
+                            system_instruction=system_prompt,
+                            response_mime_type="application/json",
+                            temperature=0.0,
+                            max_output_tokens=2048,
+                        ),
+                    ),
+                    timeout=GEMINI_TIMEOUT_SEGUNDOS,
+                )
+            except Exception as e_sys:
+                logger.warning(f"⚠️ Chamada com system_instruction falhou ({e_sys}). Tentando modo de prompt unificado...")
+                full_prompt = f"{system_prompt}\n\n{user_content}"
+                response = await asyncio.wait_for(
+                    self._client.aio.models.generate_content(
+                        model=m_name,
+                        contents=full_prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            temperature=0.0,
+                            max_output_tokens=2048,
+                        ),
+                    ),
+                    timeout=GEMINI_TIMEOUT_SEGUNDOS,
+                )
+            if not response or not response.text:
+                raise ValueError("Resposta vazia da API do Gemini.")
+            logger.info(f"✅ Resposta do Gemini obtida com sucesso usando {m_name}.")
+            try:
+                return _parse_and_repair_json(response.text)
+            except json.JSONDecodeError:
+                logger.error(
+                    f"⚠️ JSON do Gemini não pôde ser interpretado nem após reparo. "
+                    f"Resposta bruta (truncada): {response.text.strip()[:500]!r}",
+                    extra={"status": "erro"},
+                )
+                raise
+        except Exception as e:
+            logger.error(f"⚠️ Erro Crítico ao chamar o Gemini ({m_name}): {e}", extra={"status": "erro"}, exc_info=True)
+            return {
+                "intencao": None,
+                "ifttt_action": None,
+                "ambiente": None,
+                "mensagem_wpp": "Puxa, estou passando por uma instabilidade técnica rápida aqui no meu sistema. Pode tentar novamente em alguns minutos? 🛠️",
+                "salvar_memoria": False
+            }
 
     async def processar_mensagem(
         self,
         mensagem: str,
         id_grupo: str,
         ambientes_disponiveis: list[str] = None,
-        historico_recente: Optional[str] = None
+        historico_recente: Optional[str] = None,
+        agora: Optional[datetime] = None
     ) -> Dict[str, Any]:
-        """
-        Consulta o RAG por histórico contextual, analisa histórico de curto prazo, envia a pergunta + contexto ao gemini-2.5-flash
-        e retorna a classificação estruturada no formato compatível com AgentResponse.
-        """
-        # 0a. Verificação Determinística de CANCELAMENTO de Pausa (reunião acabou/foi
-        # cancelada) — precisa vir ANTES da checagem de pausa abaixo, senão uma frase
-        # como "reunião cancelada" seria capturada por conter "reunião" e tentaria
-        # pausar de novo em vez de reativar.
         mensagem_lower = mensagem.lower()
         if _mensagem_indica_cancelamento_pausa(mensagem_lower):
             logger.info(f"   [LLM] Regra determinística de CANCELAMENTO de pausa ativada para mensagem: '{mensagem}'")
@@ -255,19 +303,9 @@ class LLMService:
                 "salvar_memoria": False
             }
 
-        # 0b. Verificação Determinística de Pausa de Automação / Reunião / Fechamento de Mês
         palavras_pausa = ["reunião", "reuniao", "fechamento de mês", "fechamento de mes", "não desliga", "nao desliga", "pausar automação", "pausar automacao"]
-        if any(p in mensagem_lower for p in palavras_pausa):
-            logger.info(f"   [LLM] Regra determinística de Pausa de Automação / Reunião ativada para mensagem: '{mensagem}'")
-            return {
-                "intencao": "pausar_automacao",
-                "ifttt_action": "desativar_automacao",
-                "ambiente": None,
-                "mensagem_wpp": "Compreendido! 🕒 Já pausei as automações de desligamento automático para sua reunião. Ao final do horário estendido, cuidarei da reativação e desligamento para você! 😊",
-                "salvar_memoria": True
-            }
+        # Allow LLM to extract dates before returning
 
-        # 1. Recupera contexto relevante do RAG (histórico de longo prazo)
         contexto_rag = ""
         try:
             contexto_rag = await rag_service.get_relevant_context(mensagem, id_grupo)
@@ -276,10 +314,8 @@ class LLMService:
         except Exception as e:
             logger.warning(f"⚠️ Erro ao recuperar contexto do RAG: {e}")
 
-        # Pega a data atual para o LLM gerar o log corretamente
         data_atual_str = datetime.now().strftime("%d/%m/%y")
 
-        # 2. Define o Prompt do Sistema (System Prompt)
         system_prompt = (
             "Você é a Sofia, a assistente inteligente da SOF para controle de temperatura. "
             "Sempre aja com essa persona: feminina, amigável, acolhedora, prestativa e altamente eficiente. "
@@ -293,10 +329,13 @@ class LLMService:
             "  \"intencao\": \"ligar_resfriamento\" | \"ligar_aquecimento\" | \"ligar_temperatura_media\" | \"desligar_dispositivos\" | \"ligar_dispositivos\" | \"pausar_automacao\" | \"reativar_automacao_agora\" | \"sem_acao\",\n"
             "  \"ifttt_action\": \"freezer\" | \"esquentar\" | \"medio\" | \"off\" | \"ligar\" | \"desativar_automacao\" | \"reativar_automacao\" | null,\n"
             "  \"ambiente\": \"nome do ambiente (slug) ou null\",\n"
+            "  \"data_evento\": \"YYYY-MM-DD ou null\",\n"
+            "  \"hora_inicio\": \"HH:MM ou null\",\n"
+            "  \"hora_fim\": \"HH:MM ou null\",\n"
+            "  \"escopo_temporal\": \"hoje\" | \"futuro\" | \"indefinido\",\n"
             "  \"mensagem_wpp\": \"Sua resposta amigável para o WhatsApp\",\n"
             "  \"salvar_memoria\": true | false\n"
             "}\n\n"
-            
             "Filtro de Memória Orgânica (salvar_memoria):\n"
             "- Defina como true APENAS se a mensagem do usuário ditar uma regra, preferência duradoura, padrão de temperatura ou hábito que o bot deve lembrar para o futuro (ex: 'sempre ligamos no medio de manhã', 'nossa loja é muito gelada às 14h', 'vamos ter reunião até 20h').\n"
             "- Defina como false para comandos normais ('liga o ar'), reclamações pontuais ('tá quente hoje'), saudações e lixo.\n\n"
@@ -383,7 +422,6 @@ class LLMService:
             "6. Mantenha a resposta concisa (limite de 2 a 3 linhas) e use emojis de forma elegante e sutil."
         )
 
-        # 3. Constrói o Prompt do Usuário com o contexto RAG, Ambientes e Histórico Recente de Curto Prazo
         ambientes_str = ", ".join(ambientes_disponiveis) if ambientes_disponiveis else "Nenhum (Ambiente Único)"
         
         user_content_parts = [f"AMBIENTES CADASTRADOS PARA ESTA REVENDA: [{ambientes_str}]"]
@@ -401,75 +439,59 @@ class LLMService:
         user_content_parts.append(f"Mensagem atual do Usuário: '{mensagem}'")
         user_content = "\n\n".join(user_content_parts)
 
-        # 4. Envia para a API do Gemini (Solução Definitiva - Direta e sem Loop)
-        m_name = getattr(settings, 'gemini_model', 'gemini-3.6-flash')
-        logger.info(f"   [Gemini] Iniciando requisição direta ao modelo {m_name}...")
+        result_llm = await self._chamar_gemini(system_prompt, user_content)
+        
+        # Override se cair na regra deterministica
+        if any(p in mensagem_lower for p in palavras_pausa):
+            result_llm["intencao"] = "pausar_automacao"
+            result_llm["ifttt_action"] = "desativar_automacao"
+            result_llm["salvar_memoria"] = True
+            if "mensagem_wpp" not in result_llm or not result_llm["mensagem_wpp"]:
+                result_llm["mensagem_wpp"] = "Compreendido! 🕒 Já pausei as automações de desligamento automático para sua reunião. Ao final do horário estendido, cuidarei da reativação e desligamento para você! 😊"
+        
+        # C5 Parte A: o escopo temporal é calculado SEMPRE, para qualquer intenção.
+        # Antes, o parser só rodava quando a intenção era pausar_automacao — se o
+        # Gemini classificasse um evento futuro como desligar_dispositivos, a data
+        # na mensagem passava despercebida e a ação disparava hoje (incidente real).
+        janela = extrair_janela_evento(mensagem, agora=agora)
+        parser_escopo_str = janela.escopo.value if janela else "indefinido"
+        llm_escopo = result_llm.get("escopo_temporal")
+        llm_escopo_str = llm_escopo.lower() if llm_escopo else "indefinido"
 
-        try:
-            try:
-                response = await asyncio.wait_for(
-                    self._client.aio.models.generate_content(
-                        model=m_name,
-                        contents=user_content,
-                        config=types.GenerateContentConfig(
-                            system_instruction=system_prompt,
-                            response_mime_type="application/json",
-                            temperature=0.0,
-                            max_output_tokens=2048,
-                        ),
-                    ),
-                    timeout=GEMINI_TIMEOUT_SEGUNDOS,
-                )
-            except Exception as e_sys:
-                logger.warning(f"⚠️ Chamada com system_instruction falhou ({e_sys}). Tentando modo de prompt unificado...")
-                full_prompt = f"{system_prompt}\n\n{user_content}"
-                response = await asyncio.wait_for(
-                    self._client.aio.models.generate_content(
-                        model=m_name,
-                        contents=full_prompt,
-                        config=types.GenerateContentConfig(
-                            response_mime_type="application/json",
-                            temperature=0.0,
-                            max_output_tokens=2048,
-                        ),
-                    ),
-                    timeout=GEMINI_TIMEOUT_SEGUNDOS,
-                )
+        if result_llm.get("intencao") == "pausar_automacao":
+            if parser_escopo_str == "indefinido" or llm_escopo_str == "indefinido":
+                result_llm["escopo_temporal"] = "indefinido"
+                result_llm["data_evento"] = None
+                result_llm["hora_fim"] = None
+            elif parser_escopo_str != llm_escopo_str:
+                result_llm["escopo_temporal"] = "indefinido"
+                result_llm["data_evento"] = None
+                result_llm["hora_fim"] = None
+            else:
+                result_llm["escopo_temporal"] = parser_escopo_str
+                # parser data overwrites LLM data to ensure determinism if parser extracted it
+                if janela and janela.data:
+                    result_llm["data_evento"] = janela.data.isoformat()
+                if janela and janela.hora_fim:
+                    result_llm["hora_fim"] = janela.hora_fim.strftime("%H:%M")
+        else:
+            # Intenções de ação imediata (resfriar/aquecer/ligar/desligar): o escopo
+            # passa a existir no resultado para que o guard do main.py possa suprimir
+            # a ação física quando a mensagem carrega uma data futura.
+            # "futuro" de qualquer uma das duas fontes vale: o parser é determinístico,
+            # e um "futuro" declarado pelo LLM junto de um comando imediato é
+            # exatamente o formato do incidente. O custo de um falso positivo aqui é
+            # adiar uma climatização; o do falso negativo é desligar a loja na hora errada.
+            if parser_escopo_str == "futuro" or llm_escopo_str == "futuro":
+                result_llm["escopo_temporal"] = "futuro"
+                if janela and janela.data:
+                    result_llm["data_evento"] = janela.data.isoformat()
+                if janela and janela.hora_fim:
+                    result_llm["hora_fim"] = janela.hora_fim.strftime("%H:%M")
+            else:
+                # Sem data futura detectada: comando imediato segue seu curso normal.
+                result_llm["escopo_temporal"] = parser_escopo_str
 
-            if not response or not response.text:
-                raise ValueError("Resposta vazia da API do Gemini.")
+        return result_llm
 
-            logger.info(f"✅ Resposta do Gemini obtida com sucesso usando {m_name}.")
-
-            # 5. Converte o JSON string para dict do Python, com reparos em cascata
-            # para os padrões de malformação mais comuns (ver _parse_and_repair_json).
-            try:
-                return _parse_and_repair_json(response.text)
-            except json.JSONDecodeError:
-                logger.error(
-                    f"⚠️ JSON do Gemini não pôde ser interpretado nem após reparo. "
-                    f"Resposta bruta (truncada): {response.text.strip()[:500]!r}",
-                    extra={"status": "erro"},
-                )
-                raise
-
-        except Exception as e:
-            logger.error(f"⚠️ Erro Crítico ao chamar o Gemini ({m_name}): {e}", extra={"status": "erro"}, exc_info=True)
-
-            # FALLBACK DE SEGURANÇA PARA PRODUÇÃO
-            # intencao=None (não "sem_acao") de propósito: permite que
-            # app/main.py::process_agent_command detecte a falha real do Gemini
-            # (via `if not intencao:`) e tente o fallback de palavras-chave antes
-            # de desistir e usar a mensagem_wpp de instabilidade abaixo.
-            return {
-                "intencao": None,
-                "ifttt_action": None,
-                "ambiente": None,
-                "mensagem_wpp": "Puxa, estou passando por uma instabilidade técnica rápida aqui no meu sistema. Pode tentar novamente em alguns minutos? 🛠️",
-                "salvar_memoria": False
-            }
-
-
-# Instância única para importação
 llm_service = LLMService()
-

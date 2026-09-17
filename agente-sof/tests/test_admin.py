@@ -5,19 +5,23 @@ from unittest.mock import ANY, patch, AsyncMock
 ID_GRUPO_TESTE = "TESTE-admin-001"
 
 @pytest.fixture
-async def revenda_teste(db_session):
-    await db_session.execute(text("""
-        INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, tuya_home_id, credenciais_tuya, ativo)
-        VALUES (:id_grupo, 'Revenda Teste Admin', '999999', '{}', true)
-        ON CONFLICT (id_grupo_wpp) DO UPDATE SET ativo = true
-    """), {"id_grupo": ID_GRUPO_TESTE})
-    await db_session.commit()
+def revenda_teste():
+    from app.database import get_sync_engine
+    engine = get_sync_engine()
+    with engine.begin() as conn:
+        conn.execute(
+            text("""
+            INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, tuya_home_id, credenciais_tuya, ativo, estado)
+            VALUES (:id_grupo, 'Revenda Teste Admin', '999999', '{}', true, 'PE')
+            ON CONFLICT (id_grupo_wpp) DO UPDATE SET ativo = true
+            """), {"id_grupo": ID_GRUPO_TESTE}
+        )
     yield ID_GRUPO_TESTE
-    await db_session.execute(
-        text("DELETE FROM mapa_revendas WHERE id_grupo_wpp = :id_grupo"),
-        {"id_grupo": ID_GRUPO_TESTE}
-    )
-    await db_session.commit()
+    with engine.begin() as conn:
+        conn.execute(
+            text("DELETE FROM mapa_revendas WHERE id_grupo_wpp = :id_grupo"),
+            {"id_grupo": ID_GRUPO_TESTE}
+        )
 
 # --- T1 ---
 @pytest.mark.integration
@@ -42,7 +46,7 @@ def test_toggle_sem_autenticacao_rejeitado(client, revenda_teste):
     assert response.status_code in (401, 403)
 
 @pytest.mark.integration
-async def test_toggle_desativa_revenda_no_banco(client, admin_headers, revenda_teste, db_session):
+def test_toggle_desativa_revenda_no_banco(client, admin_headers, revenda_teste):
     response = client.post(
         f"/admin/revendas/{revenda_teste}/toggle",
         headers=admin_headers,
@@ -51,11 +55,14 @@ async def test_toggle_desativa_revenda_no_banco(client, admin_headers, revenda_t
     assert response.status_code == 200
     assert response.json()["ativo"] is False
 
-    resultado = await db_session.execute(
-        text("SELECT ativo FROM mapa_revendas WHERE id_grupo_wpp = :id_grupo"),
-        {"id_grupo": revenda_teste},
-    )
-    assert resultado.scalar() is False
+    from app.database import get_sync_engine
+    engine = get_sync_engine()
+    with engine.begin() as conn:
+        resultado = conn.execute(
+            text("SELECT ativo FROM mapa_revendas WHERE id_grupo_wpp = :id_grupo"),
+            {"id_grupo": revenda_teste},
+        )
+        assert resultado.scalar() is False
 
 @pytest.mark.integration
 def test_toggle_revenda_inexistente_retorna_404(client, admin_headers):
@@ -68,12 +75,14 @@ def test_toggle_revenda_inexistente_retorna_404(client, admin_headers):
 
 # --- T3 ---
 @pytest.mark.integration
-async def test_revenda_desativada_nao_processa_mensagem(client, auth_headers, revenda_teste, db_session):
-    await db_session.execute(
-        text("UPDATE mapa_revendas SET ativo = false WHERE id_grupo_wpp = :id_grupo"),
-        {"id_grupo": revenda_teste},
-    )
-    await db_session.commit()
+def test_revenda_desativada_nao_processa_mensagem(client, auth_headers, revenda_teste):
+    from app.database import get_sync_engine
+    engine = get_sync_engine()
+    with engine.begin() as conn:
+        conn.execute(
+            text("UPDATE mapa_revendas SET ativo = false WHERE id_grupo_wpp = :id_grupo"),
+            {"id_grupo": revenda_teste},
+        )
 
     with patch("app.services.llm_service.llm_service.processar_mensagem", new_callable=AsyncMock) as mock_llm, \
          patch("app.services.tuya_service.tuya_service.execute_scene", new_callable=AsyncMock) as mock_tuya:
@@ -151,19 +160,21 @@ def test_painel_define_escape_client_side(client):
 
 
 @pytest.mark.integration
-async def test_admin_revendas_json_expoe_nome_cru_para_o_cliente_escapar(client, admin_headers, db_session):
+def test_admin_revendas_json_expoe_nome_cru_para_o_cliente_escapar(client, admin_headers):
     """
     /admin/revendas é JSON puro — não deve fazer HTML-escaping (isso é
     responsabilidade do JS ao inserir no DOM via escapeHtml(), evitando
     double-escaping). Substitui o antigo teste de XSS no HTML server-rendered.
     """
     id_grupo_malicioso = "TESTE-xss-002"
-    await db_session.execute(text("""
-        INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, tuya_home_id, credenciais_tuya, ativo)
-        VALUES (:id_grupo, '<script>alert(1)</script>', '999998', '{}', true)
-        ON CONFLICT (id_grupo_wpp) DO UPDATE SET nome_revenda = EXCLUDED.nome_revenda
-    """), {"id_grupo": id_grupo_malicioso})
-    await db_session.commit()
+    from app.database import get_sync_engine
+    engine = get_sync_engine()
+    with engine.begin() as conn:
+        conn.execute(text("""
+            INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, tuya_home_id, credenciais_tuya, ativo, estado)
+            VALUES (:id_grupo, '<script>alert(1)</script>', '999998', '{}', true, 'PE')
+            ON CONFLICT (id_grupo_wpp) DO UPDATE SET nome_revenda = EXCLUDED.nome_revenda
+        """), {"id_grupo": id_grupo_malicioso})
 
     response = client.get("/admin/revendas", headers=admin_headers)
     dados = response.json()
@@ -171,8 +182,8 @@ async def test_admin_revendas_json_expoe_nome_cru_para_o_cliente_escapar(client,
     assert revenda is not None
     assert revenda["nome_revenda"] == "<script>alert(1)</script>"
 
-    await db_session.execute(
-        text("DELETE FROM mapa_revendas WHERE id_grupo_wpp = :id_grupo"),
-        {"id_grupo": id_grupo_malicioso},
-    )
-    await db_session.commit()
+    with engine.begin() as conn:
+        conn.execute(
+            text("DELETE FROM mapa_revendas WHERE id_grupo_wpp = :id_grupo"),
+            {"id_grupo": id_grupo_malicioso}
+        )

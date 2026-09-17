@@ -89,3 +89,20 @@ def test_parse_and_repair_json_irrecuperavel_levanta_erro():
 
     with pytest.raises(json.JSONDecodeError):
         _parse_and_repair_json("isso não é json de jeito nenhum }{[")
+
+from unittest.mock import patch, AsyncMock
+from app.services.llm_service import llm_service
+
+@patch("app.services.llm_service.llm_service._chamar_gemini", new_callable=AsyncMock)
+async def test_llm_data_futura_gera_escopo_futuro(mock_gemini, agora_fixo):
+    mock_gemini.return_value = {"intencao": "pausar_automacao", "escopo_temporal": "futuro",
+        "data_evento": "2026-09-19", "hora_fim": "18:00", "mensagem_wpp": "ok", "salvar_memoria": False}
+    r = await llm_service.processar_mensagem("evento dia 19/09 sábado até 18:00", "GRUPO-X", agora=agora_fixo)
+    assert r["escopo_temporal"] == "futuro" and r["data_evento"] == "2026-09-19"
+
+@patch("app.services.llm_service.llm_service._chamar_gemini", new_callable=AsyncMock)
+async def test_divergencia_llm_vs_parser_vira_indefinido(mock_gemini, agora_fixo):
+    mock_gemini.return_value = {"intencao": "pausar_automacao", "escopo_temporal": "hoje",
+        "data_evento": None, "hora_fim": "18:00", "mensagem_wpp": "ok", "salvar_memoria": False}
+    r = await llm_service.processar_mensagem("evento somente dia 19/09 sábado até 18:00", "GRUPO-X", agora=agora_fixo)
+    assert r["escopo_temporal"] == "indefinido"

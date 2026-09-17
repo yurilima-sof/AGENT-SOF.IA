@@ -8,14 +8,23 @@ from app.config import get_settings
 
 settings = get_settings()
 
+from sqlalchemy.pool import NullPool
+
 # --- Conexão Assíncrona (FastAPI e Operações em tempo de execução) ---
-async_engine = create_async_engine(
-    settings.database_url,
-    echo=False,
-    pool_pre_ping=True,  # Evita conexões mortas no pool
-    pool_size=10,
-    max_overflow=20,
-)
+if settings.app_env == "testing":
+    async_engine = create_async_engine(
+        settings.database_url,
+        echo=False,
+        poolclass=NullPool,
+    )
+else:
+    async_engine = create_async_engine(
+        settings.database_url,
+        echo=False,
+        pool_pre_ping=True,  # Evita conexões mortas no pool
+        pool_size=10,
+        max_overflow=20,
+    )
 async_session_maker = async_sessionmaker(
     async_engine,
     expire_on_commit=False,

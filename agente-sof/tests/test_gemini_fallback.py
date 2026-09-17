@@ -19,8 +19,8 @@ ID_GRUPO_TESTE = "TESTE-gemini-fallback-001"
 @pytest.fixture
 async def revenda_teste(db_session):
     await db_session.execute(text("""
-        INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, tuya_home_id, credenciais_tuya, ativo)
-        VALUES (:id_grupo, 'Revenda Teste Fallback', '999997', '{}', true)
+        INSERT INTO mapa_revendas (id_grupo_wpp, nome_revenda, estado, tuya_home_id, credenciais_tuya, ativo)
+        VALUES (:id_grupo, 'Revenda Teste Fallback', 'PE', '999997', '{}', true)
         ON CONFLICT (id_grupo_wpp) DO UPDATE SET ativo = true
     """), {"id_grupo": ID_GRUPO_TESTE})
     await db_session.commit()

@@ -22,10 +22,17 @@ def settings():
 def auth_headers(settings):
     return {"Authorization": f"Bearer {settings.api_key}"}
 
+from unittest.mock import patch, AsyncMock
+
 @pytest.fixture
 def client() -> Generator[TestClient, None, None]:
-    with TestClient(app) as c:
-        yield c
+    with patch("app.crud.chat_history.inicializar_tabela_historico", new_callable=AsyncMock), \
+         patch("app.crud.revendas.inicializar_colunas_revendas", new_callable=AsyncMock), \
+         patch("app.crud.agendamentos.inicializar_tabela_agendamentos", new_callable=AsyncMock), \
+         patch("app.services.scheduler_service.scheduler_service.carregar_agendamentos_pendentes", new_callable=AsyncMock):
+        with TestClient(app) as c:
+            yield c
+
 
 os.environ.setdefault("ADMIN_API_KEY", "dev-admin-key-insegura-para-teste")
 
@@ -39,3 +46,41 @@ from app.database import async_session_maker
 async def db_session():
     async with async_session_maker() as session:
         yield session
+
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+TZ_RECIFE = ZoneInfo("America/Recife")
+
+@pytest.fixture
+def agora_fixo():
+    return datetime(2026, 9, 17, 10, 34, 0, tzinfo=TZ_RECIFE)
+
+@pytest.fixture
+def scheduler_isolado():
+    from app.services.scheduler_service import scheduler_service
+    scheduler_service._tasks.clear()
+    yield scheduler_service
+    for task in scheduler_service._tasks.values():
+        task.cancel()
+    scheduler_service._tasks.clear()
+
+
+
+@pytest.fixture(autouse=True)
+async def cleanup_scheduler_tasks():
+    # Roda antes do teste
+    yield
+    # Roda depois do teste
+    from app.services.scheduler_service import scheduler_service
+    import asyncio
+    
+    tasks_to_await = []
+    for task in scheduler_service._tasks.values():
+        task.cancel()
+        tasks_to_await.append(task)
+    
+    if tasks_to_await:
+        await asyncio.gather(*tasks_to_await, return_exceptions=True)
+        
+    scheduler_service._tasks.clear()

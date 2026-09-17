@@ -70,4 +70,12 @@ utils/
 extracao_tuya_completa.md
 relatorio_devices_*.md
 
+# --- Scratch: scripts descartáveis de depuração/investigação ---
+# Nada em scratch/ é importado pela app nem pela suíte de testes.
+# Os JSONs daqui carregam IDs de dispositivos e automações reais de cliente.
+scratch/
+
+# --- Dumps de saída de execução local (ex.: redirecionamento do pytest) ---
+output.txt
+
 

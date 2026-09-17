@@ -192,6 +192,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     logger.info("🛑 Encerrando a aplicação...")
     try:
+        from app.services.scheduler_service import scheduler_service
+        for task_key, task in list(scheduler_service._tasks.items()):
+            if not task.done():
+                task.cancel()
+        logger.info("✅ Tarefas do scheduler encerradas.")
+    except Exception as e:
+        logger.warning(f"⚠️ Erro ao encerrar scheduler: {e}")
+
+    try:
         from app.services.tuya_service import tuya_service
         await tuya_service.close()
         logger.info("✅ Conexões Tuya (httpx) encerradas.")
@@ -355,6 +364,7 @@ async def process_agent_command(
         intencao = None
         ambiente = None
         mensagem_wpp = None
+        escopo = None  # C5: precisa existir mesmo se o bloco do LLM não rodar/falhar
 
         if settings.gemini_api_key:
             try:
@@ -385,6 +395,52 @@ async def process_agent_command(
                 acao = resultado.get("ifttt_action")
                 ambiente = resultado.get("ambiente")
                 mensagem_wpp = resultado.get("mensagem_wpp")
+                escopo = resultado.get("escopo_temporal")
+                data_evento_str = resultado.get("data_evento")
+                hora_fim_str = resultado.get("hora_fim")
+
+                if intencao == "pausar_automacao":
+                    # O guard de escopo foi movido para fora deste bloco (C5 Parte B):
+                    # ele agora vale para qualquer intenção, logo antes do PASSO 2.
+                    if escopo == "indefinido":
+                        acao = None
+                        if not mensagem_wpp or "para qual data" not in mensagem_wpp.lower():
+                            mensagem_wpp = "Certo, mas para qual data e até que horas devo pausar as automações?"
+                    elif escopo == "futuro" and data_evento_str:
+                        acao = None
+                        from datetime import datetime
+                        from app.crud.agendamentos import salvar_agendamento_evento
+                        from app.services.tuya_service import tuya_service
+                        from app.services.tuya_dispatch_service import _eh_automacao_de_desligamento
+                        
+                        try:
+                            d = datetime.strptime(data_evento_str, "%Y-%m-%d").date()
+                            if hora_fim_str:
+                                hf = datetime.strptime(hora_fim_str, "%H:%M").time()
+                            else:
+                                hf = datetime.strptime("23:59", "%H:%M").time()
+                            
+                            # Pause no início do dia (00:00), resume no horário fim
+                            from zoneinfo import ZoneInfo
+                            tz = ZoneInfo("America/Recife")
+                            hora_pause = datetime.combine(d, datetime.min.time(), tzinfo=tz)
+                            hora_resume = datetime.combine(d, hf, tzinfo=tz)
+                            
+                            automacoes = await tuya_service.get_automations_by_home(home_id)
+                            desativadas_ids = []
+                            if automacoes:
+                                for auto in automacoes:
+                                    auto_id = auto.get("id") or auto.get("automation_id")
+                                    if auto_id and _eh_automacao_de_desligamento(auto):
+                                        desativadas_ids.append(auto_id)
+                            
+                            if desativadas_ids:
+                                await salvar_agendamento_evento(db, id_grupo_wpp=payload.id_grupo, 
+                                    nome_revenda=payload.nome_revenda, home_id=home_id, 
+                                    automacao_ids=desativadas_ids, data_execucao=d, 
+                                    hora_pause=hora_pause, hora_resume=hora_resume)
+                        except Exception as e:
+                            logger.error(f"Erro agendando futuro: {e}")
 
                 # --- Filtro de Memória Orgânica ---
                 if resultado.get("salvar_memoria") is True:
@@ -413,6 +469,38 @@ async def process_agent_command(
             familia_fallback = classificar_familia(payload.mensagem)
             if familia_fallback:
                 acao, intencao, mensagem_wpp = determinar_acao_e_intencao(familia_fallback, chamados_recentes=0)
+
+        # -----------------------------------------------------------------
+        # GUARD DE ESCOPO TEMPORAL (C5 Parte B) — independente da intenção
+        # -----------------------------------------------------------------
+        # Uma data futura na mensagem SEMPRE suprime a ação física imediata, seja
+        # qual for a intenção classificada (pausar, desligar, resfriar, ligar).
+        # Foi assim que o incidente aconteceu: o Gemini leu "desligar as 19:00" de
+        # um evento de sábado como desligamento imediato e a loja desligou na hora.
+        #
+        # "indefinido" é tratado de forma diferente de propósito: ele só zera a ação
+        # quando a intenção é de pausa/agendamento (evento mal especificado, que
+        # precisa de esclarecimento). Para comandos imediatos ("tá muito quente"),
+        # indefinido é o normal — não há data na frase — e a ação deve passar.
+        if acao:
+            if escopo == "futuro":
+                logger.info(
+                    f"   [Guard] Escopo futuro detectado (intenção '{intencao}'): "
+                    f"ação '{acao}' suprimida — nada será disparado hoje."
+                )
+                acao = None
+            # `escopo is not None` delimita este ramo ao caminho do LLM, que sempre
+            # preenche escopo_temporal. No fallback de keyword (Gemini fora do ar) o
+            # escopo é None: ali não há informação temporal nenhuma, e bloquear a pausa
+            # deixaria a automação desligar a loja no horário — o oposto do que se quer.
+            # Hoje classificar_familia nunca devolve pausar_automacao, então esta guarda
+            # é preventiva: sem ela, mapear "reunião" no keyword_fallback viraria uma
+            # regressão silenciosa.
+            elif intencao == "pausar_automacao" and escopo is not None and escopo != "hoje":
+                logger.info(
+                    f"   [Guard] Pausa com escopo '{escopo}' (≠ hoje): ação '{acao}' suprimida."
+                )
+                acao = None
 
         # -----------------------------------------------------------------
         # PASSO 2: Montar a resposta com base na ação identificada
@@ -657,6 +745,27 @@ async def checar_fechamento_proativo(
         "total_revendas": len(mensagens_geradas),
         "mensagens": mensagens_geradas
     }
+
+from app.services.scheduler_service import scheduler_service
+
+@app.post(
+    "/scheduler/tick",
+    summary="Carregar e agendar eventos pendentes de reativação",
+    tags=["Scheduler"],
+    dependencies=[Depends(verify_admin_api_key)]
+)
+async def trigger_scheduler_tick():
+    """
+    Endpoint invocado por cron (ex: a cada 5 minutos) para buscar no banco de dados 
+    eventos pendentes de pausa/reativação do dia e agendá-los na memória via asyncio.
+    """
+    try:
+        await scheduler_service.carregar_agendamentos_pendentes()
+        return {"status": "ok", "message": "Agendamentos pendentes verificados e agendados."}
+    except Exception as e:
+        logger.error(f"Erro no /scheduler/tick: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # =============================================================================
 # ADMIN
