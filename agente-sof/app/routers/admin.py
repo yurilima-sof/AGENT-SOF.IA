@@ -14,6 +14,7 @@
 
 import logging
 import time
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -155,6 +156,19 @@ async def admin_disparar_acao(
             detail="Revenda sem tuya_home_id cadastrado. Configure o mapeamento antes de disparar ações.",
         )
 
+    # Salvaguarda C2 no disparo manual: pausar automação exige horário de resume.
+    # Aqui ele não é inventado — vem de `duracao_horas`, que o operador informa
+    # explicitamente na requisição (default 2.0 do schema). Isso é diferente do
+    # fallback cego de +2h que foi removido do fluxo do WhatsApp: lá ninguém tinha
+    # dito por quanto tempo pausar; aqui, alguém disse.
+    horario_fim_pausa = None
+    if payload.acao == "desativar_automacao":
+        # Reusa o RECIFE_TZ do time_parser, que já trata ZoneInfoNotFoundError
+        # (container sem tzdata) caindo para UTC-3 fixo.
+        from app.domain.policy.time_parser import RECIFE_TZ
+
+        horario_fim_pausa = datetime.now(RECIFE_TZ) + timedelta(hours=payload.duracao_horas)
+
     inicio = time.monotonic()
     try:
         resultado = await disparar_acao_fisica(
@@ -164,7 +178,7 @@ async def admin_disparar_acao(
             home_id=revenda["tuya_home_id"],
             acao=payload.acao,
             ambiente=payload.ambiente,
-            duracao_pausa_horas=payload.duracao_horas,
+            horario_fim_pausa=horario_fim_pausa,
         )
     except Exception as e:
         logger.error(

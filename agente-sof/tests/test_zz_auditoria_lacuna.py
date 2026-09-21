@@ -166,13 +166,26 @@ async def test_comando_imediato_sem_data_fica_indefinido(agora_fixo):
 
 
 @pytest.mark.integration
-async def test_pausa_sem_escopo_nao_e_bloqueada(
+async def test_pausa_sem_escopo_nao_desativa_no_degradado(
     client, auth_headers, revenda_teste, gemini_ativo
 ):
-    """Caminho degradado: pausa sem escopo_temporal nenhum (None) — como viria de um
-    fallback de keyword com o Gemini fora do ar — NÃO pode ser bloqueada pelo guard.
-    Bloquear aqui faria a automação desligar a loja no horário, que é justamente o
-    contrário do que o guard existe para evitar."""
+    """DECISÃO SUBSTITUÍDA em 21/09/2026 (antes: C5 mandava desativar no degradado).
+
+    Regra anterior (test_pausa_sem_escopo_nao_e_bloqueada): pausa sem escopo_temporal
+    (None) NÃO podia ser bloqueada, sob o argumento de que bloquear faria a automação
+    desligar a loja no horário.
+
+    Nova regra: pausa sem escopo/horário NO DEGRADADO NÃO desativa automação.
+    Trade-off aceito conscientemente pelo responsável: é preferível a loja desligar no
+    horário normal durante uma reunião (visível na hora, recuperável com um comando)
+    do que ficar ligada a noite toda sem controle — que foi o incidente real de
+    21/09, quando o resume nunca chegou a ser agendado. O comportamento antigo
+    (desativar às cegas) produzia justamente o pior caso sempre que o horário não
+    era extraído, que é exatamente o caso que este teste cobre.
+
+    A mensagem de entrada é a ORIGINAL do teste antigo, de propósito: a mudança é de
+    comportamento e está documentada aqui, não maquiada acrescentando 'até as 20h'.
+    """
     fake_llm = {
         "intencao": "pausar_automacao",
         "escopo_temporal": None,          # <- sem informação temporal
@@ -184,7 +197,8 @@ async def test_pausa_sem_escopo_nao_e_bloqueada(
                new_callable=AsyncMock, return_value=fake_llm), \
          patch("app.main.resolver_home_id_por_grupo", new_callable=AsyncMock, return_value="HOME123"), \
          patch("app.services.tuya_service.tuya_service.get_automations_by_home",
-               new_callable=AsyncMock, return_value=[{"id": "a1", "name": "OFF [18:00]"}]), \
+               new_callable=AsyncMock,
+               return_value=[{"id": "a1", "name": "OFF [18:00]", "enabled": True}]), \
          patch("app.services.tuya_service.tuya_service.check_home_devices_online",
                new_callable=AsyncMock, return_value={"all_offline": False}), \
          patch("app.services.scheduler_service.scheduler_service.agendar_reativacao_automacao",
@@ -195,4 +209,6 @@ async def test_pausa_sem_escopo_nao_e_bloqueada(
             "mensagem": "reunião agora, não desliga as máquinas",
             "id_grupo": revenda_teste, "nome_revenda": "Revenda Teste Admin"})
         assert r.status_code == 200
-        assert mock_set.called, "a pausa foi bloqueada indevidamente no caminho degradado"
+        assert not mock_set.called, (
+            "pausa sem horario NAO deve desativar no degradado (decisao nova de 21/09/2026)")
+        assert r.json()["mensagem_wpp"] is not None  # pede horario / avisa

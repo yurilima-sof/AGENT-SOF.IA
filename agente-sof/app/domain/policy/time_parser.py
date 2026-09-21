@@ -20,7 +20,7 @@ _ANCORA = r"(?:at[eé]|ate|por\s+volta\s+d[ae]s?|no\s+m[aá]ximo\s+at[eé])"
 _HORA = r"(?P<h>[01]?\d|2[0-3])(?:\s*[:h.]\s*(?P<m>[0-5]\d))?"
 _SUFIXO = r"(?:\s*(?:h|hs|hrs|horas?))?"
 
-_RE_HORARIO_ANCORADO = re.compile(rf"{_ANCORA}\s*(?:as|às|a)?\s*{_HORA}{_SUFIXO}\b", re.IGNORECASE)
+_RE_HORARIO_ANCORADO = re.compile(rf"{_ANCORA}\s*(?:[aá]s|às|[aá])?\s*{_HORA}{_SUFIXO}\b", re.IGNORECASE)
 _RE_DISCARD_PREFIX = re.compile(r"\b(?:sala|andar|piso|n[ºo°]|numero|número)\s*$", re.IGNORECASE)
 
 def extrair_horario_termino(mensagem: str, agora: Optional[datetime] = None) -> Optional[datetime]:

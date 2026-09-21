@@ -42,7 +42,8 @@ def test_agent_valid_keyword_fallback(client, auth_headers, monkeypatch):
     from app.services.llm_service import settings as llm_settings
     monkeypatch.setattr(main_settings, "gemini_api_key", None)
     monkeypatch.setattr(llm_settings, "gemini_api_key", None)
-    with patch("app.main.buscar_link_ifttt", new_callable=AsyncMock, return_value="https://maker.ifttt.com/trigger/medio/with/key/fake"):
+    with patch("app.main.buscar_link_ifttt", new_callable=AsyncMock, return_value="https://maker.ifttt.com/trigger/medio/with/key/fake"), \
+         patch("app.services.tuya_service.tuya_service.check_home_devices_online", new_callable=AsyncMock, return_value={"all_offline": False}):
         payload = {
             "mensagem": "tá muito quente aqui",
             "id_grupo": "120363422455765261-group",
@@ -159,5 +160,57 @@ async def test_pausar_hoje_continua_desativando(client, auth_headers, revenda_te
             "id_grupo": revenda_teste, "nome_revenda": "Revenda Teste Admin"})
         assert r.status_code == 200
         assert mock_set.called  # hoje continua desativando
+
+
+@pytest.mark.integration
+async def test_pausa_sem_horario_nao_desativa_automacoes(client, auth_headers, revenda_teste):
+    """Pausa (Gemini OK) SEM horario => NENHUMA automacao desativada, pede o horario.
+
+    Sensivel a mutacao: ha uma automacao de OFF real no caminho
+    (get_automations_by_home patchado), entao remover o guard faz
+    set_automation_status ser chamado e o teste falha, como deve. Sem esse
+    patch o teste passava mesmo sem guard nenhum (vazio)."""
+    fake_llm = {
+        "intencao": "pausar_automacao", "escopo_temporal": "hoje",
+        "data_evento": None, "hora_fim": None,   # horario NAO extraido
+        "ifttt_action": None, "ambiente": None, "mensagem_wpp": "ok", "salvar_memoria": False,
+    }
+    with patch("app.services.llm_service.llm_service.processar_mensagem",
+               new_callable=AsyncMock, return_value=fake_llm), \
+         patch("app.main.resolver_home_id_por_grupo",
+               new_callable=AsyncMock, return_value="HOME123"), \
+         patch("app.services.tuya_service.tuya_service.get_automations_by_home",
+               new_callable=AsyncMock,
+               return_value=[{"id": "a1", "name": "OFF [18:00]", "enabled": True}]), \
+         patch("app.services.tuya_service.tuya_service.set_automation_status",
+               new_callable=AsyncMock) as mock_set:
+        r = client.post("/agent", headers=auth_headers, json={
+            "mensagem": "vamos ficar de plantao ate mais tarde",  # sem horario claro
+            "id_grupo": revenda_teste, "nome_revenda": "Revenda Teste"})
+        assert r.status_code == 200
+        mock_set.assert_not_called()          # NADA foi desativado
+        assert r.json()["mensagem_wpp"] is not None   # pediu esclarecimento
+
+
+@pytest.mark.integration
+async def test_pausa_com_horario_continua_desativando(client, auth_headers, revenda_teste):
+    """Regressao: com horario valido, o fluxo de pausa continua funcionando."""
+    fake_llm = {
+        "intencao": "pausar_automacao", "escopo_temporal": "hoje",
+        "data_evento": None, "hora_fim": "20:00",
+        "ifttt_action": None, "ambiente": None, "mensagem_wpp": "ok", "salvar_memoria": False,
+    }
+    with patch("app.services.llm_service.llm_service.processar_mensagem",
+               new_callable=AsyncMock, return_value=fake_llm), \
+         patch("app.services.tuya_service.tuya_service.get_automations_by_home",
+               new_callable=AsyncMock, return_value=[{"id": "a1", "name": "OFF [18:00]"}]), \
+         patch("app.services.tuya_service.tuya_service.set_automation_status",
+               new_callable=AsyncMock) as mock_set:
+        r = client.post("/agent", headers=auth_headers, json={
+            "mensagem": "plantao hoje ate as 20h",
+            "id_grupo": revenda_teste, "nome_revenda": "Revenda Teste"})
+        assert r.status_code == 200
+        assert mock_set.called                # com horario, desativa normal
+
 
 

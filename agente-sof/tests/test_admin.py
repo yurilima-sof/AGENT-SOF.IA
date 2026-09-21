@@ -187,3 +187,65 @@ def test_admin_revendas_json_expoe_nome_cru_para_o_cliente_escapar(client, admin
             text("DELETE FROM mapa_revendas WHERE id_grupo_wpp = :id_grupo"),
             {"id_grupo": id_grupo_malicioso}
         )
+
+
+# --- B3: pausa manual do painel admin ---
+@pytest.mark.integration
+def test_admin_pausa_manual_desativa_e_agenda_resume(client, admin_headers, revenda_teste):
+    """B3(a): o disparo manual de pausa do admin volta a funcionar.
+
+    duracao_horas e um horario de resume EXPLICITO informado pelo operador, entao
+    a salvaguarda C2 e satisfeita legitimamente — nao e o fallback cego de +2h que
+    foi removido. Com duracao_horas=3: a automacao de OFF e desativada E o resume
+    fica agendado ~3h a frente.
+
+    Sensivel a mutacao: sem o calculo de horario_fim_pausa em admin.py, o guard C2
+    aborta e set_automation_status nao e chamado — este teste fica vermelho.
+    """
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+
+    with patch("app.services.tuya_service.tuya_service.get_automations_by_home",
+               new_callable=AsyncMock,
+               return_value=[{"id": "a1", "name": "OFF [18:00]", "enabled": True}]), \
+         patch("app.services.tuya_service.tuya_service.set_automation_status",
+               new_callable=AsyncMock) as mock_set, \
+         patch("app.services.scheduler_service.scheduler_service.agendar_reativacao_automacao",
+               new_callable=AsyncMock) as mock_agendar:
+        antes = datetime.now(ZoneInfo("America/Recife"))
+        r = client.post(f"/admin/revendas/{revenda_teste}/disparar",
+                        headers=admin_headers,
+                        json={"acao": "desativar_automacao", "duracao_horas": 3})
+        depois = datetime.now(ZoneInfo("America/Recife"))
+
+    assert r.status_code == 200
+    mock_set.assert_called_once_with("999999", "a1", enable=False)
+
+    assert mock_agendar.called, "o resume tem que ser agendado junto com a pausa"
+    horario = mock_agendar.call_args.kwargs["horario_execucao"]
+    assert antes + timedelta(hours=3) <= horario <= depois + timedelta(hours=3), (
+        f"resume deveria cair ~3h a frente, veio {horario}")
+
+
+@pytest.mark.integration
+def test_admin_pausa_manual_respeita_duracao_diferente(client, admin_headers, revenda_teste):
+    """duracao_horas e realmente honrada (nao um 2.0 fixo disfarcado)."""
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+
+    with patch("app.services.tuya_service.tuya_service.get_automations_by_home",
+               new_callable=AsyncMock,
+               return_value=[{"id": "a1", "name": "OFF [18:00]", "enabled": True}]), \
+         patch("app.services.tuya_service.tuya_service.set_automation_status",
+               new_callable=AsyncMock), \
+         patch("app.services.scheduler_service.scheduler_service.agendar_reativacao_automacao",
+               new_callable=AsyncMock) as mock_agendar:
+        antes = datetime.now(ZoneInfo("America/Recife"))
+        r = client.post(f"/admin/revendas/{revenda_teste}/disparar",
+                        headers=admin_headers,
+                        json={"acao": "desativar_automacao", "duracao_horas": 5})
+        depois = datetime.now(ZoneInfo("America/Recife"))
+
+    assert r.status_code == 200
+    horario = mock_agendar.call_args.kwargs["horario_execucao"]
+    assert antes + timedelta(hours=5) <= horario <= depois + timedelta(hours=5)

@@ -60,7 +60,6 @@ async def disparar_acao_fisica(
     intencao: Optional[str] = None,
     ambiente: Optional[str] = None,
     horario_fim_pausa: Optional[datetime] = None,
-    duracao_pausa_horas: float = 2.0,
 ) -> dict:
     """
     Dispara fisicamente uma ação Tuya (cena ou pausa de automação) numa Home já
@@ -99,6 +98,16 @@ async def disparar_acao_fisica(
         return {"tuya_success": True, "detail": detail, "device_offline": False}
 
     if acao == "desativar_automacao" or intencao == "pausar_automacao":
+        # Salvaguarda (C2): Nunca desativar automações sem horário confiável de término/resume
+        if horario_fim_pausa is None:
+            logger.warning("   [Salvaguarda] Pausa de automação solicitada sem horário de término. Nenhuma automação será desativada.")
+            return {
+                "tuya_success": False,
+                "detail": "pausa_sem_horario_abortada",
+                "device_offline": False,
+                "mensagem_wpp": "Até que horas devo manter os equipamentos ligados? Por favor, informe o horário de término para que eu possa pausar com segurança! 😊",
+            }
+
         # Pausar automações é uma operação puramente na nuvem da Tuya (regra de automação)
         # Não depende do transmissor IR físico estar online.
         logger.info(f"   [Tuya] Buscando automações da residência {home_id} para pausar automações de OFF para reunião/fechamento...")
@@ -122,9 +131,6 @@ async def disparar_acao_fisica(
             from app.services.scheduler_service import scheduler_service
 
             horario_fim = horario_fim_pausa
-            if horario_fim is None:
-                horario_fim = datetime.now(RECIFE_TZ) + timedelta(hours=duracao_pausa_horas)
-
             await scheduler_service.agendar_reativacao_automacao(
                 id_grupo=id_grupo,
                 nome_revenda=nome_revenda,

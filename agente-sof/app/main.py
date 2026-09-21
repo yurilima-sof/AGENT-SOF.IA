@@ -452,7 +452,10 @@ async def process_agent_command(
 
                 # Normalização de nulos vindos da resposta JSON do LLM
                 if acao == "null" or acao == "None" or not acao:
-                    acao = None
+                    if intencao == "pausar_automacao" and (escopo == "hoje" or escopo is None):
+                        acao = "desativar_automacao"
+                    else:
+                        acao = None
             except Exception as e:
                 logger.error(f"⚠️ Falha no processamento com LLM/Gemini (aplicando Fallback): {e}", extra={"status": "erro"}, exc_info=True)
                 acao = None
@@ -521,8 +524,23 @@ async def process_agent_command(
 
                         agora_recife = datetime.now(ZoneInfo("America/Recife"))
                         horario_fim_pausa = extrair_horario_termino(payload.mensagem, agora=agora_recife)
-                        # Sem horário explícito na mensagem: disparar_acao_fisica aplica o fallback de +2h
-                        # (decisão explícita (a): não interromper o fluxo com perguntas ao usuário agora).
+                        # Salvaguarda (C2): NUNCA desativar automações de desligamento sem horário confiável de término/resume
+                        if horario_fim_pausa is None:
+                            logger.warning("   [Salvaguarda] Pausa de automação solicitada sem horário de término extraído. Comando abortado.")
+                            msg_clarificacao = (
+                                "Até que horas devo manter os equipamentos ligados? "
+                                "Por favor, informe o horário de término (ex: até às 20h) para que eu possa pausar o desligamento automático com segurança! 😊"
+                            )
+                            return AgentResponse(
+                                intencao=intencao,
+                                ambiente=ambiente,
+                                dispositivo_id=None,
+                                ifttt_action=None,
+                                link_ifttt=None,
+                                tuya_success=False,
+                                parametros={},
+                                mensagem_wpp=msg_clarificacao,
+                            )
 
                     # DISPARO FÍSICO: mesma função usada pelo disparo manual do painel admin
                     # (app/routers/admin.py), garantindo paridade de comportamento entre os dois.
@@ -536,6 +554,22 @@ async def process_agent_command(
                         ambiente=ambiente,
                         horario_fim_pausa=horario_fim_pausa,
                     )
+
+                    if resultado_disparo.get("detail") == "pausa_sem_horario_abortada":
+                        msg_clarificacao = (
+                            resultado_disparo.get("mensagem_wpp")
+                            or "Até que horas devo manter os equipamentos ligados? Por favor, informe o horário de término."
+                        )
+                        return AgentResponse(
+                            intencao=intencao,
+                            ambiente=ambiente,
+                            dispositivo_id=None,
+                            ifttt_action=None,
+                            link_ifttt=None,
+                            tuya_success=False,
+                            parametros={},
+                            mensagem_wpp=msg_clarificacao,
+                        )
 
                     if resultado_disparo.get("device_offline"):
                         elapsed_ms = int((time.monotonic() - start_time) * 1000)

@@ -7,6 +7,7 @@ os.environ["APP_ENV"] = "testing"
 os.environ["API_KEY"] = "dev-api-key-insegura"
 os.environ["SECRET_KEY"] = "chave-insegura-apenas-para-desenvolvimento"
 os.environ["DATABASE_URL"] = "postgresql+asyncpg://agente_user:agente_senha_dev@localhost:5432/agente_sof_db"
+os.environ["GEMINI_API_KEY"] = "fake-key"
 
 from app.config import get_settings
 get_settings.cache_clear()
