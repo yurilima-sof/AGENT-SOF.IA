@@ -214,3 +214,94 @@ async def test_pausa_com_horario_continua_desativando(client, auth_headers, reve
 
 
 
+
+
+@pytest.mark.integration
+async def test_broadcast_sof_nao_e_ingerido_no_rag(client, auth_headers, revenda_teste):
+    """I4.1 ponta a ponta: mesmo com o LLM marcando salvar_memoria=True, o
+    broadcast da propria SOF nao pode virar memoria no RAG."""
+    fake_llm = {
+        "intencao": "sem_acao", "escopo_temporal": "indefinido",
+        "data_evento": None, "hora_fim": None, "ifttt_action": None,
+        "ambiente": None, "mensagem_wpp": "ok", "salvar_memoria": True,
+    }
+    with patch("app.services.llm_service.llm_service.processar_mensagem",
+               new_callable=AsyncMock, return_value=fake_llm), \
+         patch("app.main.rag_service.ingest_message", new_callable=AsyncMock) as mock_ingest:
+        r = client.post("/agent", headers=auth_headers, json={
+            "mensagem": "Data para o evento : Ex: 19/09/2026 Ficamos no aguardo. ~Equipe SOF",
+            "id_grupo": revenda_teste, "nome_revenda": "Revenda Teste"})
+        assert r.status_code == 200
+        mock_ingest.assert_not_called()
+
+
+@pytest.mark.integration
+async def test_mensagem_de_loja_continua_sendo_ingerida(client, auth_headers, revenda_teste):
+    """Regressao do falso positivo: o filtro NAO pode barrar conteudo legitimo."""
+    fake_llm = {
+        "intencao": "sem_acao", "escopo_temporal": "indefinido",
+        "data_evento": None, "hora_fim": None, "ifttt_action": None,
+        "ambiente": None, "mensagem_wpp": "ok", "salvar_memoria": True,
+    }
+    with patch("app.services.llm_service.llm_service.processar_mensagem",
+               new_callable=AsyncMock, return_value=fake_llm), \
+         patch("app.main.rag_service.ingest_message", new_callable=AsyncMock) as mock_ingest:
+        r = client.post("/agent", headers=auth_headers, json={
+            "mensagem": "Todos os dias as 14:15 queremos a loja gelada",
+            "id_grupo": revenda_teste, "nome_revenda": "Revenda Teste"})
+        assert r.status_code == 200
+        assert mock_ingest.called, "regra legitima da loja tem que continuar sendo ingerida"
+
+
+@pytest.mark.integration
+async def test_from_me_true_nao_ingere_nem_age(client, auth_headers, revenda_teste):
+    """I4.2: from_me=true => nenhuma acao fisica e nenhuma ingestao no RAG."""
+    fake_llm = {
+        "intencao": "pausar_automacao", "escopo_temporal": "hoje",
+        "data_evento": None, "hora_fim": "20:00", "ifttt_action": "desativar_automacao",
+        "ambiente": None, "mensagem_wpp": "ok", "salvar_memoria": True,
+    }
+    with patch("app.services.llm_service.llm_service.processar_mensagem",
+               new_callable=AsyncMock, return_value=fake_llm) as mock_llm, \
+         patch("app.main.rag_service.ingest_message", new_callable=AsyncMock) as mock_ingest, \
+         patch("app.services.tuya_service.tuya_service.get_automations_by_home",
+               new_callable=AsyncMock,
+               return_value=[{"id": "a1", "name": "OFF [18:00]", "enabled": True}]), \
+         patch("app.services.tuya_service.tuya_service.set_automation_status",
+               new_callable=AsyncMock) as mock_set, \
+         patch("app.services.tuya_service.tuya_service.execute_scene",
+               new_callable=AsyncMock) as mock_exec:
+        r = client.post("/agent", headers=auth_headers, json={
+            "mensagem": "plantao hoje ate as 20h", "id_grupo": revenda_teste,
+            "nome_revenda": "Revenda Teste", "from_me": True})
+    assert r.status_code == 200
+    assert r.json()["intencao"] == "sem_acao"
+    mock_set.assert_not_called()
+    mock_exec.assert_not_called()
+    mock_ingest.assert_not_called()
+    mock_llm.assert_not_called()   # nem chega a gastar chamada de LLM
+
+
+@pytest.mark.integration
+async def test_from_me_ausente_mantem_comportamento_atual(client, auth_headers, revenda_teste):
+    """Retrocompatibilidade: sem o campo (n8n atual), o fluxo segue normal."""
+    fake_llm = {
+        "intencao": "pausar_automacao", "escopo_temporal": "hoje",
+        "data_evento": None, "hora_fim": "20:00", "ifttt_action": "desativar_automacao",
+        "ambiente": None, "mensagem_wpp": "ok", "salvar_memoria": False,
+    }
+    with patch("app.services.llm_service.llm_service.processar_mensagem",
+               new_callable=AsyncMock, return_value=fake_llm), \
+         patch("app.main.resolver_home_id_por_grupo", new_callable=AsyncMock, return_value="HOME123"), \
+         patch("app.services.tuya_service.tuya_service.get_automations_by_home",
+               new_callable=AsyncMock,
+               return_value=[{"id": "a1", "name": "OFF [18:00]", "enabled": True}]), \
+         patch("app.services.scheduler_service.scheduler_service.agendar_reativacao_automacao",
+               new_callable=AsyncMock), \
+         patch("app.services.tuya_service.tuya_service.set_automation_status",
+               new_callable=AsyncMock) as mock_set:
+        r = client.post("/agent", headers=auth_headers, json={
+            "mensagem": "plantao hoje ate as 20h", "id_grupo": revenda_teste,
+            "nome_revenda": "Revenda Teste"})   # <- sem from_me
+    assert r.status_code == 200
+    assert mock_set.called, "sem from_me o comportamento tem que ser o de hoje"

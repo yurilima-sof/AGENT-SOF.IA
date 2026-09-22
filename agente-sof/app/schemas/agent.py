@@ -61,6 +61,21 @@ class AgentRequest(BaseModel):
         examples=["Revenda Alpha", "Clima Tech Solutions"],
     )
 
+    from_me: bool = Field(
+        default=False,
+        description=(
+            "True quando a mensagem foi enviada pela própria SOF (broadcast, "
+            "comunicado), não por alguém da loja. Nesse caso a API não executa "
+            "ação física nem ingere a mensagem no RAG. "
+            "O n8n DEVE passar este campo quando a Z-API informar `fromMe`. "
+            "Enquanto não passar, o campo fica em False e a proteção recai "
+            "sobre o filtro de conteúdo em "
+            "app/domain/policy/broadcast_filter.py — que é heurístico. "
+            "Passar `from_me` é a solução robusta; o filtro é o paliativo."
+        ),
+        examples=[False, True],
+    )
+
     # Configurações do modelo Pydantic v2.
     model_config = {
         # Gera um exemplo no Swagger UI automaticamente.

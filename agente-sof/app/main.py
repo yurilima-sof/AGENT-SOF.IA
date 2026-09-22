@@ -332,6 +332,25 @@ async def process_agent_command(
         f"Mensagem: '{_msg_truncada}'"
     )
 
+    # Mensagem enviada pela própria SOF (broadcast/comunicado): não é comando de
+    # ninguém, então não dispara ação física nem vira memória no RAG. Curto-circuito
+    # aqui em cima, antes de tocar histórico, LLM ou Tuya.
+    #
+    # Retrocompatível: o n8n atual não envia `from_me`, e o default False mantém o
+    # comportamento de hoje — nesse caso quem protege é o filtro de conteúdo em
+    # broadcast_filter.py. Quando o n8n passar o campo, esta checagem assume e a
+    # heurística vira só a segunda linha.
+    if payload.from_me:
+        logger.info("   [Broadcast] Mensagem da própria SOF (from_me=true) — nenhuma ação, nenhuma ingestão.")
+        return AgentResponse(
+            intencao="sem_acao",
+            ambiente=None,
+            dispositivo_id=None,
+            ifttt_action=None,
+            parametros={},
+            mensagem_wpp=None,
+        )
+
     try:
         # Busca o histórico recente de conversas dos últimos 15 minutos (ANTERIOR à mensagem atual)
         historico_recente = await obter_historico_recente(db, payload.id_grupo, limite=6, minutos=15)
@@ -443,7 +462,14 @@ async def process_agent_command(
                             logger.error(f"Erro agendando futuro: {e}")
 
                 # --- Filtro de Memória Orgânica ---
-                if resultado.get("salvar_memoria") is True:
+                # O filtro de broadcast roda ANTES da ingestão: o comunicado da
+                # própria SOF ("~Equipe SOF") chega aqui indistinguível de uma
+                # mensagem de loja, porque o payload não tem campo de remetente.
+                # Só vale para a auto-ingestão; o POST /rag/aprender é explícito
+                # e continua ingerindo o que mandarem.
+                from app.domain.policy.broadcast_filter import deve_ingerir
+
+                if resultado.get("salvar_memoria") is True and deve_ingerir(payload.mensagem):
                     try:
                         logger.info("   [RAG] Memória orgânica útil detectada! Salvando regra no banco vetorial.")
                         await rag_service.ingest_message(payload.id_grupo, payload.mensagem)
