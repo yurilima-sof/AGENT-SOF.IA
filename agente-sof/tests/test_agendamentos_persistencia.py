@@ -75,3 +75,54 @@ async def test_backfill_legado_recebe_fase_resume(db_session):
     
     await db_session.execute(text("DELETE FROM agendamentos WHERE id_grupo_wpp='TESTE-LEGADO'"))
     await db_session.commit()
+
+
+# =============================================================================
+# I1.1 - Resume do fluxo "hoje" tem que ficar efetivamente no banco
+# =============================================================================
+
+@pytest.mark.integration
+async def test_pausa_hoje_persiste_resume_no_banco(db_session, cleanup_scheduler_tasks):
+    """Apos um 'plantao hoje ate 21h', deve existir UMA linha resume no banco,
+    data de hoje, executado=false.
+
+    Bug de producao (21/09): a consulta voltava vazia. Causa-raiz: o caminho
+    "hoje" (salvar_agendamento -> _salvar_linha) fazia o INSERT mas NAO commitava,
+    e agendar_reativacao_automacao abre a propria sessao via async_session_maker;
+    ao sair do `async with` sem commit, a transacao e revertida e a linha some.
+    O caminho "futuro" (salvar_agendamento_evento) sempre commitou — por isso so
+    o "hoje" desaparecia.
+
+    Sensivel a mutacao: removendo o commit, este teste volta a ver 0 linhas.
+    """
+    from app.services.scheduler_service import scheduler_service
+    from app.crud.agendamentos import inicializar_tabela_agendamentos
+    from zoneinfo import ZoneInfo
+
+    await inicializar_tabela_agendamentos(db_session)
+    await db_session.execute(
+        text("DELETE FROM agendamentos WHERE id_grupo_wpp='TESTE-persist'"))
+    await db_session.commit()
+
+    TZ = ZoneInfo("America/Recife")
+    hoje_21h = datetime.now(TZ).replace(hour=21, minute=0, second=0, microsecond=0)
+
+    await scheduler_service.agendar_reativacao_automacao(
+        id_grupo="TESTE-persist", nome_revenda="R", home_id="H1",
+        automacao_ids=["a1"], horario_execucao=hoje_21h)
+
+    res = await db_session.execute(text(
+        "SELECT fase, data_execucao, executado FROM agendamentos "
+        "WHERE id_grupo_wpp='TESTE-persist' AND executado=false"))
+    linhas = res.fetchall()
+
+    assert len(linhas) == 1, f"esperava 1 linha resume persistida, veio {len(linhas)}"
+    assert linhas[0][0] == "resume"
+    assert linhas[0][1] == hoje_21h.date(), (
+        f"data_execucao deve ser a data de HOJE em Recife ({hoje_21h.date()}), "
+        f"veio {linhas[0][1]}")
+    assert linhas[0][2] is False
+
+    await db_session.execute(
+        text("DELETE FROM agendamentos WHERE id_grupo_wpp='TESTE-persist'"))
+    await db_session.commit()

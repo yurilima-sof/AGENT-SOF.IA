@@ -44,8 +44,23 @@ async def salvar_agendamento(
     automacao_ids: list,
     horario_execucao: datetime
 ) -> Optional[str]:
-    # Legacy wrapper
-    return await _salvar_linha(db, id_grupo_wpp, nome_revenda, home_id, automacao_ids, horario_execucao, "resume", horario_execucao.date())
+    # Legacy wrapper — usado pelo fluxo de pausa de "hoje"
+    # (scheduler_service.agendar_reativacao_automacao).
+    #
+    # O commit fica AQUI, e não em _salvar_linha, porque _salvar_linha é
+    # compartilhada com salvar_agendamento_evento, que precisa inserir as duas
+    # fases (pause + resume) na MESMA transação e commita uma vez só no fim.
+    # Cada função pública é responsável pelo próprio commit.
+    #
+    # Sem este commit o INSERT era revertido ao fechar a sessão
+    # (async_session_maker) e o resume do "hoje" nunca chegava ao banco —
+    # bug de produção de 21/09, em que a consulta de agendamentos voltava vazia.
+    agendamento_id = await _salvar_linha(
+        db, id_grupo_wpp, nome_revenda, home_id, automacao_ids,
+        horario_execucao, "resume", horario_execucao.date(),
+    )
+    await db.commit()
+    return agendamento_id
 
 async def _salvar_linha(db, id_grupo_wpp, nome_revenda, home_id, automacao_ids, horario_execucao, fase, data_execucao):
     try:
