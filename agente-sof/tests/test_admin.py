@@ -249,3 +249,83 @@ def test_admin_pausa_manual_respeita_duracao_diferente(client, admin_headers, re
     assert r.status_code == 200
     horario = mock_agendar.call_args.kwargs["horario_execucao"]
     assert antes + timedelta(hours=5) <= horario <= depois + timedelta(hours=5)
+
+
+# --- I1.3: visibilidade dos agendamentos pendentes ---
+@pytest.mark.integration
+def test_admin_agendamentos_sem_autenticacao_rejeitado(client):
+    """Mesma proteção das demais rotas /admin/*: exige a Admin API Key."""
+    r = client.get("/admin/agendamentos")
+    assert r.status_code in (401, 403)
+
+
+@pytest.mark.integration
+def test_admin_agendamentos_rejeita_api_key_comum(client, auth_headers):
+    """A API Key do /agent NAO pode abrir o painel de agendamentos."""
+    r = client.get("/admin/agendamentos", headers=auth_headers)
+    assert r.status_code in (401, 403)
+
+
+@pytest.mark.integration
+def test_admin_lista_agendamentos_pendentes(client, admin_headers):
+    """Responde 'onde vejo o que vai religar': o pendente aparece na listagem.
+
+    Cobre a ponta a ponta do I1.1: se o resume nao for efetivamente commitado,
+    ele nao aparece aqui — que era exatamente o sintoma em producao.
+    """
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    from app.database import get_sync_engine
+
+    TZ = ZoneInfo("America/Recife")
+    hoje_21h = datetime.now(TZ).replace(hour=21, minute=0, second=0, microsecond=0)
+    engine = get_sync_engine()
+    with engine.begin() as conn:
+        conn.execute(text("DELETE FROM agendamentos WHERE id_grupo_wpp = 'TESTE-visib'"))
+        conn.execute(text("""
+            INSERT INTO agendamentos
+                (id_grupo_wpp, nome_revenda, home_id, automacao_ids,
+                 horario_execucao, fase, data_execucao, executado)
+            VALUES ('TESTE-visib', 'Revenda Visib', 'HVIS', '["a1"]',
+                    :h, 'resume', :d, FALSE)
+        """), {"h": hoje_21h, "d": hoje_21h.date()})
+    try:
+        r = client.get("/admin/agendamentos", headers=admin_headers)
+        assert r.status_code == 200
+        linhas = r.json()
+        alvo = [x for x in linhas if x["id_grupo_wpp"] == "TESTE-visib"]
+        assert len(alvo) == 1, f"o pendente tem que aparecer na listagem, veio {linhas}"
+        assert alvo[0]["fase"] == "resume"
+        assert alvo[0]["home_id"] == "HVIS"
+        assert alvo[0]["nome_revenda"] == "Revenda Visib"
+        assert alvo[0]["horario_execucao"] is not None
+    finally:
+        with engine.begin() as conn:
+            conn.execute(text("DELETE FROM agendamentos WHERE id_grupo_wpp = 'TESTE-visib'"))
+
+
+@pytest.mark.integration
+def test_admin_agendamentos_nao_lista_executados(client, admin_headers):
+    """Executado=true nao e 'pendente' — nao pode poluir a listagem."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    from app.database import get_sync_engine
+
+    TZ = ZoneInfo("America/Recife")
+    agora = datetime.now(TZ)
+    engine = get_sync_engine()
+    with engine.begin() as conn:
+        conn.execute(text("DELETE FROM agendamentos WHERE id_grupo_wpp = 'TESTE-visib-done'"))
+        conn.execute(text("""
+            INSERT INTO agendamentos
+                (id_grupo_wpp, nome_revenda, home_id, automacao_ids,
+                 horario_execucao, fase, data_execucao, executado)
+            VALUES ('TESTE-visib-done', 'R', 'HD', '["a1"]', :h, 'resume', :d, TRUE)
+        """), {"h": agora, "d": agora.date()})
+    try:
+        r = client.get("/admin/agendamentos", headers=admin_headers)
+        assert r.status_code == 200
+        assert not [x for x in r.json() if x["id_grupo_wpp"] == "TESTE-visib-done"]
+    finally:
+        with engine.begin() as conn:
+            conn.execute(text("DELETE FROM agendamentos WHERE id_grupo_wpp = 'TESTE-visib-done'"))

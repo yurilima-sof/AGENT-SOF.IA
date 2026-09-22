@@ -262,6 +262,44 @@ async def admin_logs(
     return await obter_logs_recentes(db, limite=limite, id_grupo=id_grupo)
 
 
+@router.get("/agendamentos", summary="Agendamentos Pendentes (pausa/resume)")
+async def admin_listar_agendamentos(
+    _admin_key: str = Depends(verify_admin_api_key),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Lista o que ainda vai ser executado — em especial os `resume`, que religam
+    as automações de OFF depois de uma pausa.
+
+    Existe para responder "o que está agendado para religar?" sem abrir o banco
+    na mão. Durante o incidente de 21/09 não havia essa visibilidade: a pausa
+    acontecia, o resume não era persistido (faltava commit em
+    `salvar_agendamento`) e ninguém conseguia perceber antes da loja passar a
+    noite ligada.
+
+    Ordenado por `horario_execucao` — o próximo a disparar vem primeiro.
+    """
+    result = await db.execute(text("""
+        SELECT id_grupo_wpp, nome_revenda, home_id, fase,
+               data_execucao, horario_execucao, automacao_ids
+        FROM agendamentos
+        WHERE executado = FALSE
+        ORDER BY horario_execucao
+    """))
+    return [
+        {
+            "id_grupo_wpp": r.id_grupo_wpp,
+            "nome_revenda": r.nome_revenda,
+            "home_id": r.home_id,
+            "fase": r.fase,
+            "data_execucao": r.data_execucao.isoformat() if r.data_execucao else None,
+            "horario_execucao": r.horario_execucao.isoformat() if r.horario_execucao else None,
+            "automacao_ids": r.automacao_ids,
+        }
+        for r in result.fetchall()
+    ]
+
+
 # =============================================================================
 # CENAS E HOMES TUYA
 # =============================================================================
