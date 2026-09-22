@@ -94,3 +94,42 @@ async def test_gemini_timeout_cai_no_fallback_rapido(monkeypatch):
     # (ver tests/test_gemini_fallback.py para a cobertura desse comportamento).
     assert resultado["intencao"] is None
     assert "instabilidade técnica" in resultado["mensagem_wpp"]
+
+
+# =============================================================================
+# I1.2 - Sem horario => nenhum resume agendado (e nenhum fallback de +2h)
+# =============================================================================
+
+async def test_dispatch_pausa_sem_horario_nao_agenda_resume_nem_2h():
+    """disparar_acao_fisica com horario_fim_pausa=None NAO pode agendar reativacao.
+
+    Historico: existiu um fallback que fazia `horario_fim = agora + 2h` quando o
+    horario nao vinha. Isso pausava a loja e marcava um resume que ninguem pediu
+    (foi o desligamento indevido as 12:36). O fallback foi removido; este teste
+    tranca a ausencia dele — se alguem reintroduzir qualquer default de horario,
+    agendar_reativacao_automacao volta a ser chamado e o teste fica vermelho.
+
+    Invariante: sem horario confiavel, a pausa e ABORTADA por inteiro (nada e
+    desativado e nada e agendado) e o retorno diz isso explicitamente, em vez de
+    falhar em silencio.
+    """
+    with patch("app.services.tuya_service.tuya_service.get_automations_by_home",
+               new_callable=AsyncMock,
+               return_value=[{"id": "a1", "name": "OFF [18:00]", "enabled": True}]) as mock_get, \
+         patch("app.services.tuya_service.tuya_service.set_automation_status",
+               new_callable=AsyncMock) as mock_set, \
+         patch("app.services.scheduler_service.scheduler_service.agendar_reativacao_automacao",
+               new_callable=AsyncMock) as mock_agendar:
+        resultado = await disparar_acao_fisica(
+            db=None, id_grupo="G", nome_revenda="R", home_id="H",
+            acao="desativar_automacao", horario_fim_pausa=None,
+        )
+
+    assert not mock_agendar.called, (
+        "sem horario NAO pode agendar resume — nem com fallback de +2h")
+    assert not mock_set.called, "sem horario NAO pode desativar automacao"
+    assert not mock_get.called, "o abort tem que vir ANTES de consultar a Tuya"
+    assert resultado["detail"] == "pausa_sem_horario_abortada", (
+        f"o retorno tem que dizer o motivo, veio {resultado['detail']!r}")
+    assert resultado["tuya_success"] is False
+    assert resultado.get("mensagem_wpp"), "tem que pedir o horario ao usuario"
