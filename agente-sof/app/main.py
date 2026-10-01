@@ -186,6 +186,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         from app.services.scheduler_service import scheduler_service
         await scheduler_service.carregar_agendamentos_pendentes()
 
+        # Rede de proteção diária (23:50 de Recife): religa qualquer automação de
+        # desligamento que tenha ficado pausada por um resume que não aconteceu.
+        # É um laço interno e não um cron externo de propósito — ver
+        # scheduler_service.iniciar_reconciliacao_noturna.
+        scheduler_service.iniciar_reconciliacao_noturna()
     except Exception as e:
         logger.error(f"⚠️ Aviso no startup ao checar estrutura do banco ou agendamentos: {e}", extra={"status": "erro"}, exc_info=True)
 
@@ -194,6 +199,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     logger.info("🛑 Encerrando a aplicação...")
     try:
         from app.services.scheduler_service import scheduler_service
+        scheduler_service.parar_reconciliacao_noturna()
         for task_key, task in list(scheduler_service._tasks.items()):
             if not task.done():
                 task.cancel()
