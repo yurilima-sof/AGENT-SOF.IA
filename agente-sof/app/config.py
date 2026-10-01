@@ -13,10 +13,82 @@
 #   3. Facilidade de teste: é simples substituir as configs em testes.
 # =============================================================================
 
+import logging
+import os
+import re
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
+
+# Arquivos .env procurados, em ordem de precedência (ver model_config abaixo).
+ENV_FILES = (".env", "../.env", "../../.env")
+
+_RE_CHAVE_ENV = re.compile(r"^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=")
+
+
+def chaves_duplicadas_em_env(caminho) -> dict[str, list[int]]:
+    """
+    Devolve {CHAVE: [linhas]} para cada chave definida mais de uma vez no arquivo.
+
+    Existe por causa de um incidente real: alguém colou um bloco de configuração
+    de teste no fim do .env de produção. Como o dotenv aplica a ÚLTIMA ocorrência,
+    a aplicação passou a rodar com `APP_ENV=development`, `API_KEY` no default
+    público que está versionado no git e `GEMINI_API_KEY=""` — silenciosamente,
+    por semanas.
+
+    O detalhe que torna isso insidioso: a trava que deveria pegar credencial
+    insegura (`_validar_seguranca`) só era fatal quando `APP_ENV == production`,
+    e `APP_ENV` era justamente uma das chaves sobrescritas. A trava era desarmada
+    pela mesma falha que deveria detectar. Por isso esta checagem NÃO olha o
+    ambiente: duplicata em arquivo de segredo não tem uso legítimo.
+
+    Comparação case-insensitive porque o Pydantic Settings também é: `API_KEY` e
+    `api_key` são a mesma variável e colidem do mesmo jeito.
+    """
+    caminho = Path(caminho)
+    if not caminho.is_file():
+        return {}
+
+    try:
+        linhas = caminho.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError) as e:
+        # Não é motivo para derrubar o boot: o Pydantic vai reclamar depois se o
+        # arquivo for mesmo ilegível.
+        logger.warning(f"⚠️ Não foi possível ler '{caminho}' para checar chaves duplicadas: {e}")
+        return {}
+
+    ocorrencias: dict[str, list[int]] = {}
+    aspas_abertas = None  # valor multilinha em andamento
+
+    for numero, linha in enumerate(linhas, start=1):
+        if aspas_abertas is not None:
+            # Dentro de um valor multilinha: nada aqui é definição de chave.
+            if aspas_abertas in linha:
+                aspas_abertas = None
+            continue
+
+        texto = linha.strip()
+        if not texto or texto.startswith("#"):
+            continue
+
+        match = _RE_CHAVE_ENV.match(texto)
+        if not match:
+            continue
+
+        valor = texto[match.end():].lstrip()
+        if valor[:1] in ('"', "'"):
+            aspas = valor[0]
+            # Fechou na mesma linha? Precisa de uma segunda aspa depois da primeira.
+            if valor.count(aspas) < 2:
+                aspas_abertas = aspas
+
+        ocorrencias.setdefault(match.group(1).upper(), []).append(numero)
+
+    return {chave: linhas_ for chave, linhas_ in ocorrencias.items() if len(linhas_) > 1}
 
 
 class Settings(BaseSettings):
@@ -96,7 +168,10 @@ class Settings(BaseSettings):
     # - env_file_encoding: garante suporte a caracteres especiais no .env
     # - case_sensitive: variáveis de ambiente são case-insensitive (DATABASE_URL == database_url)
     model_config = SettingsConfigDict(
-        env_file=(".env", "../.env", "../../.env"),
+        # Mesma tupla usada por validar_arquivos_env(): a checagem de chaves
+        # duplicadas precisa olhar exatamente os arquivos que o Pydantic lê. Se
+        # as duas listas divergirem, existe um .env que vale e não é conferido.
+        env_file=ENV_FILES,
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",  # Ignora variáveis de ambiente que não estão mapeadas aqui.
@@ -118,9 +193,19 @@ class Settings(BaseSettings):
         return [ip.strip() for ip in self.admin_allowed_ips.split(",") if ip.strip()]
 
     @model_validator(mode="after")
-    def _proibir_defaults_em_producao(self):
-        if self.app_env != "production":
-            return self
+    def _validar_seguranca(self):
+        """
+        Checa credenciais fracas em TODOS os ambientes.
+
+        Antes a função inteira começava com `if app_env != "production": return`,
+        o que significava que em desenvolvimento ninguém descobria que a chave era
+        default — e, quando o APP_ENV vinha errado por acidente, ninguém descobria
+        em produção também.
+
+        Agora a checagem sempre roda; o que varia é a severidade: fatal em
+        produção, WARNING no resto. Assim o problema fica visível no log de
+        qualquer ambiente sem impedir o desenvolvimento local de subir.
+        """
         defaults_inseguros = {"dev-api-key-insegura", "chave-insegura-apenas-para-desenvolvimento", "dev-admin-key-insegura-para-teste", ""}
         problemas = []
         if self.api_key in defaults_inseguros or len(self.api_key) < 32:
@@ -131,9 +216,19 @@ class Settings(BaseSettings):
             problemas.append("ADMIN_API_KEY (deve ser alterada e possuir >=32 caracteres)")
         if not self.gemini_api_key:
             problemas.append("GEMINI_API_KEY (obrigatória em produção)")
-        if problemas:
+
+        if not problemas:
+            return self
+
+        if self.app_env == "production":
             from app.core.exceptions import ConfigError
             raise ConfigError(f"Configuração insegura para ambiente de produção: {', '.join(problemas)}")
+
+        if self.app_env != "testing":
+            logger.warning(
+                f"⚠️ Configuração insegura detectada (ambiente '{self.app_env}', por isso não é fatal): "
+                f"{', '.join(problemas)}. Em produção isto impediria o boot."
+            )
         return self
 
 
@@ -150,6 +245,41 @@ class Settings(BaseSettings):
 #   print(settings.database_url)
 # =============================================================================
 
+def validar_arquivos_env() -> None:
+    """
+    Recusa o boot se algum .env definir a mesma chave duas vezes.
+
+    Mora aqui, e não num `model_validator`, porque é uma checagem do ARQUIVO e
+    não desta instância de `Settings` — testes que constroem `Settings(...)` com
+    valores explícitos não deveriam depender do .env que existe no disco.
+    Chamada de `get_settings()`, que é por onde a aplicação inteira passa.
+
+    O desvio de ambiente lê `os.environ` diretamente, em vez de `settings.app_env`:
+    o incidente que originou esta checagem sobrescreveu justamente o `APP_ENV` via
+    arquivo, desarmando as validações que dependiam dele. Variável de processo não
+    tem esse problema — é o que a suíte de testes usa (ver tests/conftest.py).
+    """
+    if os.environ.get("APP_ENV") == "testing":
+        return
+
+    achados = []
+    for nome_arquivo in ENV_FILES:
+        duplicadas = chaves_duplicadas_em_env(nome_arquivo)
+        for chave, linhas in sorted(duplicadas.items()):
+            achados.append(
+                f"{chave} em '{nome_arquivo}' (linhas {', '.join(str(n) for n in linhas)})"
+            )
+
+    if achados:
+        from app.core.exceptions import ConfigError
+        raise ConfigError(
+            "Chave(s) definida(s) mais de uma vez no .env. O dotenv aplica a ÚLTIMA "
+            "ocorrência, então o valor efetivo pode não ser o que você espera — foi "
+            "assim que a aplicação rodou em produção com a API_KEY default. "
+            "Deixe uma definição por chave: " + "; ".join(achados)
+        )
+
+
 @lru_cache()
 def get_settings() -> Settings:
     """
@@ -158,4 +288,5 @@ def get_settings() -> Settings:
     O @lru_cache garante que o arquivo .env seja lido apenas uma vez.
     Use esta função em vez de instanciar Settings() diretamente.
     """
+    validar_arquivos_env()
     return Settings()
