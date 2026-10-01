@@ -21,6 +21,38 @@ async def inicializar_colunas_revendas(db: AsyncSession) -> None:
         await db.rollback()
         logger.error(f"⚠️ Não foi possível inicializar colunas de mapa_revendas: {e}", extra={"status": "erro"}, exc_info=True)
 
+async def listar_revendas_ativas_com_home(db: AsyncSession) -> list[dict]:
+    """
+    Revendas ativas que têm `tuya_home_id` cadastrado — ou seja, as que têm
+    automação nativa e, portanto, podem ficar com o desligamento pausado.
+
+    Usada pela reconciliação noturna (scheduler_service.reconciliar_automacoes_noturnas).
+    """
+    try:
+        result = await db.execute(text("""
+            SELECT id_grupo_wpp, nome_revenda, tuya_home_id
+            FROM mapa_revendas
+            WHERE ativo = true
+              AND tuya_home_id IS NOT NULL
+              AND tuya_home_id <> ''
+            ORDER BY nome_revenda
+        """))
+        return [
+            {
+                "id_grupo_wpp": r.id_grupo_wpp,
+                "nome_revenda": r.nome_revenda,
+                "home_id": r.tuya_home_id,
+            }
+            for r in result.fetchall()
+        ]
+    except Exception as e:
+        await db.rollback()
+        logger.error(
+            f"⚠️ Erro ao listar revendas ativas com home Tuya: {e}",
+            extra={"status": "erro"}, exc_info=True,
+        )
+        return []
+
 async def verificar_revenda_ativa(db: AsyncSession, id_grupo: str) -> bool:
     try:
         result = await db.execute(

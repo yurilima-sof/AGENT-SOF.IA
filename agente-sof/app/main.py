@@ -23,7 +23,7 @@ from slowapi.util import get_remote_address
 from sqlalchemy import text
 
 from app.config import get_settings
-from app.core.security import verify_api_key, verify_admin_api_key
+from app.core.security import verify_api_key, verify_admin_api_key, verify_admin_ip_allowlist
 from app.database import async_session_maker
 from app.schemas.agent import AgentRequest, AgentResponse, ErrorResponse
 from app.schemas.rag import RagIngestRequest, RagIngestResponse
@@ -185,6 +185,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
             
         from app.services.scheduler_service import scheduler_service
         await scheduler_service.carregar_agendamentos_pendentes()
+
     except Exception as e:
         logger.error(f"⚠️ Aviso no startup ao checar estrutura do banco ou agendamentos: {e}", extra={"status": "erro"}, exc_info=True)
 
@@ -812,7 +813,10 @@ from app.services.scheduler_service import scheduler_service
     "/scheduler/tick",
     summary="Carregar e agendar eventos pendentes de reativação",
     tags=["Scheduler"],
-    dependencies=[Depends(verify_admin_api_key)]
+    # Mesma proteção do router /admin/*: chave de admin E allowlist de IP.
+    # Sem a allowlist, estas duas rotas ficavam acessíveis de qualquer IP da
+    # internet — e /scheduler/reconciliacao escreve na Tuya de TODAS as revendas.
+    dependencies=[Depends(verify_admin_api_key), Depends(verify_admin_ip_allowlist)]
 )
 async def trigger_scheduler_tick():
     """
@@ -824,6 +828,31 @@ async def trigger_scheduler_tick():
         return {"status": "ok", "message": "Agendamentos pendentes verificados e agendados."}
     except Exception as e:
         logger.error(f"Erro no /scheduler/tick: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post(
+    "/scheduler/reconciliacao",
+    summary="Reconciliação noturna: religar automações de desligamento pausadas",
+    tags=["Scheduler"],
+    # Mesma proteção do router /admin/*: chave de admin E allowlist de IP.
+    # Sem a allowlist, estas duas rotas ficavam acessíveis de qualquer IP da
+    # internet — e /scheduler/reconciliacao escreve na Tuya de TODAS as revendas.
+    dependencies=[Depends(verify_admin_api_key), Depends(verify_admin_ip_allowlist)]
+)
+async def trigger_reconciliacao_noturna():
+    """
+    Dispara manualmente a rede de proteção que roda sozinha às 23:50 (Recife).
+
+    Útil para verificar o estado agora ("alguma loja está com o desligamento
+    pausado sem motivo?") e como reforço externo via cron. A operação é
+    idempotente: religar automação já ativa não faz nada, e homes em janela de
+    pausa legítima são preservadas.
+    """
+    try:
+        return await scheduler_service.reconciliar_automacoes_noturnas()
+    except Exception as e:
+        logger.error(f"Erro no /scheduler/reconciliacao: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

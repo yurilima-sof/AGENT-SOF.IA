@@ -30,7 +30,8 @@ def client() -> Generator[TestClient, None, None]:
     with patch("app.crud.chat_history.inicializar_tabela_historico", new_callable=AsyncMock), \
          patch("app.crud.revendas.inicializar_colunas_revendas", new_callable=AsyncMock), \
          patch("app.crud.agendamentos.inicializar_tabela_agendamentos", new_callable=AsyncMock), \
-         patch("app.services.scheduler_service.scheduler_service.carregar_agendamentos_pendentes", new_callable=AsyncMock):
+         patch("app.services.scheduler_service.scheduler_service.carregar_agendamentos_pendentes", new_callable=AsyncMock), \
+         patch("app.services.scheduler_service.scheduler_service.iniciar_reconciliacao_noturna"):
         with TestClient(app) as c:
             yield c
 
@@ -61,10 +62,13 @@ def agora_fixo():
 def scheduler_isolado():
     from app.services.scheduler_service import scheduler_service
     scheduler_service._tasks.clear()
+    scheduler_service._task_meta.clear()
+    scheduler_service._reconciliacao_task = None
     yield scheduler_service
     for task in scheduler_service._tasks.values():
         task.cancel()
     scheduler_service._tasks.clear()
+    scheduler_service._task_meta.clear()
 
 
 
@@ -83,5 +87,6 @@ async def cleanup_scheduler_tasks():
     
     if tasks_to_await:
         await asyncio.gather(*tasks_to_await, return_exceptions=True)
-        
+
     scheduler_service._tasks.clear()
+    scheduler_service._task_meta.clear()
