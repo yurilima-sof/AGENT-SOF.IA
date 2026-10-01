@@ -1,0 +1,23 @@
+# =============================================================================
+# .gitignore - raiz do repositorio
+# =============================================================================
+# O agente-sof/.gitignore so vale de agente-sof/ para baixo; artefatos gerados
+# na raiz (cache de pytest, metadados do Windows) precisam ser ignorados aqui.
+#
+# NOTA: o .gitignore nao suporta comentario no fim da linha — o texto inteiro
+# vira parte do padrao. Comentario sempre em linha propria.
+# =============================================================================
+
+# --- Caches de ferramentas ---
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+
+# --- Metadados de Sistema Operacional ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Variaveis de ambiente (SEGURANCA CRITICA) ---
+.env

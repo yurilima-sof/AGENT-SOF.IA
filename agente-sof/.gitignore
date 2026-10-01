@@ -36,9 +36,12 @@ build/
 *.swo
 
 # --- Sistemas Operacionais ---
-.DS_Store          # macOS
-Thumbs.db          # Windows
-desktop.ini        # Windows
+# ATENCAO: o .gitignore NAO suporta comentario no fim da linha — o texto todo
+# vira parte do padrao. Estas tres linhas ja tiveram "# macOS"/"# Windows" no
+# fim e, por isso, nunca casaram com nada (desktop.ini chegou a ser versionado).
+.DS_Store
+Thumbs.db
+desktop.ini
 
 # --- Logs ---
 *.log

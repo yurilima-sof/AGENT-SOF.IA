@@ -29,4 +29,13 @@ USER appuser
 EXPOSE 8000
 
 # Comando para iniciar o servidor Uvicorn em produção
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+#
+# NÃO adicione --workers aqui sem antes mudar o scheduler.
+# O agendamento de pausa/reativação (app/services/scheduler_service.py) guarda
+# as tasks em memória do processo. Com N workers, cada um carrega TODOS os
+# agendamentos pendentes do banco e executa cada um: a automação é reativada N
+# vezes e a cena de desligamento dispara N vezes. A reconciliação noturna é
+# idempotente e sobreviveria, mas o tick não.
+# Pré-requisito para escalar: mover o "quem executa" para o banco
+# (SELECT ... FOR UPDATE SKIP LOCKED) em vez do dicionário em memória.
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
