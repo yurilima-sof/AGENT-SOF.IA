@@ -6,7 +6,13 @@ from typing import Generator
 os.environ["APP_ENV"] = "testing"
 os.environ["API_KEY"] = "dev-api-key-insegura"
 os.environ["SECRET_KEY"] = "chave-insegura-apenas-para-desenvolvimento"
-os.environ["DATABASE_URL"] = "postgresql+asyncpg://agente_user:agente_senha_dev@localhost:5432/agente_sof_db"
+# Banco de teste. O default aponta para o Postgres do docker-compose em 5432, mas
+# TEST_DATABASE_URL permite apontar para uma instância efêmera noutra porta — assim a
+# suíte roda sem tomar a porta do banco de desenvolvimento, que tem dados reais.
+os.environ["DATABASE_URL"] = os.environ.get(
+    "TEST_DATABASE_URL",
+    "postgresql+asyncpg://agente_user:agente_senha_dev@localhost:5432/agente_sof_db",
+)
 os.environ["GEMINI_API_KEY"] = "fake-key"
 
 from app.config import get_settings
