@@ -10,6 +10,20 @@ from app.config import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
+# =============================================================================
+# COBERTURA MÍNIMA DE TRANSMISSORES IR
+# =============================================================================
+# Número MÁXIMO de transmissores IR online que ainda caracteriza a revenda como
+# offline. Com o valor 1: "só 1 controle respondendo = revenda offline".
+#
+# Por que não é zero: um único dispositivo online NÃO caracteriza revenda
+# operante. Na prática ele costuma não ser nem da loja — é cadastro residual,
+# aparelho de bancada ou equipamento que ficou noutro endereço. Disparar uma
+# cena nesse estado comanda algo que não é da revenda e responde "pronto,
+# liguei" para um salão que continua quente. Não há comando seguro aqui.
+IR_COBERTURA_MINIMA = 1
+
+
 class TuyaService:
     def __init__(self):
         self.base_url = settings.tuya_base_url
@@ -291,13 +305,26 @@ class TuyaService:
         Verifica se os dispositivos IR (Emissores de Infravermelho / Hubs IR) da residência estão online.
         Como as cenas Tuya acionam os aparelhos através dos transmissores IR físicos, a verificação valida se os 
         dispositivos IR / Hubs responsáveis pelo sinal estão ativos.
+
+        Além do offline total, aplica o limiar de COBERTURA MÍNIMA (ver IR_COBERTURA_MINIMA):
+        uma Home com no máximo 1 transmissor online é tratada como offline, qualquer que
+        seja o total cadastrado — um dispositivo solitário não caracteriza revenda operante.
+
         Fail-safe: Se a consulta falhar ou não houver dispositivos registrados, assume online = True.
         """
         try:
             devices = await self.get_devices_by_home(home_id)
             if not devices:
                 logger.info(f"ℹ️ Nenhum dispositivo listado via API para Home {home_id}. Prosseguindo no modo fail-safe.")
-                return {"all_offline": False, "online_count": 0, "total_count": 0, "checked": False}
+                return {
+                    "all_offline": False,
+                    "cobertura_degradada": False,
+                    "online_count": 0,
+                    "total_count": 0,
+                    "ir_online": 0,
+                    "ir_total": 0,
+                    "checked": False,
+                }
 
             total_count = len(devices)
             
@@ -326,16 +353,31 @@ class TuyaService:
 
             # Regra de desconexão focada nos Dispositivos IR que executam as Cenas:
             # 1. Se existirem transmissores IR cadastrados e TODOS estiverem offline (ir_online == 0)
-            # 2. OU se todos os dispositivos da casa estiverem offline
+            # 2. Cobertura insuficiente: no máximo IR_COBERTURA_MINIMA online (hoje: 1)
+            # 3. OU se todos os dispositivos da casa estiverem offline
+            #
+            # (2) vale SEM exceção por tamanho da Home, inclusive quando só existe 1 IR
+            # cadastrado. Um dispositivo solitário online não é evidência de revenda
+            # operante: normalmente ele sequer está na loja. Ver CHANGELOG 15/10/2026.
             all_offline = False
+            cobertura_degradada = False
             if ir_total > 0 and ir_online == 0:
                 logger.warning(f"🔌 Todos os transmissores IR físicos (Hubs/Controles) da Home {home_id} estão OFFLINE ({ir_online}/{ir_total}).")
                 all_offline = True
+            elif ir_total > 0 and ir_online <= IR_COBERTURA_MINIMA:
+                logger.warning(
+                    f"🔌 Cobertura IR insuficiente na Home {home_id}: apenas {ir_online}/{ir_total} "
+                    f"transmissores online (mínimo exigido: {IR_COBERTURA_MINIMA + 1}). "
+                    f"Dispositivo solitário não caracteriza a revenda — tratando como OFFLINE."
+                )
+                all_offline = True
+                cobertura_degradada = True
             elif total_count > 0 and online_count == 0:
                 all_offline = True
 
             return {
                 "all_offline": all_offline,
+                "cobertura_degradada": cobertura_degradada,
                 "online_count": online_count,
                 "total_count": total_count,
                 "ir_online": ir_online,
@@ -344,6 +386,14 @@ class TuyaService:
             }
         except Exception as e:
             logger.error(f"⚠️ Erro ao checar conectividade dos dispositivos para Home {home_id}: {e}. Ativando fallback permissivo.", extra={"status": "erro"}, exc_info=True)
-            return {"all_offline": False, "online_count": 0, "total_count": 0, "checked": False}
+            return {
+                "all_offline": False,
+                "cobertura_degradada": False,
+                "online_count": 0,
+                "total_count": 0,
+                "ir_online": 0,
+                "ir_total": 0,
+                "checked": False,
+            }
 
 tuya_service = TuyaService()

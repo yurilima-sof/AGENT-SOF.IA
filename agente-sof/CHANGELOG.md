@@ -6,6 +6,52 @@ responsável e o trade-off aceito — não apenas no código.
 
 ---
 
+## 2026-10-15
+
+### Alterado — Cobertura mínima de transmissores IR: "1 só online = revenda offline"
+
+`app/services/tuya_service.py`
+
+`check_home_devices_online` passou a considerar a revenda **offline** sempre que houver
+**no máximo 1 transmissor IR online**, qualquer que seja o total cadastrado. Antes, só o
+zero absoluto (`ir_online == 0`) abortava o comando.
+
+**Por que:** um dispositivo solitário online **não caracteriza revenda operante**. Na
+prática ele costuma nem estar na loja — é cadastro residual, aparelho de bancada ou
+equipamento que ficou noutro endereço. Disparar a cena nesse estado comanda algo que não
+é da revenda e responde "pronto, liguei" para um salão que continua quente. Não existe
+comando seguro nesse estado, então nenhum é enviado.
+
+**Sem isenção por tamanho da Home.** A primeira versão desta entrada isentava
+`ir_total == 1`, sob o argumento de que existiriam revendas legitimamente com um único
+transmissor, que ficariam presas em offline permanente. O responsável corrigiu a premissa
+no mesmo dia: não existe esse caso — um IR sozinho é justamente o sinal de que o
+dispositivo não é da revenda. A isenção foi removida antes de qualquer deploy; o limiar
+vale para toda Home com pelo menos 1 IR cadastrado.
+
+**Trade-off aceito:** uma revenda com 2 IRs em que um esteja cronicamente offline deixa
+de aceitar comandos até alguém religar o transmissor. Preferimos isso — visível, com
+mensagem explícita no WhatsApp e `status_op=dispositivo_offline` no log — a climatizar
+meia loja e reportar sucesso.
+
+**Escopo:** só o caminho de **cena física**. Pausa/reativação de automação continua não
+dependendo de IR online (é operação de nuvem) e não passa por esta checagem —
+`tuya_dispatch_service.py` já faz essa distinção antes do bloco de verificação.
+
+O limiar ficou nomeado e ajustável no topo de `tuya_service.py`: `IR_COBERTURA_MINIMA = 1`.
+Pôr 0 restaura exatamente o comportamento anterior, útil como chave de desligamento se o
+deploy revelar mais lojas afetadas do que o esperado.
+
+O retorno ganhou a chave `cobertura_degradada: bool`, que distingue nos logs e na auditoria
+"tudo offline" de "cobertura insuficiente". O painel admin não precisou mudar: já lia
+`all_offline` + `ir_online/ir_total`, e agora mostra 🔴 Offline (1/4 IR) nesse caso.
+
+Coberto por `tests/unit/test_cobertura_ir_minima.py` (12 casos), incluindo a Home de IR
+único, a não-regressão do offline total e a prova de que um sensor online não mascara IRs
+caídos. Verificado por mutação: revertendo o `elif` da cobertura, 7 testes ficam vermelhos.
+
+---
+
 ## 2026-09-21
 
 ### Corrigido — C1: TimeParser ignorava o conector "ás"
